@@ -16,10 +16,12 @@
  */
 package org.apache.commons.vfs2.provider.webdav4.test;
 
+import static org.apache.commons.vfs2.VfsTestUtils.getTestDirectory;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -31,16 +33,16 @@ import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.ProviderTestSuite;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.apache.commons.vfs2.provider.temp.TemporaryFileProvider;
 import org.apache.commons.vfs2.provider.webdav4.Webdav4FileProvider;
 import org.apache.commons.vfs2.provider.webdav4.Webdav4FileSystemConfigBuilder;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestSuite;
 import org.apache.commons.vfs2.util.FreeSocketPortUtil;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.apache.jackrabbit.standalone.Main;
@@ -73,7 +75,15 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
 
     private static File RepoDirectory;
 
-    private static boolean DEBUG = Boolean.getBoolean("Webdav4ProviderTestCase.Debug");
+    private static final boolean DEBUG = Boolean.getBoolean("Webdav4ProviderTestCase.Debug");
+
+    public Webdav4ProviderTestCase() throws IOException {
+        SocketPort = FreeSocketPortUtil.findFreeLocalPort();
+        message("FreeSocketPortUtil.findFreeLocalPort() = " + SocketPort);
+        // Use %40 for @ in a URL
+        // Any user id and password will do with the default Jackrabbit set up.
+        ConnectionUri = String.format("webdav4://%s:%s@localhost:%d/repository/default", USER_ID, PASSWORD, SocketPort);
+    }
 
     static File createTempDirectory() throws IOException {
         // create base folder
@@ -114,11 +124,7 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
         // First output the node path
         message(node.getPath());
         // Skip the virtual (and large!) jcr:system subtree
-        if (node.getName().equals("jcr:system")) {
-            return;
-        }
-
-        if (node.getName().equals("jcr:content")) {
+        if (node.getName().equals("jcr:system") || node.getName().equals("jcr:content")) {
             return;
         }
 
@@ -153,7 +159,7 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
         return System.getProperty(TEST_URI);
     }
 
-    private static TransientRepository getTransientRepository(final File repoDirectory) throws IOException {
+    private static TransientRepository getTransientRepository(final File repoDirectory) {
         return new TransientRepository(new File(repoDirectory, "repository.xml"), repoDirectory);
     }
 
@@ -173,7 +179,7 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
         final File[] files = sourceDir.listFiles();
         for (final File file : files) {
             if (file.isFile()) {
-                try (final InputStream data = new FileInputStream(file)) {
+                try (final InputStream data = Files.newInputStream(file.toPath())) {
                     message("Importing file " + file);
                     JcrUtils.putFile(parent, file.getName(), "application/octet-stream", data);
                 }
@@ -270,10 +276,8 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
      * <li>Remove temporary repository directory.</li>
      * </ol>
      * Stops the embedded Apache WebDAV Server.
-     *
-     * @throws Exception @throws
      */
-    private static void tearDownClass() throws Exception {
+    private static void tearDownClass() {
         // Stop Jackrabbit Main for graceful shutdown
         jrMain.shutdown();
 
@@ -293,14 +297,6 @@ public class Webdav4ProviderTestCase extends AbstractProviderTestConfig {
                 RepoDirectory.deleteOnExit();
             }
         }
-    }
-
-    public Webdav4ProviderTestCase() throws IOException {
-        SocketPort = FreeSocketPortUtil.findFreeLocalPort();
-        message("FreeSocketPortUtil.findFreeLocalPort() = " + SocketPort);
-        // Use %40 for @ in a URL
-        // Any user id and password will do with the default Jackrabbit set up.
-        ConnectionUri = String.format("webdav4://%s:%s@localhost:%d/repository/default", USER_ID, PASSWORD, SocketPort);
     }
 
     /**

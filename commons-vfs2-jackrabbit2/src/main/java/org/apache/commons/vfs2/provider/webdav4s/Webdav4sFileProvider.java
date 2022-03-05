@@ -42,12 +42,13 @@ import org.apache.http.client.protocol.HttpClientContext;
  */
 public class Webdav4sFileProvider extends Http4sFileProvider {
 
-    /** The capabilities of the WebDAV provider */
+    /** The capabilities of the WebDAV provider. */
     protected static final Collection<Capability> capabilities = Webdav4FileProvider.DEFAULT_CAPABILITIES;
 
+    /**
+     * Constructs a new instance.
+     */
     public Webdav4sFileProvider() {
-        super();
-
         setFileNameParser(Webdav4sFileNameParser.getInstance());
     }
 
@@ -70,8 +71,8 @@ public class Webdav4sFileProvider extends Http4sFileProvider {
         final FileSystemOptions fsOpts = fileSystemOptions == null ? new FileSystemOptions() : fileSystemOptions;
 
         UserAuthenticationData authData = null;
-        HttpClient httpClient = null;
-        HttpClientContext httpClientContext = null;
+        final HttpClient httpClient;
+        final HttpClientContext httpClientContext;
 
         try {
             final Webdav4FileSystemConfigBuilder builder = Webdav4FileSystemConfigBuilder.getInstance();
@@ -87,13 +88,13 @@ public class Webdav4sFileProvider extends Http4sFileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return Webdav4FileSystemConfigBuilder.getInstance();
+    public Collection<Capability> getCapabilities() {
+        return capabilities;
     }
 
     @Override
-    public Collection<Capability> getCapabilities() {
-        return capabilities;
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return Webdav4FileSystemConfigBuilder.getInstance();
     }
 
 }

@@ -16,14 +16,13 @@
  */
 package org.apache.commons.vfs2.cache;
 
-import java.io.File;
+import static org.apache.commons.vfs2.VfsTestUtils.getTestDirectoryFile;
 
-import org.apache.commons.AbstractVfsTestCase;
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
+import org.apache.commons.vfs2.CacheTestSuite;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FilesCache;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.CacheTestSuite;
 
 import junit.framework.Test;
 
@@ -31,6 +30,7 @@ import junit.framework.Test;
  * Tests the {@link SoftRefFilesCache} using {@link SoftRefFilesCacheTests}.
  */
 public class SoftRefFilesCacheTestCase extends AbstractProviderTestConfig {
+
     public static Test suite() throws Exception {
         final CacheTestSuite suite = new CacheTestSuite(new SoftRefFilesCacheTestCase());
         suite.addTests(SoftRefFilesCacheTests.class);
@@ -38,13 +38,13 @@ public class SoftRefFilesCacheTestCase extends AbstractProviderTestConfig {
     }
 
     @Override
-    public FilesCache getFilesCache() {
+    public FilesCache createFilesCache() {
         return new SoftRefFilesCache();
     }
 
     @Override
     public FileObject getBaseTestFolder(final FileSystemManager manager) throws Exception {
-        final File testDir = AbstractVfsTestCase.getTestDirectoryFile();
-        return manager.toFileObject(testDir);
+        return manager.toFileObject(getTestDirectoryFile());
     }
+
 }

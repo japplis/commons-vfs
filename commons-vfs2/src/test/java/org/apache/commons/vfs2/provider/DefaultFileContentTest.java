@@ -16,26 +16,34 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.FailableFunction;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * {@code DefaultFileContentTest} tests for bug-VFS-614. This bug involves the stream implementation closing the stream
  * after reading to the end of the buffer, which broke marking.
  */
 public class DefaultFileContentTest {
+
     private static final String expected = "testing";
 
     /**
@@ -45,13 +53,13 @@ public class DefaultFileContentTest {
     @Test
     public void testGetZeroContents() throws IOException {
         final FileSystemManager fsManager = VFS.getManager();
-        try (final FileObject fo = fsManager.resolveFile(new File("."), "src/test/resources/test-data/size-0-file.bin");
+        try (FileObject fo = fsManager.resolveFile(new File("."), "src/test/resources/test-data/size-0-file.bin");
                 final FileContent content = fo.getContent()) {
-            Assert.assertEquals(0, content.getSize());
-            Assert.assertTrue(content.isEmpty());
-            Assert.assertEquals(StringUtils.EMPTY, content.getString(StandardCharsets.UTF_8));
-            Assert.assertEquals(StringUtils.EMPTY, content.getString(StandardCharsets.UTF_8.name()));
-            Assert.assertArrayEquals(ArrayUtils.EMPTY_BYTE_ARRAY, content.getByteArray());
+            assertEquals(0, content.getSize());
+            assertTrue(content.isEmpty());
+            assertEquals(StringUtils.EMPTY, content.getString(StandardCharsets.UTF_8));
+            assertEquals(StringUtils.EMPTY, content.getString(StandardCharsets.UTF_8.name()));
+            assertArrayEquals(ArrayUtils.EMPTY_BYTE_ARRAY, content.getByteArray());
         }
     }
 
@@ -74,9 +82,14 @@ public class DefaultFileContentTest {
         testInputStreamBufferSize(1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testInputStreamBufferSizeNegative() throws Exception {
-        testInputStreamBufferSize(-2);
+    @Test
+    public void testInputStreamBufferSizeNegative() {
+        assertThrows(IllegalArgumentException.class, () -> testInputStreamBufferSize(-2));
+    }
+
+    @Test
+    public void testInputStreamClosedInADifferentThread() throws Exception {
+        testStreamClosedInADifferentThread(FileContent::getInputStream);
     }
 
     @Test
@@ -97,10 +110,10 @@ public class DefaultFileContentTest {
                         final byte[] data = new byte[100];
                         readCount = stream.read(data, 0, 7);
                         stream.read();
-                        Assert.assertEquals(7, readCount);
-                        Assert.assertEquals(expected, new String(data).trim());
+                        assertEquals(7, readCount);
+                        assertEquals(expected, new String(data).trim());
                         readCount = stream.read(data, 8, 10);
-                        Assert.assertEquals(-1, readCount);
+                        assertEquals(-1, readCount);
                         stream.reset();
                     }
                 }
@@ -125,7 +138,7 @@ public class DefaultFileContentTest {
                         final byte[] data = new byte[100];
                         stream.read(data, 0, 7);
                         stream.read();
-                        Assert.assertEquals(expected, new String(data).trim());
+                        assertEquals(expected, new String(data).trim());
                         stream.reset();
                     }
                 }
@@ -152,18 +165,44 @@ public class DefaultFileContentTest {
         testOutputStreamBufferSize(1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testOutputStreamBufferSizeNegative() throws Exception {
-        testOutputStreamBufferSize(-1);
+    @Test
+    public void testOutputStreamBufferSizeNegative() {
+        assertThrows(IllegalArgumentException.class, () -> testOutputStreamBufferSize(-1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testOutputStreamBufferSizeNegativeWithAppendFlag() throws Exception {
         final File temp = File.createTempFile("temp-file-name", ".tmp");
         final FileSystemManager fileSystemManager = VFS.getManager();
 
         try (FileObject file = fileSystemManager.resolveFile(temp.getAbsolutePath())) {
-            file.getContent().getOutputStream(true, -1);
+            assertThrows(IllegalArgumentException.class, () -> file.getContent().getOutputStream(true, -1));
+        }
+    }
+
+    @Test
+    public void testOutputStreamClosedInADifferentThread() throws Exception {
+        testStreamClosedInADifferentThread(FileContent::getOutputStream);
+    }
+
+    private <T extends Closeable> void testStreamClosedInADifferentThread(final FailableFunction<FileContent, T, IOException> getStream) throws Exception {
+        final File temp = File.createTempFile("temp-file-name", ".tmp");
+        final FileSystemManager fileSystemManager = VFS.getManager();
+
+        try (FileObject file = fileSystemManager.resolveFile(temp.getAbsolutePath())) {
+            final T stream = getStream.apply(file.getContent());
+            final AtomicBoolean check = new AtomicBoolean();
+            final Thread thread = new Thread(() -> {
+                try {
+                    stream.close();
+                } catch (final IOException exception) {
+                    // ignore
+                }
+                check.set(true);
+            });
+            thread.start();
+            thread.join();
+            assertTrue(check.get());
         }
     }
 

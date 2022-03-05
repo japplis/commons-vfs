@@ -22,19 +22,16 @@ package org.apache.commons.vfs2;
 public interface FilesCache {
 
     /**
-     * Adds a FileObject to the cache.
+     * Purges the entries corresponding to the FileSystem.
      *
-     * @param file the file
+     * @param fileSystem The FileSystem.
      */
-    void putFile(final FileObject file);
+    void clear(FileSystem fileSystem);
 
     /**
-     * Adds a FileObject to the cache if it isn't already present.
-     *
-     * @param file the file
-     * @return true if the file was stored, false otherwise.
+     * Purges the whole cache.
      */
-    boolean putFileIfAbsent(final FileObject file);
+    void close();
 
     /**
      * Retrieves a FileObject from the cache by name.
@@ -43,19 +40,22 @@ public interface FilesCache {
      * @param fileName the name
      * @return the file object or null if file is not cached
      */
-    FileObject getFile(final FileSystem fileSystem, final FileName fileName);
+    FileObject getFile(FileSystem fileSystem, FileName fileName);
 
     /**
-     * Purges the entries corresponding to the FileSystem.
+     * Adds a FileObject to the cache.
      *
-     * @param fileSystem The FileSystem.
+     * @param file the file
      */
-    void clear(final FileSystem fileSystem);
+    void putFile(FileObject file);
 
     /**
-     * Purges the whole cache.
+     * Adds a FileObject to the cache if it isn't already present.
+     *
+     * @param file the file
+     * @return true if the file was stored, false otherwise.
      */
-    void close();
+    boolean putFileIfAbsent(FileObject file);
 
     /**
      * Removes a file from cache.
@@ -63,12 +63,12 @@ public interface FilesCache {
      * @param fileSystem file system
      * @param name file name
      */
-    void removeFile(final FileSystem fileSystem, final FileName name);
+    void removeFile(FileSystem fileSystem, FileName name);
 
-    /**
-     * If the cache uses timestamps it could use this method to handle updates of them.
-     *
-     * @param file file name
+    /*
+      If the cache uses timestamps it could use this method to handle updates of them.
+
+      @param file file name
      */
     // public void touchFile(final FileObject file);
 }

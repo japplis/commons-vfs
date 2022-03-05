@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileContent;
@@ -66,16 +67,47 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
  */
 public abstract class AbstractFileObject<AFS extends AbstractFileSystem> implements FileObject {
 
-    private static final String DO_GET_INPUT_STREAM_INT = "doGetInputStream(int)";
-
     /**
      * Same as {@link BufferedInputStream}.
      */
     public static final int DEFAULT_BUFFER_SIZE = 8192;
 
-    private static final FileName[] EMPTY_FILE_ARRAY = {};
-
     private static final int INITIAL_LIST_SIZE = 5;
+
+    private static final String DO_GET_INPUT_STREAM_INT = "doGetInputStream(int)";
+
+    private final AbstractFileName fileName;
+    private final AFS fileSystem;
+
+    private FileContent content;
+    // Cached info
+    private boolean attached;
+    private FileType type;
+
+    private FileObject parent;
+    // Changed to hold only the name of the children and let the object
+    // go into the global files cache
+    // private FileObject[] children;
+    private FileName[] children;
+
+    private List<Object> objects;
+
+    /**
+     * FileServices instance.
+     */
+    private FileOperations operations;
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param fileName the file name.
+     * @param fileSystem the file system.
+     */
+    protected AbstractFileObject(final AbstractFileName fileName, final AFS fileSystem) {
+        this.fileName = fileName;
+        this.fileSystem = fileSystem;
+        fileSystem.fileObjectHanded(this);
+    }
 
     /**
      * Traverses a file.
@@ -112,39 +144,6 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 selected.add(index, file);
             }
         }
-    }
-    private final AbstractFileName fileName;
-
-    private final AFS fileSystem;
-    private FileContent content;
-    // Cached info
-    private boolean attached;
-
-    private FileType type;
-    private FileObject parent;
-
-    // Changed to hold only the name of the children and let the object
-    // go into the global files cache
-    // private FileObject[] children;
-    private FileName[] children;
-
-    private List<Object> objects;
-
-    /**
-     * FileServices instance.
-     */
-    private FileOperations operations;
-
-    /**
-     *
-     * @param name the file name - muse be an instance of {@link AbstractFileName}
-     * @param fileSystem the file system
-     * @throws ClassCastException if {@code name} is not an instance of {@link AbstractFileName}
-     */
-    protected AbstractFileObject(final AbstractFileName name, final AFS fileSystem) {
-        this.fileName = name;
-        this.fileSystem = fileSystem;
-        fileSystem.fileObjectHanded(this);
     }
 
     /**
@@ -205,8 +204,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
             } else {
                 list.add(childName);
             }
-            children = new FileName[list.size()];
-            list.toArray(children);
+            children = list.toArray(FileName.EMPTY_ARRAY);
         }
 
         // removeChildrenCache();
@@ -349,7 +347,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 throw new FileSystemException("vfs.provider/create-folder-mismatched-type.error", fileName);
             }
             /*
-             * VFS-210: checking for writeable is not always possible as the security constraint might be more complex
+             * VFS-210: checking for writable is not always possible as the security constraint might be more complex
              * if (!isWriteable()) { throw new FileSystemException("vfs.provider/create-folder-read-only.error", name);
              * }
              */
@@ -408,9 +406,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         findFiles(selector, true, files);
 
         // Delete 'em
-        final int count = files.size();
-        for (int i = 0; i < count; i++) {
-            final AbstractFileObject file = FileObjectUtils.getAbstractFileObject(files.get(i));
+        for (final FileObject fileObject : files) {
+            final AbstractFileObject file = FileObjectUtils.getAbstractFileObject(fileObject);
             // file.attach();
 
             // VFS-210: It seems impossible to me that findFiles will return a list with hidden files/directories
@@ -529,7 +526,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
      * Creates this file as a folder. Is only called when:
      * <ul>
      * <li>{@link #doGetType} returns {@link FileType#IMAGINARY}.</li>
-     * <li>The parent folder exists and is writeable, or this file is the root of the file system.</li>
+     * <li>The parent folder exists and is writable, or this file is the root of the file system.</li>
      * </ul>
      * This implementation throws an exception.
      *
@@ -925,7 +922,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     }
 
     /**
-     * Make the file or folder writeable.
+     * Make the file or folder writable.
      * <p>
      * Only called if {@link #doGetType} does not return {@link FileType#IMAGINARY}.
      * </p>
@@ -971,13 +968,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         if (objects == null) {
             return null;
         }
-
-        final FileName[] names = new FileName[objects.length];
-        for (int iterObjects = 0; iterObjects < objects.length; iterObjects++) {
-            names[iterObjects] = objects[iterObjects].getName();
-        }
-
-        return names;
+        return Stream.of(objects).map(FileObject::getName).toArray(FileName[]::new);
     }
 
     @Override
@@ -997,7 +988,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public FileObject[] findFiles(final FileSelector selector) throws FileSystemException {
         final List<FileObject> list = this.listFiles(selector);
-        return list == null ? null : list.toArray(new FileObject[list.size()]);
+        return list == null ? null : list.toArray(FileObject.EMPTY_ARRAY);
     }
 
     /**
@@ -1047,8 +1038,9 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         final FileObject[] children = getChildren();
         for (final FileObject element : children) {
             final FileName child = element.getName();
+            final String childBaseName = child.getBaseName();
             // TODO - use a comparator to compare names
-            if (child.getBaseName().equals(name)) {
+            if (childBaseName.equals(name) || UriParser.decode(childBaseName).equals(name)) {
                 return resolveFile(child);
             }
         }
@@ -1081,7 +1073,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
             }
 
             // allow the filesystem to return resolved children. e.g. prefill type for webdav
-            FileObject[] childrenObjects;
+            final FileObject[] childrenObjects;
             try {
                 childrenObjects = doListChildrenResolved();
                 children = extractNames(childrenObjects);
@@ -1112,9 +1104,10 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 // honor the new doListChildren contract
                 // return null;
                 throw new FileNotFolderException(fileName);
-            } else if (files.length == 0) {
+            }
+            if (files.length == 0) {
                 // No children
-                children = EMPTY_FILE_ARRAY;
+                children = FileName.EMPTY_ARRAY;
             } else {
                 // Create file objects for the children
                 final FileName[] cache = new FileName[files.length];
@@ -1201,9 +1194,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         // Get the raw input stream
         try {
             return doGetInputStream(bufferSize);
-        } catch (final org.apache.commons.vfs2.FileNotFoundException exc) {
-            throw new org.apache.commons.vfs2.FileNotFoundException(fileName, exc);
-        } catch (final FileNotFoundException exc) {
+        } catch (final org.apache.commons.vfs2.FileNotFoundException | FileNotFoundException exc) {
             throw new org.apache.commons.vfs2.FileNotFoundException(fileName, exc);
         } catch (final FileSystemException exc) {
             throw exc;
@@ -1294,8 +1285,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
      */
     @Override
     public FileObject getParent() throws FileSystemException {
-        if (this.compareTo(fileSystem.getRoot()) == 0) // equals is not implemented :-/
-        {
+        // equals is not implemented :-/
+        if (this.compareTo(fileSystem.getRoot()) == 0) {
             if (fileSystem.getParentLayer() == null) {
                 // Root file has no parent
                 return null;
@@ -1335,11 +1326,10 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
      * @throws FileSystemException if an error occurs.
      */
     public RandomAccessContent getRandomAccessContent(final RandomAccessMode mode) throws FileSystemException {
-        /*
-         * VFS-210 if (!getType().hasContent()) { throw new FileSystemException("vfs.provider/read-not-file.error",
-         * name); }
-         */
-
+        //
+        // VFS-210 if (!getType().hasContent()) { throw new FileSystemException("vfs.provider/read-not-file.error",
+        // name); }
+        //
         if (mode.requestRead()) {
             if (!fileSystem.hasCapability(Capability.RANDOM_ACCESS_READ)) {
                 throw new FileSystemException("vfs.provider/random-access-read-not-supported.error");
@@ -1527,7 +1517,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean isExecutable() throws FileSystemException {
         try {
-            return exists() ? doIsExecutable() : false;
+            return exists() && doIsExecutable();
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/check-is-executable.error", fileName, exc);
         }
@@ -1570,7 +1560,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean isHidden() throws FileSystemException {
         try {
-            return exists() ? doIsHidden() : false;
+            return exists() && doIsHidden();
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/check-is-hidden.error", fileName, exc);
         }
@@ -1585,7 +1575,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean isReadable() throws FileSystemException {
         try {
-            return exists() ? doIsReadable() : false;
+            return exists() && doIsReadable();
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/check-is-readable.error", fileName, exc);
         }
@@ -1614,7 +1604,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean isSymbolicLink() throws FileSystemException {
         try {
-            return exists() ? doIsSymbolicLink() : false;
+            return exists() && doIsSymbolicLink();
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/check-is-symbolic-link.error", fileName, exc);
         }
@@ -1638,7 +1628,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
             }
             return true;
         } catch (final Exception exc) {
-            throw new FileSystemException("vfs.provider/check-is-writeable.error", fileName, exc);
+            throw new FileSystemException("vfs.provider/check-is-writable.error", fileName, exc);
         }
     }
 
@@ -1686,10 +1676,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 throw new FileSystemException("vfs.provider/rename-parent-read-only.error", getName(),
                         getParent().getName());
             }
-        } else {
-            if (!isWriteable()) {
-                throw new FileSystemException("vfs.provider/rename-read-only.error", getName());
-            }
+        } else if (!isWriteable()) {
+            throw new FileSystemException("vfs.provider/rename-read-only.error", getName());
         }
 
         if (destFile.exists() && !isSameFile(destFile)) {
@@ -1855,7 +1843,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean setExecutable(final boolean readable, final boolean ownerOnly) throws FileSystemException {
         try {
-            return exists() ? doSetExecutable(readable, ownerOnly) : false;
+            return exists() && doSetExecutable(readable, ownerOnly);
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/set-executable.error", fileName, exc);
         }
@@ -1875,20 +1863,18 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     @Override
     public boolean setReadable(final boolean readable, final boolean ownerOnly) throws FileSystemException {
         try {
-            return exists() ? doSetReadable(readable, ownerOnly) : false;
+            return exists() && doSetReadable(readable, ownerOnly);
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/set-readable.error", fileName, exc);
         }
     }
 
-    // --- OPERATIONS ---
-
     @Override
     public boolean setWritable(final boolean readable, final boolean ownerOnly) throws FileSystemException {
         try {
-            return exists() ? doSetWritable(readable, ownerOnly) : false;
+            return exists() && doSetWritable(readable, ownerOnly);
         } catch (final Exception exc) {
-            throw new FileSystemException("vfs.provider/set-writeable.error", fileName, exc);
+            throw new FileSystemException("vfs.provider/set-writable.error", fileName, exc);
         }
     }
 

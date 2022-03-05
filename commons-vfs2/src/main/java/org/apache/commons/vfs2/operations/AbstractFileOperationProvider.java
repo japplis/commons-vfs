@@ -18,7 +18,6 @@ package org.apache.commons.vfs2.operations;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -35,6 +34,22 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
      * and Collection of operations that are available for that scheme.
      */
     private final Collection<Class<? extends FileOperation>> operations = new ArrayList<>();
+
+    /**
+     * Add new FileOperation to list of known operations.
+     *
+     * @param operationClass a class implementing FileOperation.
+     * @throws FileSystemException if instances of the class cannot be assigned to FileOperation.
+     */
+    protected final void addOperation(final Class<? extends FileOperation> operationClass) throws FileSystemException {
+        // check validity of passed class
+        if (!FileOperation.class.isAssignableFrom(operationClass)) {
+            throw new FileSystemException("vfs.operation/cant-register.error", operationClass);
+        }
+
+        // ok, lets add it to the list
+        operations.add(operationClass);
+    }
 
     /**
      * Gather available operations for the specified FileObject and put them into specified operationsList.
@@ -59,9 +74,8 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
      * @throws FileSystemException if list of operations cannot be retrieved.
      * @see #collectOperations(Collection operationsList, FileObject file)
      */
-    protected abstract void doCollectOperations(final Collection<Class<? extends FileOperation>> availableOperations,
-            final Collection<Class<? extends FileOperation>> resultList, final FileObject file)
-            throws FileSystemException;
+    protected abstract void doCollectOperations(Collection<Class<? extends FileOperation>> availableOperations,
+        Collection<Class<? extends FileOperation>> resultList, FileObject file) throws FileSystemException;
 
     /**
      * @param file the FileObject for which we need a operation.
@@ -72,11 +86,7 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
     @Override
     public final FileOperation getOperation(final FileObject file, final Class<? extends FileOperation> operationClass)
             throws FileSystemException {
-        final Class<? extends FileOperation> implementation = lookupOperation(operationClass);
-
-        final FileOperation operationInstance = instantiateOperation(file, implementation);
-
-        return operationInstance;
+        return instantiateOperation(file, lookupOperation(operationClass));
     }
 
     /**
@@ -87,8 +97,7 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
      * @return a new file operation
      * @throws FileSystemException if operation cannot be instantiated.
      */
-    protected abstract FileOperation instantiateOperation(final FileObject file,
-            final Class<? extends FileOperation> operationClass) throws FileSystemException;
+    protected abstract FileOperation instantiateOperation(FileObject file, Class<? extends FileOperation> operationClass) throws FileSystemException;
 
     /**
      * Find class implementing a specific operation interface.
@@ -106,9 +115,7 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
 
         // find appropriate class
         Class<? extends FileOperation> foundClass = null;
-        final Iterator<Class<? extends FileOperation>> iterator = operations.iterator();
-        while (iterator.hasNext()) {
-            final Class<? extends FileOperation> operation = iterator.next();
+        for (final Class<? extends FileOperation> operation : operations) {
             if (operationClass.isAssignableFrom(operation)) {
                 foundClass = operation;
                 break;
@@ -120,21 +127,5 @@ public abstract class AbstractFileOperationProvider implements FileOperationProv
         }
 
         return foundClass;
-    }
-
-    /**
-     * Add new FileOperation to list of known operations.
-     *
-     * @param operationClass a class implementing FileOperation.
-     * @throws FileSystemException if instances of the class cannot be assigned to FileOperation.
-     */
-    protected final void addOperation(final Class<? extends FileOperation> operationClass) throws FileSystemException {
-        // check validity of passed class
-        if (!FileOperation.class.isAssignableFrom(operationClass)) {
-            throw new FileSystemException("vfs.operation/cant-register.error", operationClass);
-        }
-
-        // ok, lets add it to the list
-        operations.add(operationClass);
     }
 }

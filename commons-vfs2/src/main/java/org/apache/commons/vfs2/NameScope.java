@@ -59,8 +59,17 @@ public enum NameScope {
     /** The name */
     private final String realName;
 
-    private NameScope(final String name) {
+    NameScope(final String name) {
         this.realName = name;
+    }
+
+    /**
+     * Returns the name of the scope.
+     *
+     * @return The name of the scope.
+     */
+    public String getName() {
+        return realName;
     }
 
     /**
@@ -70,15 +79,6 @@ public enum NameScope {
      */
     @Override
     public String toString() {
-        return realName;
-    }
-
-    /**
-     * Returns the name of the scope.
-     *
-     * @return The name of the scope.
-     */
-    public String getName() {
         return realName;
     }
 }

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.vfs2.util.Messages;
 
 /**
@@ -42,6 +43,104 @@ public class FileSystemException extends IOException {
      * Array of complementary info (context).
      */
     private final String[] info;
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     */
+    public FileSystemException(final String code) {
+        this(code, null, (Object[]) null);
+    }
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     * @param info one context information.
+     */
+    public FileSystemException(final String code, final Object info) {
+        this(code, null, new Object[] {info});
+    }
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     * @param info array of complementary info (context).
+     */
+    public FileSystemException(final String code, final Object... info) {
+        this(code, null, info);
+    }
+
+    /**
+     * Constructs exception with the specified detail message and cause.
+     *
+     * @param code the error code of the message.
+     * @param info one context information.
+     * @param cause the cause.
+     */
+    public FileSystemException(final String code, final Object info, final Throwable cause) {
+        this(code, cause, new Object[] {info});
+    }
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     * @param info array of complementary info (context).
+     * @param cause the cause.
+     * @deprecated Use instead {@link #FileSystemException(String, Throwable, Object[])}. Will be removed in 3.0.
+     */
+    @Deprecated
+    public FileSystemException(final String code, final Object[] info, final Throwable cause) {
+        this(code, cause, info);
+    }
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     * @param cause the original cause
+     */
+    public FileSystemException(final String code, final Throwable cause) {
+        this(code, cause, (Object[]) null);
+    }
+
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param code the error code of the message.
+     * @param info array of complementary info (context).
+     * @param cause the cause.
+     */
+    public FileSystemException(final String code, final Throwable cause, final Object... info) {
+        super(code, cause);
+
+        if (info == null) {
+            this.info = ArrayUtils.EMPTY_STRING_ARRAY;
+        } else {
+            this.info = new String[info.length];
+            for (int i = 0; i < info.length; i++) {
+                String value = String.valueOf(info[i]);
+                // mask passwords (VFS-169)
+                final Matcher urlMatcher = URL_PATTERN.matcher(value);
+                if (urlMatcher.find()) {
+                    value = PASSWORD_PATTERN.matcher(value).replaceFirst(":***@");
+                }
+                this.info[i] = value;
+            }
+        }
+    }
+
+    /**
+     * Constructs wrapper exception.
+     *
+     * @param cause the root cause to wrap.
+     */
+    public FileSystemException(final Throwable cause) {
+        this(cause.getMessage(), cause, (Object[]) null);
+    }
 
     /**
      * Throws a FileSystemException when the given object is null.
@@ -90,115 +189,6 @@ public class FileSystemException extends IOException {
     }
 
     /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     */
-    public FileSystemException(final String code) {
-        this(code, null, (Object[]) null);
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param info0 one context information.
-     */
-    public FileSystemException(final String code, final Object info0) {
-        this(code, null, new Object[] { info0 });
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param info0 one context information.
-     * @param throwable the cause.
-     */
-    public FileSystemException(final String code, final Object info0, final Throwable throwable) {
-        this(code, throwable, new Object[] { info0 });
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param info array of complementary info (context).
-     */
-    public FileSystemException(final String code, final Object... info) {
-        this(code, null, info);
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param throwable the original cause
-     */
-    public FileSystemException(final String code, final Throwable throwable) {
-        this(code, throwable, (Object[]) null);
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param info array of complementary info (context).
-     * @param throwable the cause.
-     * @deprecated Use instead {@link #FileSystemException(String, Throwable, Object[])}. Will be removed in 3.0.
-     */
-    @Deprecated
-    public FileSystemException(final String code, final Object[] info, final Throwable throwable) {
-        this(code, throwable, info);
-    }
-
-    /**
-     * Constructs exception with the specified detail message.
-     *
-     * @param code the error code of the message.
-     * @param info array of complementary info (context).
-     * @param throwable the cause.
-     */
-    public FileSystemException(final String code, final Throwable throwable, final Object... info) {
-        super(code, throwable);
-
-        if (info == null) {
-            this.info = new String[0];
-        } else {
-            this.info = new String[info.length];
-            for (int i = 0; i < info.length; i++) {
-                String value = String.valueOf(info[i]);
-                // mask passwords (VFS-169)
-                final Matcher urlMatcher = URL_PATTERN.matcher(value);
-                if (urlMatcher.find()) {
-                    final Matcher pwdMatcher = PASSWORD_PATTERN.matcher(value);
-                    value = pwdMatcher.replaceFirst(":***@");
-                }
-                this.info[i] = value;
-            }
-        }
-    }
-
-    /**
-     * Constructs wrapper exception.
-     *
-     * @param throwable the root cause to wrap.
-     */
-    public FileSystemException(final Throwable throwable) {
-        this(throwable.getMessage(), throwable, (Object[]) null);
-    }
-
-    /**
-     * Retrieves message from bundle.
-     *
-     * @return The exception message.
-     */
-    @Override
-    public String getMessage() {
-        return Messages.getString(super.getMessage(), (Object[]) getInfo());
-    }
-
-    /**
      * Retrieves error code of the exception. Could be used as key for internationalization.
      *
      * @return the code.
@@ -214,5 +204,15 @@ public class FileSystemException extends IOException {
      */
     public String[] getInfo() {
         return info;
+    }
+
+    /**
+     * Retrieves message from bundle.
+     *
+     * @return The exception message.
+     */
+    @Override
+    public String getMessage() {
+        return Messages.getString(super.getMessage(), (Object[]) getInfo());
     }
 }

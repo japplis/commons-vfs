@@ -18,6 +18,7 @@ package org.apache.commons.vfs2.filter;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileFilter;
@@ -58,32 +59,6 @@ public class AgeFileFilter implements FileFilter, Serializable {
 
     /** The cutoff time threshold. */
     private final long cutoff;
-
-    /**
-     * Tests if the specified {@code File} is newer than the specified time
-     * reference.
-     *
-     * @param fileObject the {@code File} of which the modification date must
-     *                   be compared, must not be {@code null}
-     * @param timeMillis the time reference measured in milliseconds since the epoch
-     *                   (00:00:00 GMT, January 1, 1970)
-     * @return true if the {@code File} exists and has been modified after the
-     *         given time reference.
-     * @throws FileSystemException Thrown for file system errors.
-     * @throws IllegalArgumentException if the file is {@code null}
-     */
-    private static boolean isFileNewer(final FileObject fileObject, final long timeMillis) throws FileSystemException {
-        if (fileObject == null) {
-            throw new IllegalArgumentException("No specified file");
-        }
-        if (!fileObject.exists()) {
-            return false;
-        }
-        try (final FileContent content = fileObject.getContent()) {
-            final long lastModified = content.getLastModifiedTime();
-            return lastModified > timeMillis;
-        }
-    }
 
     /**
      * Constructs a new age file filter for files older than (at or before) a
@@ -161,6 +136,29 @@ public class AgeFileFilter implements FileFilter, Serializable {
     }
 
     /**
+     * Tests if the specified {@code File} is newer than the specified time
+     * reference.
+     *
+     * @param fileObject the {@code File} of which the modification date must
+     *                   be compared, must not be {@code null}
+     * @param timeMillis the time reference measured in milliseconds since the epoch
+     *                   (00:00:00 GMT, January 1, 1970)
+     * @return true if the {@code File} exists and has been modified after the
+     *         given time reference.
+     * @throws FileSystemException Thrown for file system errors.
+     * @throws IllegalArgumentException if the file is {@code null}
+     */
+    private static boolean isFileNewer(final FileObject fileObject, final long timeMillis) throws FileSystemException {
+        Objects.requireNonNull(fileObject, "fileObject");
+        if (!fileObject.exists()) {
+            return false;
+        }
+        try (FileContent content = fileObject.getContent()) {
+            return content.getLastModifiedTime() > timeMillis;
+        }
+    }
+
+    /**
      * Checks to see if the last modification of the file matches cutoff favorably.
      * <p>
      * If last modification time equals cutoff and newer files are required, file
@@ -175,8 +173,7 @@ public class AgeFileFilter implements FileFilter, Serializable {
      */
     @Override
     public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        final boolean newer = isFileNewer(fileInfo.getFile(), cutoff);
-        return acceptOlder ? !newer : newer;
+        return acceptOlder != isFileNewer(fileInfo.getFile(), cutoff);
     }
 
     /**

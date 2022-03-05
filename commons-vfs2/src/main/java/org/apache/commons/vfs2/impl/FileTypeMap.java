@@ -20,23 +20,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileContentInfo;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 
 /**
  * A helper class that determines the provider to use for a file.
  */
-class FileTypeMap {
+final class FileTypeMap {
 
     private final Map<String, String> mimeTypeMap = new HashMap<>();
     private final Map<String, String> extensionMap = new HashMap<>();
-
-    /**
-     * Adds a MIME type mapping.
-     */
-    public void addMimeType(final String mimeType, final String scheme) {
-        mimeTypeMap.put(mimeType, scheme);
-    }
 
     /**
      * Adds a file name extension mapping.
@@ -46,27 +40,10 @@ class FileTypeMap {
     }
 
     /**
-     * Find the scheme for the provider of a layered file system.
-     * <p>
-     * This will check the FileContentInfo or file extension.
-     * </p>
-     *
-     * @return Scheme supporting the file type or null (if unknonw).
+     * Adds a MIME type mapping.
      */
-    public String getScheme(final FileObject file) throws FileSystemException {
-        // Check the file's mime type for a match
-        final FileContent content = file.getContent();
-        final String mimeType = content.getContentInfo().getContentType();
-        if (mimeType != null) {
-            return mimeTypeMap.get(mimeType);
-        }
-
-        // no specific mime-type - if it is a file also check the extension
-        if (!file.isFile()) {
-            return null; // VFS-490 folders don't use extensions for mime-type
-        }
-        final String extension = file.getName().getExtension();
-        return extensionMap.get(extension);
+    public void addMimeType(final String mimeType, final String scheme) {
+        mimeTypeMap.put(mimeType, scheme);
     }
 
     /**
@@ -75,5 +52,30 @@ class FileTypeMap {
     public void clear() {
         mimeTypeMap.clear();
         extensionMap.clear();
+    }
+
+    /**
+     * Gets the scheme for the provider of a layered file system.
+     * <p>
+     * This will check the {@link FileContentInfo} or file extension.
+     * </p>
+     *
+     * @param fileObject The file object to query.
+     * @return Scheme supporting the file type or null (if unknown).
+     * @throws FileSystemException if an error occurs.
+     */
+    public String getScheme(final FileObject fileObject) throws FileSystemException {
+        // Check the file's mime type for a match
+        final FileContent content = fileObject.getContent();
+        final String mimeType = content.getContentInfo().getContentType();
+        if (mimeType != null) {
+            return mimeTypeMap.get(mimeType);
+        }
+
+        // no specific mime-type - if it is a file also check the extension
+        if (!fileObject.isFile()) {
+            return null; // VFS-490 folders don't use extensions for mime-type
+        }
+        return extensionMap.get(fileObject.getName().getExtension());
     }
 }

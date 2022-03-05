@@ -16,11 +16,12 @@
  */
 package org.apache.commons.vfs2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.Serializable;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Sanity check that a custom enum can be properly serialized and deserialized on a give JRE.
@@ -39,17 +40,30 @@ public class FileTypeTest {
 
     }
 
-    @Test
-    public void testSerializationFile() {
-        test(FileType.FILE);
+    private void assertFileTypeEquals(final FileType expected, final FileType actualFileType) {
+        assertEquals(expected.getName(), actualFileType.getName());
+        assertEquals(expected.hasAttributes(), actualFileType.hasAttributes());
+        assertEquals(expected.hasChildren(), actualFileType.hasChildren());
+        assertEquals(expected.hasContent(), actualFileType.hasContent());
+    }
+
+    private void test(final FileType expected) {
+        final byte[] serialized = SerializationUtils.serialize(expected);
+        final FileType actualFileType = SerializationUtils.deserialize(serialized);
+        assertFileTypeEquals(expected, actualFileType);
     }
 
     @Test
     public void testSerializationContainer() {
         final Fixture expectedFixture = new Fixture();
         final byte[] serialized = SerializationUtils.serialize(expectedFixture);
-        final Fixture actualFixture = (Fixture) SerializationUtils.deserialize(serialized);
-        assertEquals(expectedFixture.getFileType(), actualFixture.getFileType());
+        final Fixture actualFixture = SerializationUtils.deserialize(serialized);
+        assertFileTypeEquals(expectedFixture.getFileType(), actualFixture.getFileType());
+    }
+
+    @Test
+    public void testSerializationFile() {
+        test(FileType.FILE);
     }
 
     @Test
@@ -67,16 +81,4 @@ public class FileTypeTest {
         test(FileType.IMAGINARY);
     }
 
-    private void test(final FileType expected) {
-        final byte[] serialized = SerializationUtils.serialize(expected);
-        final FileType actualFileType = (FileType) SerializationUtils.deserialize(serialized);
-        assertEquals(expected, actualFileType);
-    }
-
-    private void assertEquals(final FileType expected, final FileType actualFileType) {
-        Assert.assertEquals(expected.getName(), actualFileType.getName());
-        Assert.assertEquals(expected.hasAttributes(), actualFileType.hasAttributes());
-        Assert.assertEquals(expected.hasChildren(), actualFileType.hasChildren());
-        Assert.assertEquals(expected.hasContent(), actualFileType.hasContent());
-    }
 }

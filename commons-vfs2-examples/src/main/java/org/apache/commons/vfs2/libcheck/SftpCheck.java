@@ -16,7 +16,6 @@
  */
 package org.apache.commons.vfs2.libcheck;
 
-import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -33,6 +32,12 @@ public final class SftpCheck {
         /* main class not instantiated. */
     }
 
+    /**
+     * Invokes this example from the command line.
+     *
+     * @param args Arguments TODO
+     * @throws Exception If anything goes wrong.
+     */
     public static void main(final String[] args) throws Exception {
         if (args.length != 4) {
             throw new IllegalArgumentException("Usage: SftpCheck user pass host dir");
@@ -81,10 +86,7 @@ public final class SftpCheck {
         final ChannelSftp chan = (ChannelSftp) session.openChannel("sftp");
         chan.connect();
         final Vector<?> list = chan.ls(dir);
-        final Iterator<?> iterList = list.iterator();
-        while (iterList.hasNext()) {
-            System.err.println(iterList.next());
-        }
+        list.forEach(System.err::println);
         System.err.println("done");
         chan.disconnect();
         session.disconnect();

@@ -30,15 +30,17 @@ import org.apache.http.client.methods.HttpGet;
 
 /**
  * RandomAccess content using {@code Http4FileObject}.
+ *
+ * @param <FS> Type of HttpFileSystem.
  */
-class Http4RandomAccessContent<FS extends Http4FileSystem> extends AbstractRandomAccessStreamContent {
+final class Http4RandomAccessContent<FS extends Http4FileSystem> extends AbstractRandomAccessStreamContent {
 
-    protected long filePointer = 0;
+    protected long filePointer;
 
     private final Http4FileObject<FS> fileObject;
 
-    private DataInputStream dis = null;
-    private MonitorInputStream mis = null;
+    private DataInputStream dataInputStream;
+    private MonitorInputStream monitorInputStream;
 
     Http4RandomAccessContent(final Http4FileObject<FS> fileObject, final RandomAccessMode mode) {
         super(mode);
@@ -46,32 +48,18 @@ class Http4RandomAccessContent<FS extends Http4FileSystem> extends AbstractRando
     }
 
     @Override
-    public long getFilePointer() throws IOException {
-        return filePointer;
-    }
-
-    @Override
-    public void seek(final long pos) throws IOException {
-        if (pos == filePointer) {
-            // no change
-            return;
+    public void close() throws IOException {
+        if (dataInputStream != null) {
+            dataInputStream.close();
+            dataInputStream = null;
+            monitorInputStream = null;
         }
-
-        if (pos < 0) {
-            throw new FileSystemException("vfs.provider/random-access-invalid-position.error", Long.valueOf(pos));
-        }
-
-        if (dis != null) {
-            close();
-        }
-
-        filePointer = pos;
     }
 
     @Override
     protected DataInputStream getDataInputStream() throws IOException {
-        if (dis != null) {
-            return dis;
+        if (dataInputStream != null) {
+            return dataInputStream;
         }
 
         final HttpGet httpGet = new HttpGet(fileObject.getInternalURI());
@@ -84,18 +72,18 @@ class Http4RandomAccessContent<FS extends Http4FileSystem> extends AbstractRando
                     Long.valueOf(filePointer), Integer.valueOf(status));
         }
 
-        mis = new MonitoredHttpResponseContentInputStream(httpResponse);
+        monitorInputStream = new MonitoredHttpResponseContentInputStream(httpResponse);
 
         // If the range request was ignored
         if (status == HttpURLConnection.HTTP_OK) {
-            final long skipped = mis.skip(filePointer);
+            final long skipped = monitorInputStream.skip(filePointer);
             if (skipped != filePointer) {
                 throw new FileSystemException("vfs.provider.http/get-range.error", fileObject.getName(),
                         Long.valueOf(filePointer), Integer.valueOf(status));
             }
         }
 
-        dis = new DataInputStream(new FilterInputStream(mis) {
+        dataInputStream = new DataInputStream(new FilterInputStream(monitorInputStream) {
             @Override
             public int read() throws IOException {
                 final int ret = super.read();
@@ -124,20 +112,34 @@ class Http4RandomAccessContent<FS extends Http4FileSystem> extends AbstractRando
             }
         });
 
-        return dis;
+        return dataInputStream;
     }
 
     @Override
-    public void close() throws IOException {
-        if (dis != null) {
-            dis.close();
-            dis = null;
-            mis = null;
-        }
+    public long getFilePointer() throws IOException {
+        return filePointer;
     }
 
     @Override
     public long length() throws IOException {
         return fileObject.getContent().getSize();
+    }
+
+    @Override
+    public void seek(final long pos) throws IOException {
+        if (pos == filePointer) {
+            // no change
+            return;
+        }
+
+        if (pos < 0) {
+            throw new FileSystemException("vfs.provider/random-access-invalid-position.error", Long.valueOf(pos));
+        }
+
+        if (dataInputStream != null) {
+            close();
+        }
+
+        filePointer = pos;
     }
 }

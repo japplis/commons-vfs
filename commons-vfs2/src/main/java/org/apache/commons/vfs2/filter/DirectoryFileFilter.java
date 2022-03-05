@@ -45,12 +45,12 @@ import org.apache.commons.vfs2.FileType;
  */
 public class DirectoryFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * Singleton instance of directory filter.
      */
     public static final FileFilter DIRECTORY = new DirectoryFileFilter();
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -61,14 +61,14 @@ public class DirectoryFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file is a directory.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return {@code true} if the file is a directory
      * @throws FileSystemException Thrown for file system errors.
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        return fileInfo.getFile().getType() == FileType.FOLDER;
+    public boolean accept(final FileSelectInfo fileSelectInfo) throws FileSystemException {
+        return fileSelectInfo.getFile().getType() == FileType.FOLDER;
     }
 
 }

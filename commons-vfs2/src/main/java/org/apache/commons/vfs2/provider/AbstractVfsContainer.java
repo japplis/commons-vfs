@@ -17,6 +17,7 @@
 package org.apache.commons.vfs2.provider;
 
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -33,7 +34,7 @@ public abstract class AbstractVfsContainer extends AbstractVfsComponent {
     /**
      * Adds a sub-component to this component.
      * <p>
-     * If the sub-component implements {@link VfsComponent}, it is initialised. All sub-components are closed when this
+     * If the sub-component implements {@link VfsComponent}, it is initialized. All sub-components are closed when this
      * component is closed.
      * </p>
      *
@@ -43,7 +44,7 @@ public abstract class AbstractVfsContainer extends AbstractVfsComponent {
     protected void addComponent(final Object component) throws FileSystemException {
         synchronized (components) {
             if (!components.contains(component)) {
-                // Initialise
+                // Initialize
                 if (component instanceof VfsComponent) {
                     final VfsComponent vfsComponent = (VfsComponent) component;
                     vfsComponent.setLogger(getLogger());
@@ -58,18 +59,6 @@ public abstract class AbstractVfsContainer extends AbstractVfsComponent {
     }
 
     /**
-     * Removes a sub-component from this component.
-     *
-     * @param component the component to remove.
-     */
-    protected void removeComponent(final Object component) {
-        synchronized (components) {
-            // multiple instances should not happen
-            components.remove(component);
-        }
-    }
-
-    /**
      * Closes the sub-components of this component.
      */
     @Override
@@ -81,11 +70,19 @@ public abstract class AbstractVfsContainer extends AbstractVfsComponent {
         }
 
         // Close all components
-        for (final Object component : toclose) {
-            if (component instanceof VfsComponent) {
-                final VfsComponent vfsComponent = (VfsComponent) component;
-                vfsComponent.close();
-            }
+        Stream.of(toclose).filter(component -> component instanceof VfsComponent)
+                          .forEach(component -> ((VfsComponent) component).close());
+    }
+
+    /**
+     * Removes a sub-component from this component.
+     *
+     * @param component the component to remove.
+     */
+    protected void removeComponent(final Object component) {
+        synchronized (components) {
+            // multiple instances should not happen
+            components.remove(component);
         }
     }
 }

@@ -19,6 +19,9 @@ package org.apache.commons.vfs2;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.commons.vfs2.provider.AbstractFileSystem;
+
 /**
  * The main entry point for the VFS. Used to create {@link FileSystemManager} instances.
  */
@@ -30,28 +33,47 @@ public final class VFS {
     /** The URI style */
     private static Boolean uriStyle;
 
+    private VFS() {
+        // no public instantiation.
+    }
+
+    /**
+     * Closes the default {@link FileSystemManager} instance.
+     * <p>
+     * Warning, if you close the default instance, a new one will be created by {@link #getManager()}.
+     * </p>
+     *
+     * @since 2.8.0
+     */
+    public static synchronized void close() {
+        if (instance != null) {
+            instance.close();
+            instance = null;
+        }
+    }
+
     /**
      * Creates a file system manager instance.
      *
-     * @param managerClassName The specific manager impelmentation class name.
+     * @param managerClassName The specific manager implementation class name.
      * @return The FileSystemManager.
      * @throws FileSystemException if an error occurs creating the manager.
      */
     private static FileSystemManager createFileSystemManager(final String managerClassName) throws FileSystemException {
         try {
             // Create instance
-            final Class<?> mgrClass = Class.forName(managerClassName);
-            final FileSystemManager mgr = (FileSystemManager) mgrClass.newInstance();
-
-            try {
-                // Initialize
-                final Method initMethod = mgrClass.getMethod("init", (Class[]) null);
-                initMethod.invoke(mgr, (Object[]) null);
-            } catch (final NoSuchMethodException ignored) {
-                /* Ignore; don't initialize. */
+            final Class<FileSystemManager> clazz = (Class<FileSystemManager>) Class.forName(managerClassName);
+            final FileSystemManager manager = clazz.newInstance();
+            // Initialize
+            if (manager instanceof AbstractFileSystem) {
+                ((AbstractFileSystem) manager).init();
+            } else {
+                final Method method = MethodUtils.getMatchingMethod(clazz, "init");
+                if (method != null) {
+                    method.invoke(manager, (Object[]) null);
+                }
             }
-
-            return mgr;
+            return manager;
         } catch (final InvocationTargetException e) {
             throw new FileSystemException("vfs/create-manager.error", managerClassName, e.getTargetException());
         } catch (final Exception e) {
@@ -60,7 +82,7 @@ public final class VFS {
     }
 
     /**
-     * Returns the default {@link FileSystemManager} instance.
+     * Gets the default {@link FileSystemManager} instance.
      * <p>
      * Warning, if you close this instance you may affect all current and future users of this manager singleton.
      * </p>
@@ -75,6 +97,11 @@ public final class VFS {
         return instance;
     }
 
+    /**
+     * TODO.
+     *
+     * @return TODO.
+     */
     public static boolean isUriStyle() {
         if (uriStyle == null) {
             uriStyle = Boolean.FALSE;
@@ -89,15 +116,13 @@ public final class VFS {
      * @throws FileSystemException if an error occurs creating the manager.
      * @since 2.5.0
      */
-    public static FileSystemManager reset() throws FileSystemException {
-        if (instance != null) {
-            instance.close();
-        }
+    public static synchronized FileSystemManager reset() throws FileSystemException {
+        close();
         return instance = createFileSystemManager("org.apache.commons.vfs2.impl.StandardFileSystemManager");
     }
 
     /**
-     * Sets the file system manager
+     * Sets the file system manager.
      *
      * @param manager the file system manager
      * @since 2.2
@@ -106,13 +131,15 @@ public final class VFS {
         VFS.instance = manager;
     }
 
+    /**
+     * TODO.
+     *
+     * @param uriStyle TODO.
+     */
     public static void setUriStyle(final boolean uriStyle) {
         if (VFS.uriStyle != null && VFS.uriStyle.booleanValue() != uriStyle) {
             throw new IllegalStateException("VFS.uriStyle was already set differently.");
         }
         VFS.uriStyle = Boolean.valueOf(uriStyle);
-    }
-
-    private VFS() {
     }
 }

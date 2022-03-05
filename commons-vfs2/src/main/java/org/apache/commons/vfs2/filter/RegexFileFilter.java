@@ -48,10 +48,10 @@ import org.apache.commons.vfs2.FileSelectInfo;
  */
 public class RegexFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /** Exception message when no pattern is given in the constructor. */
     public static final String PATTERN_IS_MISSING = "Pattern is missing";
+
+    private static final long serialVersionUID = 1L;
 
     /** The regular expression pattern that will be used to match file names. */
     private final Pattern pattern;
@@ -117,13 +117,13 @@ public class RegexFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file name matches one of the regular expressions.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return true if the file matches one of the regular expressions
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
-        final String name = fileInfo.getFile().getName().getBaseName();
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
+        final String name = fileSelectInfo.getFile().getName().getBaseName();
         return pattern.matcher(name).matches();
     }
 

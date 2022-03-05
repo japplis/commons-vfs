@@ -30,12 +30,22 @@ import org.apache.commons.vfs2.FileSelectInfo;
  */
 public class TrueFileFilter implements FileFilter, Serializable {
 
+    /**
+     * Singleton instance of true filter.
+     *
+     * @since 2.10.0
+     */
+    public static final FileFilter INSTANCE = new TrueFileFilter();
+
     private static final long serialVersionUID = 1L;
 
     /**
      * Singleton instance of true filter.
+     *
+     * @deprecated Use {@link #INSTANCE}.
      */
-    public static final FileFilter TRUE = new TrueFileFilter();
+    @Deprecated
+    public static final FileFilter TRUE = INSTANCE;
 
     /**
      * Restrictive constructor.
@@ -46,12 +56,12 @@ public class TrueFileFilter implements FileFilter, Serializable {
     /**
      * Returns true.
      *
-     * @param fileInfo the file to check (ignored)
+     * @param fileSelectInfo the file to check (ignored)
      *
      * @return Always {@code true}
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
         return true;
     }
 

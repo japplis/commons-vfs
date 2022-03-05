@@ -56,13 +56,13 @@ import org.apache.commons.vfs2.FileSystemException;
  */
 public class SymbolicLinkFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /** Singleton instance of <i>hidden</i> filter. */
     public static final FileFilter SYMBOLIC = new SymbolicLinkFileFilter();
 
     /** Singleton instance of <i>visible</i> filter. */
     public static final FileFilter ACTUAL = new NotFileFilter(SYMBOLIC);
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -73,17 +73,17 @@ public class SymbolicLinkFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file is a symbolic link. Non existing files won't be accepted.
      *
-     * @param fileInfo the file to check
+     * @param fileSelectInfo the file to check
      *
      * @return {@code true} if the file is <i>symbolic link</i>, otherwise {@code false}.
      * @throws FileSystemException Thrown for file system errors.
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        if (!fileInfo.getFile().exists()) {
+    public boolean accept(final FileSelectInfo fileSelectInfo) throws FileSystemException {
+        if (!fileSelectInfo.getFile().exists()) {
             return false;
         }
-        return fileInfo.getFile().isSymbolicLink();
+        return fileSelectInfo.getFile().isSymbolicLink();
     }
 
 }

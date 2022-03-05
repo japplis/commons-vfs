@@ -17,7 +17,7 @@
 package org.apache.commons.vfs2;
 
 /**
- * delivers a file-not-folder exception which happens when trying to issue
+ * A file-not-folder exception which happens when trying to issue
  * {@link org.apache.commons.vfs2.FileObject#getChildren()} on a file.
  *
  * @since 2.0
@@ -29,11 +29,22 @@ public class FileTypeHasNoContentException extends FileSystemException {
      */
     private static final long serialVersionUID = 20101208L;
 
-    public FileTypeHasNoContentException(final Object info0) {
-        super("vfs.provider/read-not-file.error", info0);
+    /**
+     * Constructs exception with the specified detail message.
+     *
+     * @param info one context information.
+     */
+    public FileTypeHasNoContentException(final Object info) {
+        super("vfs.provider/read-not-file.error", info);
     }
 
-    public FileTypeHasNoContentException(final Object info0, final Throwable throwable) {
-        super("vfs.provider/read-not-file.error", info0, throwable);
+    /**
+     * Constructs exception with the specified detail message and cause.
+     *
+     * @param info one context information.
+     * @param cause the cause.
+     */
+    public FileTypeHasNoContentException(final Object info, final Throwable cause) {
+        super("vfs.provider/read-not-file.error", info, cause);
     }
 }

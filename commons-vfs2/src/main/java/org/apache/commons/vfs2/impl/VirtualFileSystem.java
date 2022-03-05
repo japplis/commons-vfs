@@ -40,8 +40,14 @@ import org.apache.commons.vfs2.provider.DelegateFileObject;
 public class VirtualFileSystem extends AbstractFileSystem {
     private final Map<FileName, FileObject> junctions = new HashMap<>();
 
-    public VirtualFileSystem(final AbstractFileName rootName, final FileSystemOptions fileSystemOptions) {
-        super(rootName, null, fileSystemOptions);
+    /**
+     * Constructs a new instance.
+     *
+     * @param rootFileName The root file name of this file system.
+     * @param fileSystemOptions Options to build this file system.
+     */
+    public VirtualFileSystem(final AbstractFileName rootFileName, final FileSystemOptions fileSystemOptions) {
+        super(rootFileName, null, fileSystemOptions);
     }
 
     /**
@@ -63,27 +69,6 @@ public class VirtualFileSystem extends AbstractFileSystem {
         caps.add(Capability.SIGNING);
         caps.add(Capability.WRITE_CONTENT);
         caps.add(Capability.APPEND_CONTENT);
-    }
-
-    /**
-     * Creates a file object. This method is called only if the requested file is not cached.
-     */
-    @Override
-    protected FileObject createFile(final AbstractFileName name) throws Exception {
-        // Find the file that the name points to
-        final FileName junctionPoint = getJunctionForFile(name);
-        final FileObject file;
-        if (junctionPoint != null) {
-            // Resolve the real file
-            final FileObject junctionFile = junctions.get(junctionPoint);
-            final String relName = junctionPoint.getRelativeName(name);
-            file = junctionFile.resolveFile(relName, NameScope.DESCENDENT_OR_SELF);
-        } else {
-            file = null;
-        }
-
-        // Return a wrapper around the file
-        return new DelegateFileObject(name, this, file);
     }
 
     /**
@@ -136,19 +121,31 @@ public class VirtualFileSystem extends AbstractFileSystem {
         }
     }
 
+    @Override
+    public void close() {
+        super.close();
+        junctions.clear();
+    }
+
     /**
-     * Removes a junction from this file system.
-     *
-     * @param junctionPoint The junction to remove.
-     * @throws FileSystemException if an error occurs.
+     * Creates a file object. This method is called only if the requested file is not cached.
      */
     @Override
-    public void removeJunction(final String junctionPoint) throws FileSystemException {
-        final FileName junctionName = getFileSystemManager().resolveName(getRootName(), junctionPoint);
-        junctions.remove(junctionName);
+    protected FileObject createFile(final AbstractFileName name) throws Exception {
+        // Find the file that the name points to
+        final FileName junctionPoint = getJunctionForFile(name);
+        final FileObject file;
+        if (junctionPoint != null) {
+            // Resolve the real file
+            final FileObject junctionFile = junctions.get(junctionPoint);
+            final String relName = junctionPoint.getRelativeName(name);
+            file = junctionFile.resolveFile(relName, NameScope.DESCENDENT_OR_SELF);
+        } else {
+            file = null;
+        }
 
-        // TODO - remove from parents of junction point
-        // TODO - detach all cached children of the junction point from their real file
+        // Return a wrapper around the file
+        return new DelegateFileObject(name, this, file);
     }
 
     /**
@@ -174,9 +171,18 @@ public class VirtualFileSystem extends AbstractFileSystem {
         return null;
     }
 
+    /**
+     * Removes a junction from this file system.
+     *
+     * @param junctionPoint The junction to remove.
+     * @throws FileSystemException if an error occurs.
+     */
     @Override
-    public void close() {
-        super.close();
-        junctions.clear();
+    public void removeJunction(final String junctionPoint) throws FileSystemException {
+        final FileName junctionName = getFileSystemManager().resolveName(getRootName(), junctionPoint);
+        junctions.remove(junctionName);
+
+        // TODO - remove from parents of junction point
+        // TODO - detach all cached children of the junction point from their real file
     }
 }

@@ -17,11 +17,14 @@
 package org.apache.commons.vfs2.cache;
 
 import org.apache.commons.vfs2.FileObject;
+import org.junit.Test;
 
 /**
  * Tests for {@link DefaultFilesCache} used by {@link DefaultFilesCacheTestCase}.
  */
 public class DefaultFilesCacheTests extends AbstractFilesCacheTestsBase {
+
+    @Test
     public void testFilesCache() throws Exception {
         final FileObject scratchFolder = getWriteFolder();
 
@@ -35,4 +38,5 @@ public class DefaultFilesCacheTests extends AbstractFilesCacheTestsBase {
         final int hc2 = getFileHashCode();
         assertEquals("Hashcode of file changed, so most likely new instance", hc1, hc2);
     }
+
 }

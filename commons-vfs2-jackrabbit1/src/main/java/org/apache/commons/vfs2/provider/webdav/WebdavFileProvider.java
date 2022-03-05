@@ -23,6 +23,7 @@ import java.util.Collections;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemConfigBuilder;
 import org.apache.commons.vfs2.FileSystemException;
@@ -46,7 +47,7 @@ public class WebdavFileProvider extends HttpFileProvider {
      * @deprecated Might be removed in the next major version.
      */
     @Deprecated
-    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = new UserAuthenticationData.Type[] {
+    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = {
             UserAuthenticationData.USERNAME, UserAuthenticationData.PASSWORD };
 
     /** The capabilities of the WebDAV provider */
@@ -56,9 +57,10 @@ public class WebdavFileProvider extends HttpFileProvider {
                     Capability.GET_LAST_MODIFIED, Capability.ATTRIBUTES, Capability.RANDOM_ACCESS_READ,
                     Capability.DIRECTORY_READ_CONTENT));
 
+    /**
+     * Constructs a new instance.
+     */
     public WebdavFileProvider() {
-        super();
-
         setFileNameParser(WebdavFileNameParser.getInstance());
     }
 
@@ -100,12 +102,12 @@ public class WebdavFileProvider extends HttpFileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return WebdavFileSystemConfigBuilder.getInstance();
+    public Collection<Capability> getCapabilities() {
+        return capabilities;
     }
 
     @Override
-    public Collection<Capability> getCapabilities() {
-        return capabilities;
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return WebdavFileSystemConfigBuilder.getInstance();
     }
 }

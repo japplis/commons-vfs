@@ -62,13 +62,13 @@ import org.apache.commons.vfs2.FileType;
  */
 public class EmptyFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /** Singleton instance of <i>empty</i> filter. */
     public static final FileFilter EMPTY = new EmptyFileFilter();
 
     /** Singleton instance of <i>not-empty</i> filter. */
     public static final FileFilter NOT_EMPTY = new NotFileFilter(EMPTY);
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -79,14 +79,14 @@ public class EmptyFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file is empty. A non-existing file is also considered empty.
      *
-     * @param fileInfo the file or directory to check
+     * @param fileSelectInfo the file or directory to check
      *
      * @return {@code true} if the file or directory is <i>empty</i>, otherwise {@code false}.
      * @throws FileSystemException Thrown for file system errors.
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        try (final FileObject file = fileInfo.getFile()) {
+    public boolean accept(final FileSelectInfo fileSelectInfo) throws FileSystemException {
+        try (FileObject file = fileSelectInfo.getFile()) {
             if (!file.exists()) {
                 return true;
             }
@@ -94,7 +94,7 @@ public class EmptyFileFilter implements FileFilter, Serializable {
                 final FileObject[] files = file.getChildren();
                 return files == null || files.length == 0;
             }
-            try (final FileContent content = file.getContent();) {
+            try (FileContent content = file.getContent()) {
                 return content.isEmpty();
             }
         }

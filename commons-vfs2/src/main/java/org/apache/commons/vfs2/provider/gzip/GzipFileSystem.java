@@ -27,7 +27,7 @@ import org.apache.commons.vfs2.provider.AbstractFileName;
 import org.apache.commons.vfs2.provider.compressed.CompressedFileFileSystem;
 
 /**
- * Filesytem to handle compressed files using the gzip method.
+ * A compressed file system using the Gzip method.
  */
 public class GzipFileSystem extends CompressedFileFileSystem {
 
@@ -37,12 +37,12 @@ public class GzipFileSystem extends CompressedFileFileSystem {
     }
 
     @Override
-    protected FileObject createFile(final AbstractFileName name) throws FileSystemException {
-        return new GzipFileObject(name, getParentLayer(), this);
+    protected void addCapabilities(final Collection<Capability> caps) {
+        caps.addAll(GzipFileProvider.capabilities);
     }
 
     @Override
-    protected void addCapabilities(final Collection<Capability> caps) {
-        caps.addAll(GzipFileProvider.capabilities);
+    protected FileObject createFile(final AbstractFileName name) throws FileSystemException {
+        return new GzipFileObject(name, getParentLayer(), this);
     }
 }

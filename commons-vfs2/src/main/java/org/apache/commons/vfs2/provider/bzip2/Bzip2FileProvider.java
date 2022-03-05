@@ -34,11 +34,13 @@ import org.apache.commons.vfs2.provider.compressed.CompressedFileFileProvider;
 public class Bzip2FileProvider extends CompressedFileFileProvider {
 
     /** The provider's capabilities */
-    protected static final Collection<Capability> capabilities = Collections.unmodifiableCollection(Arrays.asList(Capability.GET_LAST_MODIFIED, Capability.GET_TYPE, Capability.LIST_CHILDREN, Capability.READ_CONTENT,
-            Capability.WRITE_CONTENT, Capability.URI, Capability.COMPRESS));
+    protected static final Collection<Capability> capabilities = Collections.unmodifiableCollection(Arrays.asList(Capability.GET_LAST_MODIFIED,
+        Capability.GET_TYPE, Capability.LIST_CHILDREN, Capability.READ_CONTENT, Capability.WRITE_CONTENT, Capability.URI, Capability.COMPRESS));
 
+    /**
+     * Constructs a new instance.
+     */
     public Bzip2FileProvider() {
-        super();
     }
 
     @Override

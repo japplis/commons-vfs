@@ -33,6 +33,7 @@ import org.apache.commons.vfs2.provider.UriParser;
 import org.apache.commons.vfs2.util.RandomAccessMode;
 import org.apache.commons.vfs2.util.UserAuthenticatorUtils;
 
+import jcifs.smb.NtStatus;
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
@@ -115,9 +116,11 @@ public class SmbFileObject extends AbstractFileObject<SmbFileSystem> {
     protected FileType doGetType() throws Exception {
         if (!file.exists()) {
             return FileType.IMAGINARY;
-        } else if (file.isDirectory()) {
+        }
+        if (file.isDirectory()) {
             return FileType.FOLDER;
-        } else if (file.isFile()) {
+        }
+        if (file.isFile()) {
             return FileType.FILE;
         }
 
@@ -191,9 +194,10 @@ public class SmbFileObject extends AbstractFileObject<SmbFileSystem> {
         try {
             return new SmbFileInputStream(file);
         } catch (final SmbException e) {
-            if (e.getNtStatus() == SmbException.NT_STATUS_NO_SUCH_FILE) {
+            if (e.getNtStatus() == NtStatus.NT_STATUS_NO_SUCH_FILE) {
                 throw new org.apache.commons.vfs2.FileNotFoundException(getName());
-            } else if (file.isDirectory()) {
+            }
+            if (file.isDirectory()) {
                 throw new FileTypeHasNoContentException(getName());
             }
 

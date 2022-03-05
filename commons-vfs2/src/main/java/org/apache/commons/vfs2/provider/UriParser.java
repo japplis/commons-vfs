@@ -16,11 +16,13 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.util.Os;
 
 /**
  * Utilities for dealing with URIs. See RFC 2396 for details.
@@ -45,6 +47,9 @@ public final class UriParser {
 
     private static final char LOW_MASK = 0x0F;
 
+    private UriParser() {
+    }
+
     /**
      * Encodes and appends a string to a StringBuilder.
      *
@@ -58,6 +63,21 @@ public final class UriParser {
         encode(buffer, offset, unencodedValue.length(), reserved);
     }
 
+    static void appendEncodedRfc2396(final StringBuilder buffer, final String unencodedValue, final char[] allowed) {
+        final int offset = buffer.length();
+        buffer.append(unencodedValue);
+        encodeRfc2396(buffer, offset, unencodedValue.length(), allowed);
+    }
+
+    /**
+     * Canonicalizes a path.
+     *
+     * @param buffer Source data.
+     * @param offset Where to start reading.
+     * @param length How much to read.
+     * @param fileNameParser Now to encode and decode.
+     * @throws FileSystemException If an I/O error occurs.
+     */
     public static void canonicalizePath(final StringBuilder buffer, final int offset, final int length,
             final FileNameParser fileNameParser) throws FileSystemException {
         int index = offset;
@@ -94,8 +114,7 @@ public final class UriParser {
                 count -= 2;
             } else if (fileNameParser.encodeCharacter(ch)) {
                 // Encode
-                final char[] digits = { Character.forDigit((ch >> BITS_IN_HALF_BYTE) & LOW_MASK, HEX_BASE),
-                        Character.forDigit(ch & LOW_MASK, HEX_BASE) };
+                final char[] digits = {Character.forDigit(ch >> BITS_IN_HALF_BYTE & LOW_MASK, HEX_BASE), Character.forDigit(ch & LOW_MASK, HEX_BASE)};
                 buffer.setCharAt(index, '%');
                 buffer.insert(index + 1, digits);
                 index += 2;
@@ -171,7 +190,7 @@ public final class UriParser {
     }
 
     /**
-     * Removes %nn encodings from a string.
+     * Converts "special" characters to their %nn value.
      *
      * @param decodedStr The decoded String.
      * @return The encoded String.
@@ -230,13 +249,28 @@ public final class UriParser {
                 for (int i = 0; !match && i < reserved.length; i++) {
                     if (ch == reserved[i]) {
                         match = true;
+                        break;
                     }
                 }
             }
             if (match) {
                 // Encode
-                final char[] digits = { Character.forDigit((ch >> BITS_IN_HALF_BYTE) & LOW_MASK, HEX_BASE),
-                        Character.forDigit(ch & LOW_MASK, HEX_BASE) };
+                final char[] digits = {Character.forDigit(ch >> BITS_IN_HALF_BYTE & LOW_MASK, HEX_BASE), Character.forDigit(ch & LOW_MASK, HEX_BASE)};
+                buffer.setCharAt(index, '%');
+                buffer.insert(index + 1, digits);
+                index += 2;
+            }
+        }
+    }
+
+    static void encodeRfc2396(final StringBuilder buffer, final int offset, final int length, final char[] allowed) {
+        int index = offset;
+        int count = length;
+        for (; count > 0; index++, count--) {
+            final char ch = buffer.charAt(index);
+            if (Arrays.binarySearch(allowed, ch) < 0) {
+                // Encode
+                final char[] digits = {Character.forDigit(ch >> BITS_IN_HALF_BYTE & LOW_MASK, HEX_BASE), Character.forDigit(ch & LOW_MASK, HEX_BASE)};
                 buffer.setCharAt(index, '%');
                 buffer.insert(index + 1, digits);
                 index += 2;
@@ -293,6 +327,67 @@ public final class UriParser {
     }
 
     /**
+     * Extracts the scheme from a URI.
+     *
+     * @param uri The URI.
+     * @return The scheme name. Returns null if there is no scheme.
+     * @deprecated Use instead {@link #extractScheme}.  Will be removed in 3.0.
+     */
+    @Deprecated
+    public static String extractScheme(final String uri) {
+        return extractScheme(uri, null);
+    }
+
+    /**
+     * Extracts the scheme from a URI. Removes the scheme and ':' delimiter from the front of the URI.
+     *
+     * @param uri The URI.
+     * @param buffer Returns the remainder of the URI.
+     * @return The scheme name. Returns null if there is no scheme.
+     * @deprecated Use instead {@link #extractScheme}.  Will be removed in 3.0.
+     */
+    @Deprecated
+    public static String extractScheme(final String uri, final StringBuilder buffer) {
+        if (buffer != null) {
+            buffer.setLength(0);
+            buffer.append(uri);
+        }
+
+        final int maxPos = uri.length();
+        for (int pos = 0; pos < maxPos; pos++) {
+            final char ch = uri.charAt(pos);
+
+            if (ch == ':') {
+                // Found the end of the scheme
+                final String scheme = uri.substring(0, pos);
+                if (scheme.length() <= 1 && SystemUtils.IS_OS_WINDOWS) {
+                    // This is not a scheme, but a Windows drive letter
+                    return null;
+                }
+                if (buffer != null) {
+                    buffer.delete(0, pos + 1);
+                }
+                return scheme.intern();
+            }
+
+            if (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
+                // A scheme character
+                continue;
+            }
+            if (!(pos > 0 && (ch >= '0' && ch <= '9' || ch == '+' || ch == '-' || ch == '.'))) {
+                // Not a scheme character
+                break;
+            }
+            // A scheme character (these are not allowed as the first
+            // character of the scheme, but can be used as subsequent
+            // characters.
+        }
+
+        // No scheme in URI
+        return null;
+    }
+
+    /**
      * Extracts the scheme from a URI. Removes the scheme and ':' delimiter from the front of the URI.
      * <p>
      * The scheme is extracted based on the currently supported schemes in the system.  That is to say the schemes
@@ -332,77 +427,14 @@ public final class UriParser {
             buffer.setLength(0);
             buffer.append(uri);
         }
-        for(final String scheme : schemes) {
-            if(uri.startsWith(scheme + ":")) {
+        for (final String scheme : schemes) {
+            if (uri.startsWith(scheme + ":")) {
                 if (buffer != null) {
                     buffer.delete(0, uri.indexOf(':') + 1);
                 }
                 return scheme;
             }
         }
-        return null;
-    }
-
-    /**
-     * Extracts the scheme from a URI.
-     *
-     * @param uri The URI.
-     * @return The scheme name. Returns null if there is no scheme.
-     * @deprecated Use instead {@link #extractScheme}.  Will be removed in 3.0.
-     */
-    @Deprecated
-    public static String extractScheme(final String uri) {
-        return extractScheme(uri, null);
-    }
-
-    /**
-     * Extracts the scheme from a URI. Removes the scheme and ':' delimiter from the front of the URI.
-     *
-     * @param uri The URI.
-     * @param buffer Returns the remainder of the URI.
-     * @return The scheme name. Returns null if there is no scheme.
-     * @deprecated Use instead {@link #extractScheme}.  Will be removed in 3.0.
-     */
-    @Deprecated
-    public static String extractScheme(final String uri, final StringBuilder buffer) {
-        if (buffer != null) {
-            buffer.setLength(0);
-            buffer.append(uri);
-        }
-
-        final int maxPos = uri.length();
-        for (int pos = 0; pos < maxPos; pos++) {
-            final char ch = uri.charAt(pos);
-
-            if (ch == ':') {
-                // Found the end of the scheme
-                final String scheme = uri.substring(0, pos);
-                if (scheme.length() <= 1 && Os.isFamily(Os.OS_FAMILY_WINDOWS)) {
-                    // This is not a scheme, but a Windows drive letter
-                    return null;
-                }
-                if (buffer != null) {
-                    buffer.delete(0, pos + 1);
-                }
-                return scheme.intern();
-            }
-
-            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
-                // A scheme character
-                continue;
-            }
-            if (pos > 0 && ((ch >= '0' && ch <= '9') || ch == '+' || ch == '-' || ch == '.')) {
-                // A scheme character (these are not allowed as the first
-                // character of the scheme, but can be used as subsequent
-                // characters.
-                continue;
-            }
-
-            // Not a scheme character
-            break;
-        }
-
-        // No scheme in URI
         return null;
     }
 
@@ -513,8 +545,5 @@ public final class UriParser {
         }
 
         return fileType;
-    }
-
-    private UriParser() {
     }
 }

@@ -28,14 +28,14 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
 /**
  * Random access content.
  */
-class SftpRandomAccessContent extends AbstractRandomAccessStreamContent {
+final class SftpRandomAccessContent extends AbstractRandomAccessStreamContent {
 
     /** file pointer */
-    protected long filePointer = 0;
+    protected long filePointer;
 
     private final SftpFileObject fileObject;
-    private DataInputStream dis = null;
-    private InputStream mis = null;
+    private DataInputStream dis;
+    private InputStream mis;
 
     SftpRandomAccessContent(final SftpFileObject fileObject, final RandomAccessMode mode) {
         super(mode);
@@ -45,25 +45,17 @@ class SftpRandomAccessContent extends AbstractRandomAccessStreamContent {
     }
 
     @Override
-    public long getFilePointer() throws IOException {
-        return filePointer;
-    }
-
-    @Override
-    public void seek(final long pos) throws IOException {
-        if (pos == filePointer) {
-            // no change
-            return;
-        }
-
-        if (pos < 0) {
-            throw new FileSystemException("vfs.provider/random-access-invalid-position.error", Long.valueOf(pos));
-        }
+    public void close() throws IOException {
         if (dis != null) {
-            close();
-        }
+            // mis.abort();
+            mis.close();
 
-        filePointer = pos;
+            // this is to avoid recursive close
+            final DataInputStream oldDis = dis;
+            dis = null;
+            oldDis.close();
+            mis = null;
+        }
     }
 
     @Override
@@ -75,6 +67,11 @@ class SftpRandomAccessContent extends AbstractRandomAccessStreamContent {
         // FtpClient client = fileSystem.getClient();
         mis = fileObject.getInputStream(filePointer);
         dis = new DataInputStream(new FilterInputStream(mis) {
+            @Override
+            public void close() throws IOException {
+                SftpRandomAccessContent.this.close();
+            }
+
             @Override
             public int read() throws IOException {
                 final int ret = super.read();
@@ -101,32 +98,35 @@ class SftpRandomAccessContent extends AbstractRandomAccessStreamContent {
                 }
                 return ret;
             }
-
-            @Override
-            public void close() throws IOException {
-                SftpRandomAccessContent.this.close();
-            }
         });
 
         return dis;
     }
 
     @Override
-    public void close() throws IOException {
-        if (dis != null) {
-            // mis.abort();
-            mis.close();
-
-            // this is to avoid recursive close
-            final DataInputStream oldDis = dis;
-            dis = null;
-            oldDis.close();
-            mis = null;
-        }
+    public long getFilePointer() throws IOException {
+        return filePointer;
     }
 
     @Override
     public long length() throws IOException {
         return fileObject.getContent().getSize();
+    }
+
+    @Override
+    public void seek(final long pos) throws IOException {
+        if (pos == filePointer) {
+            // no change
+            return;
+        }
+
+        if (pos < 0) {
+            throw new FileSystemException("vfs.provider/random-access-invalid-position.error", Long.valueOf(pos));
+        }
+        if (dis != null) {
+            close();
+        }
+
+        filePointer = pos;
     }
 }

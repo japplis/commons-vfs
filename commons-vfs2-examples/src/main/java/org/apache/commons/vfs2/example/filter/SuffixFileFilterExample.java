@@ -28,8 +28,17 @@ import org.apache.commons.vfs2.filter.SuffixFileFilter;
  * Example for using {@link SuffixFileFilter}.
  */
 // CHECKSTYLE:OFF Example code
-public class SuffixFileFilterExample {
+public final class SuffixFileFilterExample {
+    private SuffixFileFilterExample() {
+        /* main class not instantiated. */
+    }
 
+    /**
+     * Invokes this example from the command line.
+     *
+     * @param args Arguments TODO
+     * @throws Exception If anything goes wrong.
+     */
     public static void main(final String[] args) throws Exception {
 
         // Example, to retrieve and print all *.java files in the current
@@ -37,7 +46,7 @@ public class SuffixFileFilterExample {
         final FileSystemManager fsManager = VFS.getManager();
         final FileObject dir = fsManager.toFileObject(new File("."));
         final FileObject[] files = dir.findFiles(new FileFilterSelector(new SuffixFileFilter(".java")));
-        for (FileObject file : files) {
+        for (final FileObject file : files) {
             System.out.println(file);
         }
 

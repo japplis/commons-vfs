@@ -28,10 +28,10 @@ import org.apache.commons.vfs2.FileSystemException;
  */
 public class MonitorOutputStream extends BufferedOutputStream {
 
-    private final AtomicBoolean finished = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * Constructs a MonitorOutputStream from the passed OutputStream
+     * Constructs a MonitorOutputStream from the passed OutputStream.
      *
      * @param out The output stream to wrap.
      */
@@ -40,7 +40,7 @@ public class MonitorOutputStream extends BufferedOutputStream {
     }
 
     /**
-     * Constructs a MonitorOutputStream from the passed OutputStream and with the specified buffer size
+     * Constructs a MonitorOutputStream from the passed OutputStream and with the specified buffer size.
      *
      * @param out The output stream to wrap.
      * @param bufferSize The buffer size to use.
@@ -48,6 +48,22 @@ public class MonitorOutputStream extends BufferedOutputStream {
      */
     public MonitorOutputStream(final OutputStream out, final int bufferSize) {
         super(out, bufferSize);
+    }
+
+    /**
+     * Check if file is still open.
+     * <p>
+     * This is a workaround for an oddity with Java's BufferedOutputStream where you can write to even if the stream has
+     * been closed.
+     * </p>
+     *
+     * @throws FileSystemException if already closed.
+     * @since 2.0
+     */
+    protected void assertOpen() throws FileSystemException {
+        if (isClosed()) {
+            throw new FileSystemException("vfs.provider/closed.error");
+        }
     }
 
     /**
@@ -60,14 +76,14 @@ public class MonitorOutputStream extends BufferedOutputStream {
      * This does nothing if the stream is closed already.
      * </p>
      *
-     * @throws IOException if an error occurs.
+     * @throws IOException if an IO error occurs.
      */
     @Override
     public void close() throws IOException {
         // do not use super.close()
         // on Java 8 it might throw self suppression, see JDK-8042377
         // in older Java it silently ignores flush() errors
-        if (finished.getAndSet(true)) {
+        if (closed.getAndSet(true)) {
             return;
         }
 
@@ -100,12 +116,40 @@ public class MonitorOutputStream extends BufferedOutputStream {
     }
 
     /**
-     * @param b The character to write.
      * @throws IOException if an error occurs.
      * @since 2.0
      */
     @Override
-    public synchronized void write(final int b) throws IOException {
+    public synchronized void flush() throws IOException {
+        if (isClosed()) {
+            return;
+        }
+        super.flush();
+    }
+
+    private boolean isClosed() {
+        return closed.get();
+    }
+
+    /**
+     * Called after this stream is closed.
+     * <p>
+     * This implementation does nothing.
+     * </p>
+     *
+     * @throws IOException if an error occurs.
+     */
+    // IOException is needed because subclasses may need to throw it
+    protected void onClose() throws IOException {
+    }
+
+    /**
+     * @param b The byte array.
+     * @throws IOException if an error occurs.
+     * @since 2.0
+     */
+    @Override
+    public void write(final byte[] b) throws IOException {
         assertOpen();
         super.write(b);
     }
@@ -124,51 +168,13 @@ public class MonitorOutputStream extends BufferedOutputStream {
     }
 
     /**
+     * @param b The character to write.
      * @throws IOException if an error occurs.
      * @since 2.0
      */
     @Override
-    public synchronized void flush() throws IOException {
-        assertOpen();
-        super.flush();
-    }
-
-    /**
-     * @param b The byte array.
-     * @throws IOException if an error occurs.
-     * @since 2.0
-     */
-    @Override
-    public void write(final byte[] b) throws IOException {
+    public synchronized void write(final int b) throws IOException {
         assertOpen();
         super.write(b);
-    }
-
-    /**
-     * Check if file is still open.
-     * <p>
-     * This is a workaround for an oddity with Java's BufferedOutputStream where you can write to even if the stream has
-     * been closed.
-     * </p>
-     *
-     * @throws FileSystemException if already closed.
-     * @since 2.0
-     */
-    protected void assertOpen() throws FileSystemException {
-        if (finished.get()) {
-            throw new FileSystemException("vfs.provider/closed.error");
-        }
-    }
-
-    /**
-     * Called after this stream is closed.
-     * <p>
-     * This implementation does nothing.
-     * </p>
-     *
-     * @throws IOException if an error occurs.
-     */
-    // IOException is needed because subclasses may need to throw it
-    protected void onClose() throws IOException {
     }
 }

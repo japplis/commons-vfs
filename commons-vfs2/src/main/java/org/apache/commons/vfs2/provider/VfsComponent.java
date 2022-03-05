@@ -16,6 +16,8 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import java.io.Closeable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -29,21 +31,13 @@ import org.apache.commons.vfs2.FileSystemException;
  * <li>{@link TemporaryFileStore}
  * </ul>
  */
-public interface VfsComponent {
+public interface VfsComponent extends Closeable {
 
     /**
-     * Sets the Logger to use for the component.
-     *
-     * @param logger The Log
+     * Closes the component.
      */
-    void setLogger(Log logger);
-
-    /**
-     * Sets the context for the component.
-     *
-     * @param context The context.
-     */
-    void setContext(VfsComponentContext context);
+    @Override
+    void close();
 
     /**
      * Initializes the component.
@@ -53,7 +47,16 @@ public interface VfsComponent {
     void init() throws FileSystemException;
 
     /**
-     * Closes the component.
+     * Sets the context for the component.
+     *
+     * @param context The context.
      */
-    void close();
+    void setContext(VfsComponentContext context);
+
+    /**
+     * Sets the Logger to use for the component.
+     *
+     * @param logger The Log
+     */
+    void setLogger(Log logger);
 }

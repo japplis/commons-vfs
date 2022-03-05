@@ -42,22 +42,6 @@ import org.apache.commons.vfs2.util.Messages;
  */
 public class LRUFilesCache extends AbstractFilesCache {
 
-    /** The default LRU size */
-    private static final int DEFAULT_LRU_SIZE = 100;
-
-    /** The logger to use. */
-    private static final Log log = LogFactory.getLog(LRUFilesCache.class);
-
-    /** The FileSystem cache */
-    private final ConcurrentMap<FileSystem, Map<FileName, FileObject>> filesystemCache = new ConcurrentHashMap<>(10);
-
-    /** The size of the cache */
-    private final int lruSize;
-
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
-    private final Lock readLock = rwLock.readLock();
-    private final Lock writeLock = rwLock.writeLock();
-
     /**
      * The file cache
      */
@@ -70,7 +54,7 @@ public class LRUFilesCache extends AbstractFilesCache {
         /** The FileSystem */
         private final FileSystem filesystem;
 
-        public MyLRUMap(final FileSystem filesystem, final int size) {
+        MyLRUMap(final FileSystem filesystem, final int size) {
             super(size, true);
             this.filesystem = filesystem;
         }
@@ -78,11 +62,12 @@ public class LRUFilesCache extends AbstractFilesCache {
         @Override
         protected boolean removeLRU(final AbstractLinkedMap.LinkEntry<FileName, FileObject> linkEntry) {
             synchronized (LRUFilesCache.this) {
-                final FileObject file = linkEntry.getValue();
+                @SuppressWarnings("resource") // FileObject allocated elsewhere.
+                final FileObject fileObject = linkEntry.getValue();
 
                 // System.err.println(">>> " + size() + " check removeLRU:" + linkEntry.getKey().toString());
 
-                if (file.isAttached() || file.isContentOpen()) {
+                if (fileObject.isAttached() || fileObject.isContentOpen()) {
                     // do not allow open or attached files to be removed
                     // System.err.println(">>> " + size() + " VETO removeLRU:" +
                     // linkEntry.getKey().toString() + " (" + file.isAttached() + "/" +
@@ -94,14 +79,14 @@ public class LRUFilesCache extends AbstractFilesCache {
                 if (super.removeLRU(linkEntry)) {
                     try {
                         // force detach
-                        file.close();
+                        fileObject.close();
                     } catch (final FileSystemException e) {
                         VfsLog.warn(getLogger(), log, Messages.getString("vfs.impl/LRUFilesCache-remove-ex.warn"), e);
                     }
 
-                    final Map<?, ?> files = filesystemCache.get(filesystem);
-                    if (files.size() < 1) {
-                        filesystemCache.remove(filesystem);
+                    final Map<?, ?> files = fileSystemCache.get(filesystem);
+                    if (files.isEmpty()) {
+                        fileSystemCache.remove(filesystem);
                     }
 
                     return true;
@@ -111,6 +96,22 @@ public class LRUFilesCache extends AbstractFilesCache {
             }
         }
     }
+
+    /** The default LRU size */
+    private static final int DEFAULT_LRU_SIZE = 100;
+
+    /** The logger to use. */
+    private static final Log log = LogFactory.getLog(LRUFilesCache.class);
+
+    /** The FileSystem cache */
+    private final ConcurrentMap<FileSystem, Map<FileName, FileObject>> fileSystemCache = new ConcurrentHashMap<>();
+
+    /** The size of the cache */
+    private final int lruSize;
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final Lock readLock = rwLock.readLock();
+
+    private final Lock writeLock = rwLock.writeLock();
 
     /**
      * Default constructor. Uses a LRU size of 100 per file system.
@@ -126,6 +127,42 @@ public class LRUFilesCache extends AbstractFilesCache {
      */
     public LRUFilesCache(final int lruSize) {
         this.lruSize = lruSize;
+    }
+
+    @Override
+    public void clear(final FileSystem filesystem) {
+        final Map<FileName, FileObject> files = getOrCreateFilesystemCache(filesystem);
+
+        writeLock.lock();
+        try {
+            files.clear();
+
+            fileSystemCache.remove(filesystem);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        fileSystemCache.clear();
+    }
+
+    @Override
+    public FileObject getFile(final FileSystem filesystem, final FileName name) {
+        final Map<FileName, FileObject> files = getOrCreateFilesystemCache(filesystem);
+
+        readLock.lock();
+        try {
+            return files.get(name);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    protected Map<FileName, FileObject> getOrCreateFilesystemCache(final FileSystem fileSystem) {
+        return fileSystemCache.computeIfAbsent(fileSystem, k -> new MyLRUMap(k, lruSize));
     }
 
     @Override
@@ -160,47 +197,6 @@ public class LRUFilesCache extends AbstractFilesCache {
     }
 
     @Override
-    public FileObject getFile(final FileSystem filesystem, final FileName name) {
-        final Map<FileName, FileObject> files = getOrCreateFilesystemCache(filesystem);
-
-        readLock.lock();
-        try {
-            return files.get(name);
-        } finally {
-            readLock.unlock();
-        }
-    }
-
-    @Override
-    public void clear(final FileSystem filesystem) {
-        final Map<FileName, FileObject> files = getOrCreateFilesystemCache(filesystem);
-
-        writeLock.lock();
-        try {
-            files.clear();
-
-            filesystemCache.remove(filesystem);
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    protected Map<FileName, FileObject> getOrCreateFilesystemCache(final FileSystem filesystem) {
-        Map<FileName, FileObject> files = filesystemCache.get(filesystem);
-        if (files == null) {
-            files = new MyLRUMap(filesystem, lruSize);
-            filesystemCache.putIfAbsent(filesystem, files);
-        }
-        return files;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        filesystemCache.clear();
-    }
-
-    @Override
     public void removeFile(final FileSystem filesystem, final FileName name) {
         final Map<?, ?> files = getOrCreateFilesystemCache(filesystem);
 
@@ -208,8 +204,8 @@ public class LRUFilesCache extends AbstractFilesCache {
         try {
             files.remove(name);
 
-            if (files.size() < 1) {
-                filesystemCache.remove(filesystem);
+            if (files.isEmpty()) {
+                fileSystemCache.remove(filesystem);
             }
         } finally {
             writeLock.unlock();

@@ -16,15 +16,18 @@
  */
 package org.apache.commons.vfs2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests FileExtensionSelector.
@@ -32,6 +35,7 @@ import org.junit.Test;
  * @since 2.1
  */
 public class FileExtensionSelectorTest {
+
     private static FileObject BaseFolder;
 
     private static final int FileCount = 9;
@@ -45,7 +49,7 @@ public class FileExtensionSelectorTest {
      *
      * @throws Exception
      */
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         BaseFolder = VFS.getManager().resolveFile("ram://" + FileExtensionSelectorTest.class.getName());
         BaseFolder.deleteAll();
@@ -66,7 +70,7 @@ public class FileExtensionSelectorTest {
      *
      * @throws Exception
      */
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
         if (BaseFolder != null) {
             BaseFolder.deleteAll();
@@ -82,7 +86,7 @@ public class FileExtensionSelectorTest {
     public void testEmpty() throws Exception {
         final FileSelector selector = new FileExtensionSelector();
         final FileObject[] foList = BaseFolder.findFiles(selector);
-        Assert.assertEquals(0, foList.length);
+        assertEquals(0, foList.length);
     }
 
     /**
@@ -93,7 +97,7 @@ public class FileExtensionSelectorTest {
     @Test
     public void testManyExtensions() throws Exception {
         final FileObject[] foArray = BaseFolder.findFiles(Selectors.SELECT_FILES);
-        Assert.assertTrue(foArray.length > 0);
+        assertTrue(foArray.length > 0);
         // gather file extensions.
         final Set<String> extensionSet = new HashSet<>();
         for (final FileObject fo : foArray) {
@@ -101,12 +105,12 @@ public class FileExtensionSelectorTest {
         }
         final String message = String.format("Extensions: %s; files: %s", extensionSet.toString(),
                 Arrays.asList(foArray).toString());
-        Assert.assertTrue(message, extensionSet.size() > 0);
-        Assert.assertEquals(message, ExtensionCount, extensionSet.size());
+        assertFalse(extensionSet.isEmpty(), message);
+        assertEquals(ExtensionCount, extensionSet.size(), message);
         // check all unique extensions
         final FileSelector selector = new FileExtensionSelector(extensionSet);
         final FileObject[] list = BaseFolder.findFiles(selector);
-        Assert.assertEquals(FileCount, list.length);
+        assertEquals(FileCount, list.length);
     }
 
     /**
@@ -118,7 +122,7 @@ public class FileExtensionSelectorTest {
     public void testNullCollection() throws Exception {
         final FileSelector selector0 = new FileExtensionSelector((Collection<String>) null);
         final FileObject[] foList = BaseFolder.findFiles(selector0);
-        Assert.assertEquals(0, foList.length);
+        assertEquals(0, foList.length);
     }
 
     /**
@@ -130,7 +134,7 @@ public class FileExtensionSelectorTest {
     public void testNullString() throws Exception {
         final FileSelector selector0 = new FileExtensionSelector((String) null);
         final FileObject[] foList = BaseFolder.findFiles(selector0);
-        Assert.assertEquals(0, foList.length);
+        assertEquals(0, foList.length);
     }
 
     /**
@@ -141,7 +145,7 @@ public class FileExtensionSelectorTest {
     @Test
     public void testOneExtension() throws Exception {
         final FileObject[] foArray = BaseFolder.findFiles(Selectors.SELECT_FILES);
-        Assert.assertTrue(foArray.length > 0);
+        assertTrue(foArray.length > 0);
         // gather file extensions.
         final Set<String> extensionSet = new HashSet<>();
         for (final FileObject fo : foArray) {
@@ -149,18 +153,18 @@ public class FileExtensionSelectorTest {
         }
         final String message = String.format("Extensions: %s; files: %s", extensionSet.toString(),
                 Arrays.asList(foArray).toString());
-        Assert.assertEquals(message, ExtensionCount, extensionSet.size());
+        assertEquals(ExtensionCount, extensionSet.size(), message);
         // check each extension
         for (final String extension : extensionSet) {
             final FileSelector selector = new FileExtensionSelector(extension);
             final FileObject[] list = BaseFolder.findFiles(selector);
-            Assert.assertEquals(FilesPerExtensionCount, list.length);
+            assertEquals(FilesPerExtensionCount, list.length);
         }
         // check each file against itself
         for (final FileObject fo : foArray) {
             final FileSelector selector = new FileExtensionSelector(fo.getName().getExtension());
             final FileObject[] list = BaseFolder.findFiles(selector);
-            Assert.assertEquals(FilesPerExtensionCount, list.length);
+            assertEquals(FilesPerExtensionCount, list.length);
         }
     }
 

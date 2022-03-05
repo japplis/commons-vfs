@@ -66,13 +66,13 @@ import org.apache.commons.vfs2.FileSystemException;
  */
 public class CanWriteFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /** Singleton instance of <i>writable</i> filter. */
     public static final FileFilter CAN_WRITE = new CanWriteFileFilter();
 
     /** Singleton instance of not <i>writable</i> filter. */
     public static final FileFilter CANNOT_WRITE = new NotFileFilter(CAN_WRITE);
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -83,14 +83,14 @@ public class CanWriteFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file can be written to.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return {@code true} if the file can be written to, otherwise {@code false}.
      * @throws FileSystemException Thrown for file system errors.
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        try (final FileObject file = fileInfo.getFile()) {
+    public boolean accept(final FileSelectInfo fileSelectInfo) throws FileSystemException {
+        try (FileObject file = fileSelectInfo.getFile()) {
             final FileSystem fileSystem = file.getFileSystem();
             if (file.exists()) {
                 if (!fileSystem.hasCapability(Capability.WRITE_CONTENT)) {

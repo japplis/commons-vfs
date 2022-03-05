@@ -22,6 +22,8 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Objects;
 
 import org.apache.commons.vfs2.RandomAccessContent;
 import org.apache.commons.vfs2.util.RandomAccessMode;
@@ -31,10 +33,12 @@ import org.apache.commons.vfs2.util.RandomAccessMode;
  */
 public class RamFileRandomAccessContent implements RandomAccessContent {
 
+    private static final int BYTE_VALUE_MASK = 0xFF;
+
     /**
      * File Pointer
      */
-    protected int filePointer = 0;
+    protected int filePointer;
 
     /**
      * Buffer
@@ -73,28 +77,28 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
      * @param mode The access mode.
      */
     public RamFileRandomAccessContent(final RamFileObject file, final RandomAccessMode mode) {
-        super();
+        Objects.requireNonNull(file, "file");
+        Objects.requireNonNull(mode, "mode");
         this.buf = file.getData().getContent();
         this.file = file;
 
         rafis = new InputStream() {
             @Override
-            public int read() throws IOException {
-                try {
-                    return readByte();
-                } catch (final EOFException e) {
-                    return -1;
-                }
-            }
-
-            @Override
-            public long skip(final long n) throws IOException {
-                seek(getFilePointer() + n);
-                return n;
+            public int available() throws IOException {
+                return getLeftBytes();
             }
 
             @Override
             public void close() throws IOException {
+            }
+
+            @Override
+            public int read() throws IOException {
+                try {
+                    return readByte() & BYTE_VALUE_MASK;
+                } catch (final EOFException e) {
+                    return -1;
+                }
             }
 
             @Override
@@ -114,10 +118,79 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
             }
 
             @Override
-            public int available() throws IOException {
-                return getLeftBytes();
+            public long skip(final long n) throws IOException {
+                seek(getFilePointer() + n);
+                return n;
             }
         };
+    }
+
+    /**
+     * Build a 8-byte array from a long. No check is performed on the array length.
+     *
+     * @param n The number to convert.
+     * @param b The array to fill.
+     * @return A byte[].
+     */
+    public static byte[] toBytes(long n, final byte[] b) {
+        b[7] = (byte) n;
+        n >>>= 8;
+        b[6] = (byte) n;
+        n >>>= 8;
+        b[5] = (byte) n;
+        n >>>= 8;
+        b[4] = (byte) n;
+        n >>>= 8;
+        b[3] = (byte) n;
+        n >>>= 8;
+        b[2] = (byte) n;
+        n >>>= 8;
+        b[1] = (byte) n;
+        n >>>= 8;
+        b[0] = (byte) n;
+        return b;
+    }
+
+    /**
+     * Build a long from first 8 bytes of the array.
+     *
+     * @param b The byte[] to convert.
+     * @return A long.
+     */
+    public static long toLong(final byte[] b) {
+        return ((long) b[7] & BYTE_VALUE_MASK) + (((long) b[6] & BYTE_VALUE_MASK) << 8) + (((long) b[5] & BYTE_VALUE_MASK) << 16)
+                + (((long) b[4] & BYTE_VALUE_MASK) << 24) + (((long) b[3] & BYTE_VALUE_MASK) << 32) + (((long) b[2] & BYTE_VALUE_MASK) << 40)
+                + (((long) b[1] & BYTE_VALUE_MASK) << 48) + (((long) b[0] & BYTE_VALUE_MASK) << 56);
+    }
+
+    /**
+     * Build a short from first 2 bytes of the array.
+     *
+     * @param b The byte[] to convert.
+     * @return A short.
+     */
+    public static short toShort(final byte[] b) {
+        return (short) toUnsignedShort(b);
+    }
+
+    /**
+     * Build a short from first 2 bytes of the array.
+     *
+     * @param b The byte[] to convert.
+     * @return A short.
+     */
+    public static int toUnsignedShort(final byte[] b) {
+        return (b[1] & BYTE_VALUE_MASK) + ((b[0] & BYTE_VALUE_MASK) << 8);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.commons.vfs2.RandomAccessContent#close()
+     */
+    @Override
+    public void close() throws IOException {
+
     }
 
     /*
@@ -130,17 +203,13 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
         return this.filePointer;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.commons.vfs2.RandomAccessContent#seek(long)
-     */
     @Override
-    public void seek(final long pos) throws IOException {
-        if (pos < 0) {
-            throw new IOException("Attempt to position before the start of the file");
-        }
-        this.filePointer = (int) pos;
+    public InputStream getInputStream() throws IOException {
+        return rafis;
+    }
+
+    private int getLeftBytes() {
+        return buf.length - filePointer;
     }
 
     /*
@@ -156,11 +225,11 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.commons.vfs2.RandomAccessContent#close()
+     * @see java.io.DataInput#readBoolean()
      */
     @Override
-    public void close() throws IOException {
-
+    public boolean readBoolean() throws IOException {
+        return this.readUnsignedByte() != 0;
     }
 
     /*
@@ -208,94 +277,6 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
     /*
      * (non-Javadoc)
      *
-     * @see java.io.DataInput#readInt()
-     */
-    @Override
-    public int readInt() throws IOException {
-        return (readUnsignedByte() << 24) | (readUnsignedByte() << 16) | (readUnsignedByte() << 8) | readUnsignedByte();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readUnsignedByte()
-     */
-    @Override
-    public int readUnsignedByte() throws IOException {
-        if (filePointer < buf.length) {
-            return buf[filePointer++] & 0xFF;
-        }
-        throw new EOFException();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readUnsignedShort()
-     */
-    @Override
-    public int readUnsignedShort() throws IOException {
-        this.readFully(buffer2);
-        return toUnsignedShort(buffer2);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readLong()
-     */
-    @Override
-    public long readLong() throws IOException {
-        this.readFully(buffer8);
-        return toLong(buffer8);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readShort()
-     */
-    @Override
-    public short readShort() throws IOException {
-        this.readFully(buffer2);
-        return toShort(buffer2);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readBoolean()
-     */
-    @Override
-    public boolean readBoolean() throws IOException {
-        return this.readUnsignedByte() != 0;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#skipBytes(int)
-     */
-    @Override
-    public int skipBytes(final int n) throws IOException {
-        if (n < 0) {
-            throw new IndexOutOfBoundsException("The skip number can't be negative");
-        }
-
-        final long newPos = filePointer + n;
-
-        if (newPos > buf.length) {
-            throw new IndexOutOfBoundsException("Tyring to skip too much bytes");
-        }
-
-        seek(newPos);
-
-        return n;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see java.io.DataInput#readFully(byte[])
      */
     @Override
@@ -324,8 +305,70 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
         filePointer += len;
     }
 
-    private int getLeftBytes() {
-        return buf.length - filePointer;
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readInt()
+     */
+    @Override
+    public int readInt() throws IOException {
+        return readUnsignedByte() << 24 | readUnsignedByte() << 16 | readUnsignedByte() << 8 | readUnsignedByte();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readLine()
+     */
+    @Override
+    public String readLine() throws IOException {
+        throw new UnsupportedOperationException("deprecated");
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readLong()
+     */
+    @Override
+    public long readLong() throws IOException {
+        this.readFully(buffer8);
+        return toLong(buffer8);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readShort()
+     */
+    @Override
+    public short readShort() throws IOException {
+        this.readFully(buffer2);
+        return toShort(buffer2);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readUnsignedByte()
+     */
+    @Override
+    public int readUnsignedByte() throws IOException {
+        if (filePointer < buf.length) {
+            return buf[filePointer++] & BYTE_VALUE_MASK;
+        }
+        throw new EOFException();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#readUnsignedShort()
+     */
+    @Override
+    public int readUnsignedShort() throws IOException {
+        this.readFully(buffer2);
+        return toUnsignedShort(buffer2);
     }
 
     /*
@@ -336,6 +379,57 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
     @Override
     public String readUTF() throws IOException {
         return DataInputStream.readUTF(this);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.commons.vfs2.RandomAccessContent#seek(long)
+     */
+    @Override
+    public void seek(final long pos) throws IOException {
+        if (pos < 0) {
+            throw new IOException("Attempt to position before the start of the file");
+        }
+        this.filePointer = (int) pos;
+    }
+
+    @Override
+    public void setLength(final long newLength) throws IOException {
+        this.file.resize(newLength);
+        this.buf = this.file.getData().getContent();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataInput#skipBytes(int)
+     */
+    @Override
+    public int skipBytes(final int n) throws IOException {
+        if (n < 0) {
+            throw new IndexOutOfBoundsException("The skip number can't be negative");
+        }
+
+        final long newPos = filePointer + n;
+
+        if (newPos > buf.length) {
+            throw new IndexOutOfBoundsException("Tyring to skip too much bytes");
+        }
+
+        seek(newPos);
+
+        return n;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.io.DataOutput#write(byte[])
+     */
+    @Override
+    public void write(final byte[] b) throws IOException {
+        this.write(b, 0, b.length);
     }
 
     /*
@@ -352,84 +446,6 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
         }
         System.arraycopy(b, off, this.buf, filePointer, len);
         this.filePointer += len;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataOutput#write(byte[])
-     */
-    @Override
-    public void write(final byte[] b) throws IOException {
-        this.write(b, 0, b.length);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataOutput#writeByte(int)
-     */
-    @Override
-    public void writeByte(final int i) throws IOException {
-        this.write(i);
-    }
-
-    /**
-     * Build a long from first 8 bytes of the array.
-     *
-     * @param b The byte[] to convert.
-     * @return A long.
-     */
-    public static long toLong(final byte[] b) {
-        return ((((long) b[7]) & 0xFF) + ((((long) b[6]) & 0xFF) << 8) + ((((long) b[5]) & 0xFF) << 16)
-                + ((((long) b[4]) & 0xFF) << 24) + ((((long) b[3]) & 0xFF) << 32) + ((((long) b[2]) & 0xFF) << 40)
-                + ((((long) b[1]) & 0xFF) << 48) + ((((long) b[0]) & 0xFF) << 56));
-    }
-
-    /**
-     * Build a 8-byte array from a long. No check is performed on the array length.
-     *
-     * @param n The number to convert.
-     * @param b The array to fill.
-     * @return A byte[].
-     */
-    public static byte[] toBytes(long n, final byte[] b) {
-        b[7] = (byte) (n);
-        n >>>= 8;
-        b[6] = (byte) (n);
-        n >>>= 8;
-        b[5] = (byte) (n);
-        n >>>= 8;
-        b[4] = (byte) (n);
-        n >>>= 8;
-        b[3] = (byte) (n);
-        n >>>= 8;
-        b[2] = (byte) (n);
-        n >>>= 8;
-        b[1] = (byte) (n);
-        n >>>= 8;
-        b[0] = (byte) (n);
-        return b;
-    }
-
-    /**
-     * Build a short from first 2 bytes of the array.
-     *
-     * @param b The byte[] to convert.
-     * @return A short.
-     */
-    public static short toShort(final byte[] b) {
-        return (short) toUnsignedShort(b);
-    }
-
-    /**
-     * Build a short from first 2 bytes of the array.
-     *
-     * @param b The byte[] to convert.
-     * @return A short.
-     */
-    public static int toUnsignedShort(final byte[] b) {
-        return ((b[1] & 0xFF) + ((b[0] & 0xFF) << 8));
     }
 
     /*
@@ -456,11 +472,21 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
     /*
      * (non-Javadoc)
      *
+     * @see java.io.DataOutput#writeByte(int)
+     */
+    @Override
+    public void writeByte(final int i) throws IOException {
+        this.write(i);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
      * @see java.io.DataOutput#writeBytes(java.lang.String)
      */
     @Override
     public void writeBytes(final String s) throws IOException {
-        write(s.getBytes());
+        write(s.getBytes(Charset.defaultCharset()));
     }
 
     /*
@@ -470,8 +496,8 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
      */
     @Override
     public void writeChar(final int v) throws IOException {
-        buffer2[0] = (byte) ((v >>> 8) & 0xFF);
-        buffer2[1] = (byte) ((v >>> 0) & 0xFF);
+        buffer2[0] = (byte) (v >>> 8 & BYTE_VALUE_MASK);
+        buffer2[1] = (byte) (v >>> 0 & BYTE_VALUE_MASK);
         write(buffer2);
     }
 
@@ -515,10 +541,10 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
      */
     @Override
     public void writeInt(final int v) throws IOException {
-        buffer4[0] = (byte) ((v >>> 24) & 0xFF);
-        buffer4[1] = (byte) ((v >>> 16) & 0xFF);
-        buffer4[2] = (byte) ((v >>> 8) & 0xFF);
-        buffer4[3] = (byte) (v & 0xFF);
+        buffer4[0] = (byte) (v >>> 24 & BYTE_VALUE_MASK);
+        buffer4[1] = (byte) (v >>> 16 & BYTE_VALUE_MASK);
+        buffer4[2] = (byte) (v >>> 8 & BYTE_VALUE_MASK);
+        buffer4[3] = (byte) (v & BYTE_VALUE_MASK);
         write(buffer4);
     }
 
@@ -539,8 +565,8 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
      */
     @Override
     public void writeShort(final int v) throws IOException {
-        buffer2[0] = (byte) ((v >>> 8) & 0xFF);
-        buffer2[1] = (byte) (v & 0xFF);
+        buffer2[0] = (byte) (v >>> 8 & BYTE_VALUE_MASK);
+        buffer2[1] = (byte) (v & BYTE_VALUE_MASK);
         write(buffer2);
     }
 
@@ -558,26 +584,5 @@ public class RamFileRandomAccessContent implements RandomAccessContent {
         dataOut.close();
         final byte[] b = out.toByteArray();
         write(b);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.DataInput#readLine()
-     */
-    @Override
-    public String readLine() throws IOException {
-        throw new UnsupportedOperationException("deprecated");
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return rafis;
-    }
-
-    @Override
-    public void setLength(final long newLength) throws IOException {
-        this.file.resize(newLength);
-        this.buf = this.file.getData().getContent();
     }
 }

@@ -21,15 +21,27 @@ import java.util.Objects;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FilesCache;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.Test;
 
 /**
  * Tests for {@link LRUFilesCache} used by {@link LRUFilesCacheTestCase}.
  */
 public class LRUFilesCacheTests extends AbstractFilesCacheTestsBase {
+
+    @Test
+    public void testClass() {
+        @SuppressWarnings("resource")
+        final DefaultFileSystemManager manager = getManager();
+        Assertions.assertNotNull(manager, "manager");
+        final FilesCache filesCache = manager.getFilesCache();
+        assertTrue(Objects.toString(filesCache), filesCache instanceof LRUFilesCache);
+    }
+
+    @Test
     public void testFilesCache() throws Exception {
         final FileObject scratchFolder = getWriteFolder();
-        Assert.assertNotNull("scratchFolder", scratchFolder);
+        Assertions.assertNotNull(scratchFolder, "scratchFolder");
 
         // releaseable
         final FileObject dir1 = scratchFolder.resolveFile("dir1");
@@ -71,11 +83,4 @@ public class LRUFilesCacheTests extends AbstractFilesCacheTestsBase {
         assertNotSame(dir1, dir1_2);
     }
 
-    public void testClass() {
-        @SuppressWarnings("resource")
-        final DefaultFileSystemManager manager = getManager();
-        Assert.assertNotNull("manager", manager);
-        final FilesCache filesCache = manager.getFilesCache();
-        assertTrue(Objects.toString(filesCache), filesCache instanceof LRUFilesCache);
-    }
 }

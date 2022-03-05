@@ -30,12 +30,21 @@ import org.apache.commons.vfs2.FileSelectInfo;
  */
 public class FalseFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
+    /**
+     * Singleton instance of false filter.
+     *
+     * @since 2.10.0
+     */
+    public static final FileFilter INSTANCE = new FalseFileFilter();
 
     /**
      * Singleton instance of false filter.
+     * @deprecated Use {@link #INSTANCE}.
      */
-    public static final FileFilter FALSE = new FalseFileFilter();
+    @Deprecated
+    public static final FileFilter FALSE = INSTANCE;
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -46,12 +55,12 @@ public class FalseFileFilter implements FileFilter, Serializable {
     /**
      * Returns false.
      *
-     * @param fileInfo the file to check (ignored)
+     * @param fileSelectInfo the file to check (ignored)
      *
      * @return Always {@code false}
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
         return false;
     }
 

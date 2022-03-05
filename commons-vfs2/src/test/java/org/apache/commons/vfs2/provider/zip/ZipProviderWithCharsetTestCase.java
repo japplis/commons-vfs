@@ -16,18 +16,19 @@
  */
 package org.apache.commons.vfs2.provider.zip;
 
+import static org.apache.commons.vfs2.VfsTestUtils.getTestResource;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.AbstractVfsTestCase;
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.ProviderTestSuite;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestSuite;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import junit.framework.Test;
 
@@ -35,21 +36,12 @@ import junit.framework.Test;
  * Tests for the Zip file system.
  */
 public class ZipProviderWithCharsetTestCase extends AbstractProviderTestConfig {
+
     /**
      * Creates the test suite for the zip file system.
      */
     public static Test suite() throws Exception {
         return new ProviderTestSuite(new ZipProviderWithCharsetTestCase(), true);
-    }
-
-    /**
-     * Prepares the file system manager.
-     */
-    @Override
-    public void prepare(final DefaultFileSystemManager manager) throws Exception {
-        manager.addProvider("zip", new ZipFileProvider());
-        manager.addExtensionMap("zip", "zip");
-        manager.addMimeTypeMap("application/zip", "zip");
     }
 
     /**
@@ -62,13 +54,24 @@ public class ZipProviderWithCharsetTestCase extends AbstractProviderTestConfig {
         // Tests the same charset as the default but we exercise having a Charset set.
         builder.setCharset(opts, StandardCharsets.UTF_8);
 
-        final File zipFile = AbstractVfsTestCase.getTestResource("test.zip");
+        final File zipFile = getTestResource("test.zip");
         final String uri = "zip:file:" + zipFile.getAbsolutePath() + "!/";
         final FileObject resolvedFile = manager.resolveFile(uri, opts);
         final FileSystem fileSystem = resolvedFile.getFileSystem();
-        Assert.assertTrue(fileSystem instanceof ZipFileSystem);
+        Assertions.assertTrue(fileSystem instanceof ZipFileSystem);
         final ZipFileSystem zipFileSystem = (ZipFileSystem) fileSystem;
-        Assert.assertEquals(StandardCharsets.UTF_8, zipFileSystem.getCharset());
+        Assertions.assertEquals(StandardCharsets.UTF_8, zipFileSystem.getCharset());
         return resolvedFile;
     }
+
+    /**
+     * Prepares the file system manager.
+     */
+    @Override
+    public void prepare(final DefaultFileSystemManager manager) throws Exception {
+        manager.addProvider("zip", new ZipFileProvider());
+        manager.addExtensionMap("zip", "zip");
+        manager.addMimeTypeMap("application/zip", "zip");
+    }
+
 }

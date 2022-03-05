@@ -16,13 +16,13 @@
  */
 package org.apache.commons.vfs2.provider.smb.test;
 
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.ProviderTestConfig;
+import org.apache.commons.vfs2.ProviderTestSuite;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.apache.commons.vfs2.provider.smb.SmbFileProvider;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestSuite;
 
 import junit.framework.Test;
 
@@ -30,14 +30,14 @@ import junit.framework.Test;
  * Tests for the SMB file system.
  */
 public class SmbProviderTestCase extends AbstractProviderTestConfig implements ProviderTestConfig {
+
     private static final String TEST_URI = "test.smb.uri";
 
     public static Test suite() throws Exception {
         if (System.getProperty(TEST_URI) != null) {
             return new ProviderTestSuite(new SmbProviderTestCase());
-        } else {
-            return notConfigured(SmbProviderTestCase.class);
         }
+        return notConfigured(SmbProviderTestCase.class);
     }
 
     /**
@@ -56,4 +56,5 @@ public class SmbProviderTestCase extends AbstractProviderTestConfig implements P
         final String uri = System.getProperty(TEST_URI);
         return manager.resolveFile(uri);
     }
+
 }

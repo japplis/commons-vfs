@@ -26,38 +26,77 @@ import java.util.List;
  * </p>
  */
 public class ProviderConfiguration {
+
     private String className;
     private final List<String> schemes = new ArrayList<>(10);
     private final List<String> dependenies = new ArrayList<>(10);
 
+    /**
+     * Constructs a new instance.
+     */
     public ProviderConfiguration() {
     }
 
+    /**
+     * Gets the class name.
+     *
+     * @return the class name.
+     */
     public String getClassName() {
         return className;
     }
 
-    public void setClassName(final String className) {
-        this.className = className;
-    }
-
-    public void setScheme(final String scheme) {
-        schemes.add(scheme);
-    }
-
-    public List<String> getSchemes() {
-        return schemes;
-    }
-
-    public void setDependency(final String dependency) {
-        dependenies.add(dependency);
-    }
-
+    /**
+     * Gets the dependency.
+     *
+     * @return the dependency.
+     */
     public List<String> getDependencies() {
         return dependenies;
     }
 
+    /**
+     * Gets the schema.
+     *
+     * @return the scheme.
+     */
+    public List<String> getSchemes() {
+        return schemes;
+    }
+
+    /**
+     * Always returns false.
+     *
+     * @return false.
+     */
     public boolean isDefault() {
         return false;
+    }
+
+    /**
+     * sets the class name.
+     *
+     * @param className the class name.
+     */
+    public void setClassName(final String className) {
+        this.className = className;
+    }
+
+    /**
+     * Sets the dependency.
+     *
+     * @param dependency the dependency.
+     */
+    public void setDependency(final String dependency) {
+        dependenies.add(dependency);
+    }
+
+    /**
+     * Sets the scheme.
+     *
+     * @param scheme the scheme.
+     */
+    public void setScheme(final String scheme) {
+        schemes.add(scheme);
     }
 }

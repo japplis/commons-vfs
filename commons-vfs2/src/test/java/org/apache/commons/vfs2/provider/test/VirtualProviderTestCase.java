@@ -16,13 +16,14 @@
  */
 package org.apache.commons.vfs2.provider.test;
 
+import static org.apache.commons.vfs2.VfsTestUtils.getTestDirectoryFile;
+
 import java.io.File;
 
-import org.apache.commons.AbstractVfsTestCase;
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestSuite;
+import org.apache.commons.vfs2.ProviderTestSuite;
 
 import junit.framework.Test;
 
@@ -30,6 +31,7 @@ import junit.framework.Test;
  * Test cases for the virtual file system provider.
  */
 public class VirtualProviderTestCase extends AbstractProviderTestConfig {
+
     public static Test suite() throws Exception {
         final ProviderTestSuite testSuite = new ProviderTestSuite(new VirtualProviderTestCase());
         testSuite.addTests(JunctionTests.class);
@@ -41,8 +43,9 @@ public class VirtualProviderTestCase extends AbstractProviderTestConfig {
      */
     @Override
     public FileObject getBaseTestFolder(final FileSystemManager manager) throws Exception {
-        final File baseDir = AbstractVfsTestCase.getTestDirectoryFile();
+        final File baseDir = getTestDirectoryFile();
         final FileObject baseFile = manager.toFileObject(baseDir);
         return manager.createVirtualFileSystem(baseFile);
     }
+
 }

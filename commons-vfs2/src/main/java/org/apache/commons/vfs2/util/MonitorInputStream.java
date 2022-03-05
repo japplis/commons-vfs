@@ -28,11 +28,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MonitorInputStream extends BufferedInputStream {
 
     private static final int EOF_CHAR = -1;
-    private final AtomicLong atomicCount = new AtomicLong(0);
+    private final AtomicLong atomicCount = new AtomicLong();
     private final AtomicBoolean finished = new AtomicBoolean(false);
 
     /**
-     * Constructs a MonitorInputStream from the passed InputStream
+     * Constructs a MonitorInputStream from the passed InputStream.
      *
      * @param in The input stream to wrap.
      */
@@ -41,7 +41,7 @@ public class MonitorInputStream extends BufferedInputStream {
     }
 
     /**
-     * Constructs a MonitorInputStream from the passed InputStream and with the specified buffer size
+     * Constructs a MonitorInputStream from the passed InputStream and with the specified buffer size.
      *
      * @param in The input stream to wrap.
      * @param bufferSize The buffer size to use.
@@ -82,7 +82,7 @@ public class MonitorInputStream extends BufferedInputStream {
         // Close the stream
         IOException exc = null;
         try {
-            super.close();
+            closeSuper();
         } catch (final IOException ioe) {
             exc = ioe;
         }
@@ -97,6 +97,17 @@ public class MonitorInputStream extends BufferedInputStream {
         if (exc != null) {
             throw exc;
         }
+    }
+
+    /**
+     * This method exists in order to allow overriding whether to actually close
+     * the underlying stream (VFS-805). There are cases where closing that stream will
+     * consume any amount of remaining data. In such cases closing a different
+     * entity instead (such as an HttpResponse) may be more appropriate.
+     * @throws IOException if an IO error occurs.
+     */
+    protected void closeSuper() throws IOException {
+        super.close();
     }
 
     /**
@@ -121,7 +132,7 @@ public class MonitorInputStream extends BufferedInputStream {
      * Reads a character.
      *
      * @return The character that was read as an integer.
-     * @throws IOException if an error occurs.
+     * @throws IOException if an IO error occurs.
      */
     @Override
     public int read() throws IOException { // lgtm [java/non-sync-override]
@@ -144,7 +155,7 @@ public class MonitorInputStream extends BufferedInputStream {
      * @param offset The offset at which to start reading.
      * @param length The maximum number of bytes to read.
      * @return The number of bytes read.
-     * @throws IOException if an error occurs.
+     * @throws IOException if an IO error occurs.
      */
     @Override
     public int read(final byte[] buffer, final int offset, final int length) throws IOException { // lgtm [java/non-sync-override]

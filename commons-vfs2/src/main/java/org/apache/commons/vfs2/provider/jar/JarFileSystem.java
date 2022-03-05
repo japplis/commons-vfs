@@ -51,6 +51,15 @@ public class JarFileSystem extends ZipFileSystem {
     // return new JarFileObject(name, null, this, false);
     // }
 
+    /**
+     * Returns the capabilities of this file system.
+     */
+    @Override
+    protected void addCapabilities(final Collection<Capability> caps) {
+        // super.addCapabilities(caps);
+        caps.addAll(JarFileProvider.CAPABILITIES);
+    }
+
     @Override
     protected ZipFile createZipFile(final File file) throws FileSystemException {
         try {
@@ -66,13 +75,26 @@ public class JarFileSystem extends ZipFileSystem {
         return new JarFileObject(name, entry, this, true);
     }
 
+    Object getAttribute(final Name attrName) throws FileSystemException {
+        try {
+            final Attributes attr = getAttributes();
+            return attr.getValue(attrName);
+        } catch (final IOException ioe) {
+            throw new FileSystemException(attrName.toString(), ioe);
+        }
+    }
+
     /**
-     * Returns the capabilities of this file system.
+     * Retrives the attribute with the specified name. The default implementation simply throws an exception.
+     *
+     * @param attrName The attiribute's name.
+     * @return The value of the attribute.
+     * @throws FileSystemException if an error occurs.
      */
     @Override
-    protected void addCapabilities(final Collection<Capability> caps) {
-        // super.addCapabilities(caps);
-        caps.addAll(JarFileProvider.capabilities);
+    public Object getAttribute(final String attrName) throws FileSystemException {
+        final Name name = lookupName(attrName);
+        return getAttribute(name);
     }
 
     Attributes getAttributes() throws IOException {
@@ -91,73 +113,65 @@ public class JarFileSystem extends ZipFileSystem {
         return attributes;
     }
 
-    Object getAttribute(final Name attrName) throws FileSystemException {
-        try {
-            final Attributes attr = getAttributes();
-            final String value = attr.getValue(attrName);
-            return value;
-        } catch (final IOException ioe) {
-            throw new FileSystemException(attrName.toString(), ioe);
-        }
+    @Override
+    protected ZipFile getZipFile() throws FileSystemException {
+        // make accessible
+        return super.getZipFile();
     }
 
     Name lookupName(final String attrName) {
         if (Name.CLASS_PATH.toString().equals(attrName)) {
             return Name.CLASS_PATH;
-        } else if (Name.CONTENT_TYPE.toString().equals(attrName)) {
-            return Name.CONTENT_TYPE;
-        } else if (Name.EXTENSION_INSTALLATION.toString().equals(attrName)) {
-            return Name.EXTENSION_INSTALLATION;
-        } else if (Name.EXTENSION_LIST.toString().equals(attrName)) {
-            return Name.EXTENSION_LIST;
-        } else if (Name.EXTENSION_NAME.toString().equals(attrName)) {
-            return Name.EXTENSION_NAME;
-        } else if (Name.IMPLEMENTATION_TITLE.toString().equals(attrName)) {
-            return Name.IMPLEMENTATION_TITLE;
-        } else if (Name.IMPLEMENTATION_URL.toString().equals(attrName)) {
-            return Name.IMPLEMENTATION_URL;
-        } else if (Name.IMPLEMENTATION_VENDOR.toString().equals(attrName)) {
-            return Name.IMPLEMENTATION_VENDOR;
-        } else if (Name.IMPLEMENTATION_VENDOR_ID.toString().equals(attrName)) {
-            return Name.IMPLEMENTATION_VENDOR_ID;
-        } else if (Name.IMPLEMENTATION_VERSION.toString().equals(attrName)) {
-            return Name.IMPLEMENTATION_VENDOR;
-        } else if (Name.MAIN_CLASS.toString().equals(attrName)) {
-            return Name.MAIN_CLASS;
-        } else if (Name.MANIFEST_VERSION.toString().equals(attrName)) {
-            return Name.MANIFEST_VERSION;
-        } else if (Name.SEALED.toString().equals(attrName)) {
-            return Name.SEALED;
-        } else if (Name.SIGNATURE_VERSION.toString().equals(attrName)) {
-            return Name.SIGNATURE_VERSION;
-        } else if (Name.SPECIFICATION_TITLE.toString().equals(attrName)) {
-            return Name.SPECIFICATION_TITLE;
-        } else if (Name.SPECIFICATION_VENDOR.toString().equals(attrName)) {
-            return Name.SPECIFICATION_VENDOR;
-        } else if (Name.SPECIFICATION_VERSION.toString().equals(attrName)) {
-            return Name.SPECIFICATION_VERSION;
-        } else {
-            return new Name(attrName);
         }
-    }
-
-    /**
-     * Retrives the attribute with the specified name. The default implementation simply throws an exception.
-     *
-     * @param attrName The attiribute's name.
-     * @return The value of the attribute.
-     * @throws FileSystemException if an error occurs.
-     */
-    @Override
-    public Object getAttribute(final String attrName) throws FileSystemException {
-        final Name name = lookupName(attrName);
-        return getAttribute(name);
-    }
-
-    @Override
-    protected ZipFile getZipFile() throws FileSystemException {
-        // make accessible
-        return super.getZipFile();
+        if (Name.CONTENT_TYPE.toString().equals(attrName)) {
+            return Name.CONTENT_TYPE;
+        }
+        if (Name.EXTENSION_INSTALLATION.toString().equals(attrName)) {
+            return Name.EXTENSION_INSTALLATION;
+        }
+        if (Name.EXTENSION_LIST.toString().equals(attrName)) {
+            return Name.EXTENSION_LIST;
+        }
+        if (Name.EXTENSION_NAME.toString().equals(attrName)) {
+            return Name.EXTENSION_NAME;
+        }
+        if (Name.IMPLEMENTATION_TITLE.toString().equals(attrName)) {
+            return Name.IMPLEMENTATION_TITLE;
+        }
+        if (Name.IMPLEMENTATION_URL.toString().equals(attrName)) {
+            return Name.IMPLEMENTATION_URL;
+        }
+        if (Name.IMPLEMENTATION_VENDOR.toString().equals(attrName)) {
+            return Name.IMPLEMENTATION_VENDOR;
+        }
+        if (Name.IMPLEMENTATION_VENDOR_ID.toString().equals(attrName)) {
+            return Name.IMPLEMENTATION_VENDOR_ID;
+        }
+        if (Name.IMPLEMENTATION_VERSION.toString().equals(attrName)) {
+            return Name.IMPLEMENTATION_VENDOR;
+        }
+        if (Name.MAIN_CLASS.toString().equals(attrName)) {
+            return Name.MAIN_CLASS;
+        }
+        if (Name.MANIFEST_VERSION.toString().equals(attrName)) {
+            return Name.MANIFEST_VERSION;
+        }
+        if (Name.SEALED.toString().equals(attrName)) {
+            return Name.SEALED;
+        }
+        if (Name.SIGNATURE_VERSION.toString().equals(attrName)) {
+            return Name.SIGNATURE_VERSION;
+        }
+        if (Name.SPECIFICATION_TITLE.toString().equals(attrName)) {
+            return Name.SPECIFICATION_TITLE;
+        }
+        if (Name.SPECIFICATION_VENDOR.toString().equals(attrName)) {
+            return Name.SPECIFICATION_VENDOR;
+        }
+        if (Name.SPECIFICATION_VERSION.toString().equals(attrName)) {
+            return Name.SPECIFICATION_VERSION;
+        }
+        return new Name(attrName);
     }
 
 }

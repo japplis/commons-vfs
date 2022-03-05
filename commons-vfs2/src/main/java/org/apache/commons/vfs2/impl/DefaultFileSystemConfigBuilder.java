@@ -18,7 +18,6 @@ package org.apache.commons.vfs2.impl;
 
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemConfigBuilder;
-import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.UserAuthenticator;
 
@@ -26,6 +25,12 @@ import org.apache.commons.vfs2.UserAuthenticator;
  * Default options usable for all file systems.
  */
 public class DefaultFileSystemConfigBuilder extends FileSystemConfigBuilder {
+    /**
+     * Dummy class that implements FileSystem.
+     */
+    abstract static class DefaultFileSystem implements FileSystem {
+    }
+
     /** The default FileSystemConfigBuilder */
     private static final DefaultFileSystemConfigBuilder BUILDER = new DefaultFileSystemConfigBuilder();
 
@@ -38,16 +43,9 @@ public class DefaultFileSystemConfigBuilder extends FileSystemConfigBuilder {
         return BUILDER;
     }
 
-    /**
-     * Sets the user authenticator to get authentication informations.
-     *
-     * @param opts The FileSystemOptions.
-     * @param userAuthenticator The UserAuthenticator.
-     * @throws FileSystemException if an error occurs setting the UserAuthenticator.
-     */
-    public void setUserAuthenticator(final FileSystemOptions opts, final UserAuthenticator userAuthenticator)
-            throws FileSystemException {
-        setParam(opts, "userAuthenticator", userAuthenticator);
+    @Override
+    protected Class<? extends FileSystem> getConfigClass() {
+        return DefaultFileSystem.class;
     }
 
     /**
@@ -56,17 +54,16 @@ public class DefaultFileSystemConfigBuilder extends FileSystemConfigBuilder {
      * @return The UserAuthenticator.
      */
     public UserAuthenticator getUserAuthenticator(final FileSystemOptions opts) {
-        return (UserAuthenticator) getParam(opts, "userAuthenticator");
+        return getParam(opts, "userAuthenticator");
     }
 
     /**
-     * Dummy class that implements FileSystem.
+     * Sets the user authenticator to get authentication informations.
+     *
+     * @param opts The FileSystemOptions.
+     * @param userAuthenticator The UserAuthenticator.
      */
-    abstract static class DefaultFileSystem implements FileSystem {
-    }
-
-    @Override
-    protected Class<? extends FileSystem> getConfigClass() {
-        return DefaultFileSystem.class;
+    public void setUserAuthenticator(final FileSystemOptions opts, final UserAuthenticator userAuthenticator) {
+        setParam(opts, "userAuthenticator", userAuthenticator);
     }
 }

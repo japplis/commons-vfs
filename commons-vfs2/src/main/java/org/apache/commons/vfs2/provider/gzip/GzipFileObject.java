@@ -27,7 +27,7 @@ import org.apache.commons.vfs2.provider.compressed.CompressedFileFileObject;
 import org.apache.commons.vfs2.provider.compressed.CompressedFileFileSystem;
 
 /**
- * the gzip file.
+ * A Gzip file.
  */
 public class GzipFileObject extends CompressedFileFileObject<GzipFileSystem> {
 
@@ -50,22 +50,20 @@ public class GzipFileObject extends CompressedFileFileObject<GzipFileSystem> {
         super(name, container, fs);
     }
 
-    @Override
-    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
-        final InputStream inputStream = getContainer().getContent().getInputStream();
-        return new GZIPInputStream(inputStream, bufferSize);
-    }
-
-    @Override
-    protected OutputStream doGetOutputStream(final boolean bAppend) throws Exception {
-        final OutputStream os = getContainer().getContent().getOutputStream(false);
-        return new GZIPOutputStream(os);
-    }
-
     private static GzipFileSystem cast(final CompressedFileFileSystem fs) {
         if (fs instanceof GzipFileSystem) {
             return (GzipFileSystem) fs;
         }
         throw new IllegalArgumentException("GzipFileObject expects an instance of GzipFileSystem");
+    }
+
+    @Override
+    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
+        return new GZIPInputStream(getContainer().getContent().getInputStream(), bufferSize);
+    }
+
+    @Override
+    protected OutputStream doGetOutputStream(final boolean bAppend) throws Exception {
+        return new GZIPOutputStream(getContainer().getContent().getOutputStream(false));
     }
 }

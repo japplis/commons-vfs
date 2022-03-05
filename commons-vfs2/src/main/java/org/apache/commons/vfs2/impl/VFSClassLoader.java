@@ -27,7 +27,6 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
@@ -61,7 +60,7 @@ public class VFSClassLoader extends SecureClassLoader {
      * @throws FileSystemException if an error occurs.
      */
     public VFSClassLoader(final FileObject file, final FileSystemManager manager) throws FileSystemException {
-        this(new FileObject[] { file }, manager, null);
+        this(new FileObject[] {file}, manager, null);
     }
 
     /**
@@ -74,7 +73,7 @@ public class VFSClassLoader extends SecureClassLoader {
      */
     public VFSClassLoader(final FileObject file, final FileSystemManager manager, final ClassLoader parent)
             throws FileSystemException {
-        this(new FileObject[] { file }, manager, parent);
+        this(new FileObject[] {file}, manager, parent);
     }
 
     /**
@@ -104,16 +103,6 @@ public class VFSClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Provide access to the file objects this class loader represents.
-     *
-     * @return An array of FileObjects.
-     * @since 2.0
-     */
-    public FileObject[] getFileObjects() {
-        return resources.toArray(new FileObject[resources.size()]);
-    }
-
-    /**
      * Appends the specified FileObjects to the list of FileObjects to search for classes and resources.
      *
      * @param manager The FileSystemManager.
@@ -138,21 +127,15 @@ public class VFSClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Finds and loads the class with the specified name from the search path.
+     * Copies the permissions from src to dest.
      *
-     * @throws ClassNotFoundException if the class is not found.
+     * @param src The source PermissionCollection.
+     * @param dest The destination PermissionCollection.
      */
-    @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        try {
-            final String path = name.replace('.', '/').concat(".class");
-            final Resource res = loadResource(path);
-            if (res == null) {
-                throw new ClassNotFoundException(name);
-            }
-            return defineClass(name, res);
-        } catch (final IOException ioe) {
-            throw new ClassNotFoundException(name, ioe);
+    protected void copyPermissions(final PermissionCollection src, final PermissionCollection dest) {
+        for (final Enumeration<Permission> elem = src.elements(); elem.hasMoreElements();) {
+            final Permission permission = elem.nextElement();
+            dest.add(permission);
         }
     }
 
@@ -169,10 +152,8 @@ public class VFSClassLoader extends SecureClassLoader {
                     if (!pkg.isSealed(url)) {
                         throw new FileSystemException("vfs.impl/pkg-sealed-other-url", pkgName);
                     }
-                } else {
-                    if (isSealed(res)) {
-                        throw new FileSystemException("vfs.impl/pkg-sealing-unsealed", pkgName);
-                    }
+                } else if (isSealed(res)) {
+                    throw new FileSystemException("vfs.impl/pkg-sealing-unsealed", pkgName);
                 }
             } else {
                 definePackage(pkgName, res);
@@ -183,14 +164,6 @@ public class VFSClassLoader extends SecureClassLoader {
         final Certificate[] certs = res.getFileObject().getContent().getCertificates();
         final CodeSource cs = new CodeSource(url, certs);
         return defineClass(name, bytes, 0, bytes.length, cs);
-    }
-
-    /**
-     * Returns true if the we should seal the package where res resides.
-     */
-    private boolean isSealed(final Resource res) throws FileSystemException {
-        final String sealed = res.getPackageAttribute(Attributes.Name.SEALED);
-        return "true".equalsIgnoreCase(sealed);
     }
 
     /**
@@ -213,6 +186,78 @@ public class VFSClassLoader extends SecureClassLoader {
         }
 
         return definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+    }
+
+    /**
+     * Finds and loads the class with the specified name from the search path.
+     *
+     * @throws ClassNotFoundException if the class is not found.
+     */
+    @Override
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        try {
+            final String path = name.replace('.', '/').concat(".class");
+            final Resource res = loadResource(path);
+            if (res == null) {
+                throw new ClassNotFoundException(name);
+            }
+            return defineClass(name, res);
+        } catch (final IOException ioe) {
+            throw new ClassNotFoundException(name, ioe);
+        }
+    }
+
+    /**
+     * Finds the resource with the specified name from the search path. This returns null if the resource is not found.
+     *
+     * @param name The resource name.
+     * @return The URL that matches the resource.
+     */
+    @Override
+    protected URL findResource(final String name) {
+        try {
+            final Resource res = loadResource(name);
+            if (res != null) {
+                return res.getURL();
+            }
+            return null;
+        } catch (final Exception ignored) {
+            return null; // TODO: report?
+        }
+    }
+
+    /**
+     * Returns an Enumeration of all the resources in the search path with the specified name.
+     * <p>
+     * Gets called from {@link ClassLoader#getResources(String)} after parent class loader was questioned.
+     *
+     * @param name The resources to find.
+     * @return An Enumeration of the resources associated with the name.
+     * @throws FileSystemException if an error occurs.
+     */
+    @Override
+    protected Enumeration<URL> findResources(final String name) throws IOException {
+        final List<URL> result = new ArrayList<>(2);
+
+        for (final FileObject baseFile : resources) {
+            try (FileObject file = baseFile.resolveFile(name, NameScope.DESCENDENT_OR_SELF)) {
+                if (FileObjectUtils.exists(file)) {
+                    result.add(new Resource(name, baseFile, file).getURL());
+                }
+            }
+        }
+
+        return Collections.enumeration(result);
+    }
+
+    /**
+     * Provide access to the file objects this class loader represents.
+     *
+     * @return An array of FileObjects.
+     * @since 2.0
+     */
+    public FileObject[] getFileObjects() {
+        return resources.toArray(FileObject.EMPTY_ARRAY);
     }
 
     /**
@@ -252,73 +297,11 @@ public class VFSClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Copies the permissions from src to dest.
-     *
-     * @param src The source PermissionCollection.
-     * @param dest The destination PermissionCollection.
+     * Returns true if the we should seal the package where res resides.
      */
-    protected void copyPermissions(final PermissionCollection src, final PermissionCollection dest) {
-        for (final Enumeration<Permission> elem = src.elements(); elem.hasMoreElements();) {
-            final Permission permission = elem.nextElement();
-            dest.add(permission);
-        }
-    }
-
-    /**
-     * Does a reverse lookup to find the FileObject when we only have the URL.
-     */
-    private FileObject lookupFileObject(final String name) {
-        final Iterator<FileObject> it = resources.iterator();
-        while (it.hasNext()) {
-            final FileObject object = it.next();
-            if (name.equals(object.getName().getURI())) {
-                return object;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Finds the resource with the specified name from the search path. This returns null if the resource is not found.
-     *
-     * @param name The resource name.
-     * @return The URL that matches the resource.
-     */
-    @Override
-    protected URL findResource(final String name) {
-        try {
-            final Resource res = loadResource(name);
-            if (res != null) {
-                return res.getURL();
-            }
-            return null;
-        } catch (final Exception ignored) {
-            return null; // TODO: report?
-        }
-    }
-
-    /**
-     * Returns an Enumeration of all the resources in the search path with the specified name.
-     * <p>
-     * Gets called from {@link ClassLoader#getResources(String)} after parent class loader was questioned.
-     *
-     * @param name The resources to find.
-     * @return An Enumeration of the resources associated with the name.
-     * @throws FileSystemException if an error occurs.
-     */
-    @Override
-    protected Enumeration<URL> findResources(final String name) throws IOException {
-        final List<URL> result = new ArrayList<>(2);
-
-        for (final FileObject baseFile : resources) {
-            try (final FileObject file = baseFile.resolveFile(name, NameScope.DESCENDENT_OR_SELF)) {
-                if (FileObjectUtils.exists(file)) {
-                    result.add(new Resource(name, baseFile, file).getURL());
-                }
-            }
-        }
-
-        return Collections.enumeration(result);
+    private boolean isSealed(final Resource res) throws FileSystemException {
+        final String sealed = res.getPackageAttribute(Attributes.Name.SEALED);
+        return "true".equalsIgnoreCase(sealed);
     }
 
     /**
@@ -330,10 +313,22 @@ public class VFSClassLoader extends SecureClassLoader {
      */
     private Resource loadResource(final String name) throws FileSystemException {
         for (final FileObject baseFile : resources) {
-            try (final FileObject file = baseFile.resolveFile(name, NameScope.DESCENDENT_OR_SELF)) {
+            try (FileObject file = baseFile.resolveFile(name, NameScope.DESCENDENT_OR_SELF)) {
                 if (FileObjectUtils.exists(file)) {
                     return new Resource(name, baseFile, file);
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Does a reverse lookup to find the FileObject when we only have the URL.
+     */
+    private FileObject lookupFileObject(final String name) {
+        for (final FileObject object : resources) {
+            if (name.equals(object.getName().getURI())) {
+                return object;
             }
         }
         return null;

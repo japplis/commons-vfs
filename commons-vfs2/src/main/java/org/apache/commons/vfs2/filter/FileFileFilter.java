@@ -45,10 +45,10 @@ import org.apache.commons.vfs2.FileType;
  */
 public class FileFileFilter implements FileFilter, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     /** Singleton instance of file filter. */
     public static final FileFilter FILE = new FileFileFilter();
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Restrictive constructor.
@@ -59,14 +59,14 @@ public class FileFileFilter implements FileFilter, Serializable {
     /**
      * Checks to see if the file is a file.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return true if the file is a file
      * @throws FileSystemException Thrown for file system errors.
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) throws FileSystemException {
-        return fileInfo.getFile().getType() == FileType.FILE;
+    public boolean accept(final FileSelectInfo fileSelectInfo) throws FileSystemException {
+        return fileSelectInfo.getFile().getType() == FileType.FILE;
     }
 
 }

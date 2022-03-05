@@ -16,6 +16,7 @@
  */
 package org.apache.commons.vfs2.provider.res;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -38,6 +39,12 @@ public class ResourceFileNameParser extends GenericFileNameParser {
     }
 
     @Override
+    protected FileName createFileName(final String scheme, final String rootFile, final String path,
+            final FileType type) {
+        return new ResourceFileName(scheme, path, type);
+    }
+
+    @Override
     protected String extractRootPrefix(final String uri, final StringBuilder name) throws FileSystemException {
         // Resource URI (as used by ClassLoader.getResource()) are assumed to be absolute despite
         // lacking a leading '/'. All leading '/' will be stripped from the name.
@@ -50,16 +57,10 @@ public class ResourceFileNameParser extends GenericFileNameParser {
             name.delete(0, index);
         }
 
-        if (name.length() == 0) {
+        if (StringUtils.isEmpty(name)) {
             throw new FileSystemException("vfs.provider.res/not-valid-resource-location.error", uri);
         }
 
         return "/";
-    }
-
-    @Override
-    protected FileName createFileName(final String scheme, final String rootFile, final String path,
-            final FileType type) {
-        return new ResourceFileName(scheme, path, type);
     }
 }

@@ -16,8 +16,11 @@
  */
 package org.apache.commons.vfs2;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Check FileSystemOptions.
@@ -25,6 +28,43 @@ import org.junit.Test;
  * @since 2.1
  */
 public class FileSystemOptionsTest {
+
+    public static class JUnitConfigBuilder extends FileSystemConfigBuilder {
+        private abstract static class JUnitFS implements FileSystem {
+        }
+
+        private static final JUnitConfigBuilder BUILDER = new JUnitConfigBuilder();
+
+        public static JUnitConfigBuilder getInstance() {
+            return BUILDER;
+        }
+
+        @Override
+        protected Class<? extends FileSystem> getConfigClass() {
+            return JUnitFS.class;
+        }
+
+        public void setId(final FileSystemOptions opts, final String id) {
+            setParam(opts, "id", id);
+        }
+
+        public void setNames(final FileSystemOptions opts, final String[] names) {
+            setParam(opts, "names", names);
+        }
+    }
+
+    @Test
+    public void testClone() {
+        final FileSystemOptions fileSystemOptions = new FileSystemOptions();
+        assertEquals(fileSystemOptions.getClass(), fileSystemOptions.clone().getClass());
+        assertEquals(0, ((FileSystemOptions) fileSystemOptions.clone()).size());
+        fileSystemOptions.setOption(FileSystem.class, "key1", "value1");
+        assertEquals(1, ((FileSystemOptions) fileSystemOptions.clone()).size());
+        final FileSystemOptions clone = (FileSystemOptions) fileSystemOptions.clone();
+        assertEquals("value1", clone.getOption(FileSystem.class, "key1"));
+        fileSystemOptions.setOption(FileSystem.class, "key2", "value2");
+        assertNull(clone.getOption(FileSystem.class, "key2"));
+    }
 
     @Test
     public void testEqualsHashCodeAndCompareTo() {
@@ -35,45 +75,21 @@ public class FileSystemOptionsTest {
         final FileSystemOptions actual = new FileSystemOptions();
         builder.setId(actual, "Test");
 
-        Assert.assertEquals(expected, actual);
-        Assert.assertEquals(0, actual.compareTo(expected));
-        Assert.assertEquals(expected.hashCode(), actual.hashCode());
+        assertEquals(expected, actual);
+        assertEquals(0, actual.compareTo(expected));
+        assertEquals(expected.hashCode(), actual.hashCode());
 
-        builder.setNames(expected, new String[] { "A", "B", "C" });
+        builder.setNames(expected, new String[] {"A", "B", "C"});
 
-        Assert.assertNotEquals(expected, actual);
-        Assert.assertEquals(-1, actual.compareTo(expected));
-        Assert.assertNotEquals(expected.hashCode(), actual.hashCode());
+        assertNotEquals(expected, actual);
+        assertEquals(-1, actual.compareTo(expected));
+        assertNotEquals(expected.hashCode(), actual.hashCode());
 
-        builder.setNames(actual, new String[] { "A", "B", "C" });
+        builder.setNames(actual, new String[] {"A", "B", "C"});
 
-        Assert.assertEquals(expected, actual);
-        Assert.assertEquals(0, actual.compareTo(expected));
-        Assert.assertEquals(expected.hashCode(), actual.hashCode());
-    }
-
-    public static class JUnitConfigBuilder extends FileSystemConfigBuilder {
-        private static final JUnitConfigBuilder BUILDER = new JUnitConfigBuilder();
-
-        public static JUnitConfigBuilder getInstance() {
-            return BUILDER;
-        }
-
-        public void setId(final FileSystemOptions opts, final String id) {
-            setParam(opts, "id", id);
-        }
-
-        public void setNames(final FileSystemOptions opts, final String[] names) {
-            setParam(opts, "names", names);
-        }
-
-        @Override
-        protected Class<? extends FileSystem> getConfigClass() {
-            return JUnitFS.class;
-        }
-
-        private abstract static class JUnitFS implements FileSystem {
-        }
+        assertEquals(expected, actual);
+        assertEquals(0, actual.compareTo(expected));
+        assertEquals(expected.hashCode(), actual.hashCode());
     }
 
 }

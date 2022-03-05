@@ -17,7 +17,11 @@
 package org.apache.commons.vfs2;
 
 import java.io.Closeable;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.vfs2.operations.FileOperations;
@@ -83,7 +87,7 @@ import org.apache.commons.vfs2.operations.FileOperations;
  *
  * <p>
  * Files may be sorted using {@link java.util.Arrays#sort(Object[]) Arrays.sort()} and
- * {@link java.util.Collections#sort(List) Collections.sort()}.
+ * {@link List#sort(Comparator) List.sort()}.
  * </p>
  *
  * @see FileSystemManager
@@ -91,6 +95,13 @@ import org.apache.commons.vfs2.operations.FileOperations;
  * @see FileName
  */
 public interface FileObject extends Comparable<FileObject>, Iterable<FileObject>, Closeable {
+
+    /**
+     * An empty immutable {@code FileObject} array.
+     *
+     * @since 2.8.0
+     */
+    FileObject[] EMPTY_ARRAY = {};
 
     /**
      * Queries the file if it is possible to rename it to newfile.
@@ -276,6 +287,16 @@ public interface FileObject extends Comparable<FileObject>, Iterable<FileObject>
     FileObject getParent() throws FileSystemException;
 
     /**
+     * Returns a Path representing this file.
+     *
+     * @return the Path for the file.
+     * @since 2.7.0
+     */
+    default Path getPath() {
+        return Paths.get(getURI());
+    }
+
+    /**
      * Returns the receiver as a URI String for public display, like, without a password.
      *
      * @return A URI String without a password, never {@code null}.
@@ -289,6 +310,16 @@ public interface FileObject extends Comparable<FileObject>, Iterable<FileObject>
      * @throws FileSystemException On error determining the file's type.
      */
     FileType getType() throws FileSystemException;
+
+    /**
+     * Returns a URI representing this file.
+     *
+     * @return the URI for the file.
+     * @since 2.7.0
+     */
+    default URI getURI() {
+        return URI.create(URI.create(getName().getURI()).toASCIIString());
+    }
 
     /**
      * Returns a URL representing this file.
@@ -365,6 +396,7 @@ public interface FileObject extends Comparable<FileObject>, Iterable<FileObject>
      * @throws FileSystemException On error determining if this file exists.
      * @since 2.4
      */
+    @SuppressWarnings("unused") // FileSystemException actually thrown in implementations.
     default boolean isSymbolicLink() throws FileSystemException {
         return false;
     }
@@ -372,7 +404,7 @@ public interface FileObject extends Comparable<FileObject>, Iterable<FileObject>
     /**
      * Determines if this file can be written to.
      *
-     * @return {@code true} if this file is writeable, {@code false} if not.
+     * @return {@code true} if this file is writable, {@code false} if not.
      * @throws FileSystemException On error determining if this file exists.
      */
     boolean isWriteable() throws FileSystemException;

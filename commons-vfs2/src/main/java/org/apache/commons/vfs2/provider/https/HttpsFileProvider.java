@@ -23,8 +23,10 @@ import org.apache.commons.vfs2.provider.http.HttpFileProvider;
  */
 public class HttpsFileProvider extends HttpFileProvider {
 
+    /**
+     * Constructs a new instance.
+     */
     public HttpsFileProvider() {
-        super();
         setFileNameParser(HttpsFileNameParser.getInstance());
     }
 }

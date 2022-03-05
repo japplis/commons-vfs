@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.HashSet;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -37,33 +38,12 @@ public class TarFileObject extends AbstractFileObject<TarFileSystem> {
     private FileType type;
 
     protected TarFileObject(final AbstractFileName name, final TarArchiveEntry entry, final TarFileSystem fs,
-            final boolean tarExists) throws FileSystemException {
+            final boolean tarExists) {
         super(name, fs);
         setTarEntry(entry);
         if (!tarExists) {
             type = FileType.IMAGINARY;
         }
-    }
-
-    /**
-     * Sets the details for this file object.
-     *
-     * Consider this method package private. TODO Might be made package private in the next major version.
-     *
-     * @param entry Tar archive entry.
-     */
-    protected void setTarEntry(final TarArchiveEntry entry) {
-        if (this.entry != null) {
-            return;
-        }
-
-        if (entry == null || entry.isDirectory()) {
-            type = FileType.FOLDER;
-        } else {
-            type = FileType.FILE;
-        }
-
-        this.entry = entry;
     }
 
     /**
@@ -76,14 +56,45 @@ public class TarFileObject extends AbstractFileObject<TarFileSystem> {
     }
 
     /**
-     * Determines if this file can be written to.
-     *
-     * @return {@code true} if this file is writeable, {@code false} if not.
-     * @throws FileSystemException if an error occurs.
+     * Returns the size of the file content (in bytes). Is only called if {@link #doGetType} returns
+     * {@link FileType#FILE}.
      */
     @Override
-    public boolean isWriteable() throws FileSystemException {
-        return false;
+    protected long doGetContentSize() {
+        if (entry == null) {
+            return 0;
+        }
+
+        return entry.getSize();
+    }
+
+    /**
+     * Creates an input stream to read the file content from. Is only called if {@link #doGetType} returns
+     * {@link FileType#FILE}. The input stream returned by this method is guaranteed to be closed before this method is
+     * called again.
+     */
+    @Override
+    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
+        // VFS-210: zip allows to gather an input stream even from a directory and will
+        // return -1 on the first read. getType should not be expensive and keeps the tests
+        // running
+        if (!getType().hasContent()) {
+            throw new FileSystemException("vfs.provider/read-not-file.error", getName());
+        }
+
+        return getAbstractFileSystem().getInputStream(entry);
+    }
+
+    /**
+     * Returns the last modified time of this file.
+     */
+    @Override
+    protected long doGetLastModifiedTime() throws Exception {
+        if (entry == null) {
+            return 0;
+        }
+
+        return entry.getModTime().getTime();
     }
 
     /**
@@ -108,48 +119,38 @@ public class TarFileObject extends AbstractFileObject<TarFileSystem> {
             throw new RuntimeException(e);
         }
 
-        return children.toArray(new String[children.size()]);
+        return children.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
     /**
-     * Returns the size of the file content (in bytes). Is only called if {@link #doGetType} returns
-     * {@link FileType#FILE}.
+     * Determines if this file can be written to.
+     *
+     * @return {@code true} if this file is writable, {@code false} if not.
+     * @throws FileSystemException if an error occurs.
      */
     @Override
-    protected long doGetContentSize() {
-        if (entry == null) {
-            return 0;
-        }
-
-        return entry.getSize();
+    public boolean isWriteable() throws FileSystemException {
+        return false;
     }
 
     /**
-     * Returns the last modified time of this file.
+     * Sets the details for this file object.
+     *
+     * Consider this method package private. TODO Might be made package private in the next major version.
+     *
+     * @param entry Tar archive entry.
      */
-    @Override
-    protected long doGetLastModifiedTime() throws Exception {
-        if (entry == null) {
-            return 0;
+    protected void setTarEntry(final TarArchiveEntry entry) {
+        if (this.entry != null) {
+            return;
         }
 
-        return entry.getModTime().getTime();
-    }
-
-    /**
-     * Creates an input stream to read the file content from. Is only called if {@link #doGetType} returns
-     * {@link FileType#FILE}. The input stream returned by this method is guaranteed to be closed before this method is
-     * called again.
-     */
-    @Override
-    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
-        // VFS-210: zip allows to gather an input stream even from a directory and will
-        // return -1 on the first read. getType should not be expensive and keeps the tests
-        // running
-        if (!getType().hasContent()) {
-            throw new FileSystemException("vfs.provider/read-not-file.error", getName());
+        if (entry == null || entry.isDirectory()) {
+            type = FileType.FOLDER;
+        } else {
+            type = FileType.FILE;
         }
 
-        return getAbstractFileSystem().getInputStream(entry);
+        this.entry = entry;
     }
 }

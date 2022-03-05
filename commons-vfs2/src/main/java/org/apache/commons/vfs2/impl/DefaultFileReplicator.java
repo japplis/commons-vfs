@@ -39,16 +39,18 @@ public class DefaultFileReplicator extends AbstractVfsComponent implements FileR
     private static final Log log = LogFactory.getLog(DefaultFileReplicator.class);
     private static final int MASK = 0xffff;
 
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
 
-    private static final char[] TMP_RESERVED_CHARS = new char[] { '?', '/', '\\', ' ', '&', '"', '\'', '*', '#', ';',
-            ':', '<', '>', '|' };
+    private static final char[] TMP_RESERVED_CHARS = {'?', '/', '\\', ' ', '&', '"', '\'', '*', '#', ';', ':', '<', '>', '|'};
 
     private final ArrayList<Object> copies = new ArrayList<>();
     private long filecount;
     private File tempDir;
     private boolean tempDirMessageLogged;
 
+    /**
+     * Constructs a new instance.
+     */
     public DefaultFileReplicator() {
     }
 
@@ -92,16 +94,18 @@ public class DefaultFileReplicator extends AbstractVfsComponent implements FileR
     public void close() {
         // Delete the temporary files
         synchronized (copies) {
-            while (copies.size() > 0) {
-                final File file = (File) removeFile();
-                deleteFile(file);
+            while (!copies.isEmpty()) {
+                deleteFile((File) removeFile());
             }
         }
 
         // Clean up the temp directory, if it is empty
-        if (tempDir != null && tempDir.exists() && tempDir.list().length == 0) {
-            tempDir.delete();
-            tempDir = null;
+        if (tempDir != null && tempDir.exists()) {
+            final String[] list = tempDir.list();
+            if (list != null && list.length == 0) {
+                tempDir.delete();
+                tempDir = null;
+            }
         }
     }
 
@@ -174,7 +178,7 @@ public class DefaultFileReplicator extends AbstractVfsComponent implements FileR
             tempDir = new File(baseTmpDir, "vfs_cache").getAbsoluteFile();
         }
 
-        filecount = random.nextInt() & MASK;
+        filecount = RANDOM.nextInt() & MASK;
 
         if (!tempDirMessageLogged) {
             final String message = Messages.getString("vfs.impl/temp-dir.debug", tempDir);

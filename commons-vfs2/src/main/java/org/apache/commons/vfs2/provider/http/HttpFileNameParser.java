@@ -28,10 +28,18 @@ public class HttpFileNameParser extends URLFileNameParser {
 
     private static final HttpFileNameParser INSTANCE = new HttpFileNameParser();
 
+    /**
+     * Creates a new instance with the default port 80.
+     */
     public HttpFileNameParser() {
         super(DEFAULT_PORT);
     }
 
+    /**
+     * Gets the singleton instance.
+     *
+     * @return the singleton instance.
+     */
     public static FileNameParser getInstance() {
         return INSTANCE;
     }

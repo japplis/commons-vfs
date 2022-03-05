@@ -47,10 +47,10 @@ public class Webdav4FileProvider extends Http4FileProvider {
      * @deprecated Might be removed in the next major version.
      */
     @Deprecated
-    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = new UserAuthenticationData.Type[] {
+    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = {
             UserAuthenticationData.USERNAME, UserAuthenticationData.PASSWORD };
 
-    /** The capabilities of the WebDAV provider */
+    /** The capabilities of the WebDAV provider. */
     public static final Collection<Capability> DEFAULT_CAPABILITIES =
             Collections.unmodifiableCollection(
                     Arrays.asList(
@@ -69,12 +69,13 @@ public class Webdav4FileProvider extends Http4FileProvider {
                             )
                     );
 
-    /** The capabilities of the WebDAV provider */
+    /** The capabilities of the WebDAV provider. */
     protected static final Collection<Capability> capabilities = DEFAULT_CAPABILITIES;
 
+    /**
+     * Constructs a new instance.
+     */
     public Webdav4FileProvider() {
-        super();
-
         setFileNameParser(Webdav4FileNameParser.getInstance());
     }
 
@@ -97,8 +98,8 @@ public class Webdav4FileProvider extends Http4FileProvider {
         final FileSystemOptions fsOpts = fileSystemOptions == null ? new FileSystemOptions() : fileSystemOptions;
 
         UserAuthenticationData authData = null;
-        HttpClient httpClient = null;
-        HttpClientContext httpClientContext = null;
+        final HttpClient httpClient;
+        final HttpClientContext httpClientContext;
 
         try {
             final Webdav4FileSystemConfigBuilder builder = Webdav4FileSystemConfigBuilder.getInstance();
@@ -113,12 +114,12 @@ public class Webdav4FileProvider extends Http4FileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return Webdav4FileSystemConfigBuilder.getInstance();
+    public Collection<Capability> getCapabilities() {
+        return capabilities;
     }
 
     @Override
-    public Collection<Capability> getCapabilities() {
-        return capabilities;
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return Webdav4FileSystemConfigBuilder.getInstance();
     }
 }

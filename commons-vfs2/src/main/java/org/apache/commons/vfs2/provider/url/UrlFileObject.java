@@ -47,6 +47,16 @@ public class UrlFileObject extends AbstractFileObject<UrlFileSystem> {
         super(fileName, fs);
     }
 
+    protected URL createURL(final FileName name) throws MalformedURLException, FileSystemException, URIException {
+        if (name instanceof URLFileName) {
+            final URLFileName urlName = (URLFileName) getName();
+
+            // TODO: charset
+            return new URL(urlName.getURIEncoded(null));
+        }
+        return new URL(getName().getURI());
+    }
+
     /**
      * Attaches this file object to its file resource. This method is called before any of the doBlah() or onBlah()
      * methods. Sub-classes can use this method to perform lazy initialization.
@@ -59,14 +69,34 @@ public class UrlFileObject extends AbstractFileObject<UrlFileSystem> {
         }
     }
 
-    protected URL createURL(final FileName name) throws MalformedURLException, FileSystemException, URIException {
-        if (name instanceof URLFileName) {
-            final URLFileName urlName = (URLFileName) getName();
-
-            // TODO: charset
-            return new URL(urlName.getURIEncoded(null));
+    /**
+     * Returns the size of the file content (in bytes).
+     */
+    @Override
+    protected long doGetContentSize() throws Exception {
+        final URLConnection conn = url.openConnection();
+        try (InputStream in = conn.getInputStream()) {
+            return conn.getContentLength();
         }
-        return new URL(getName().getURI());
+    }
+
+    /**
+     * Creates an input stream to read the file content from.
+     */
+    @Override
+    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
+        return url.openStream();
+    }
+
+    /**
+     * Returns the last modified time of this file.
+     */
+    @Override
+    protected long doGetLastModifiedTime() throws Exception {
+        final URLConnection conn = url.openConnection();
+        try (InputStream in = conn.getInputStream()) {
+            return conn.getLastModified();
+        }
     }
 
     /**
@@ -77,8 +107,7 @@ public class UrlFileObject extends AbstractFileObject<UrlFileSystem> {
         try {
             // Attempt to connect & check status
             final URLConnection conn = url.openConnection();
-            final InputStream in = conn.getInputStream();
-            try {
+            try (InputStream in = conn.getInputStream()) {
                 if (conn instanceof HttpURLConnection) {
                     final int status = ((HttpURLConnection) conn).getResponseCode();
                     // 200 is good, maybe add more later...
@@ -88,39 +117,9 @@ public class UrlFileObject extends AbstractFileObject<UrlFileSystem> {
                 }
 
                 return FileType.FILE;
-            } finally {
-                in.close();
             }
         } catch (final FileNotFoundException e) {
             return FileType.IMAGINARY;
-        }
-    }
-
-    /**
-     * Returns the size of the file content (in bytes).
-     */
-    @Override
-    protected long doGetContentSize() throws Exception {
-        final URLConnection conn = url.openConnection();
-        final InputStream in = conn.getInputStream();
-        try {
-            return conn.getContentLength();
-        } finally {
-            in.close();
-        }
-    }
-
-    /**
-     * Returns the last modified time of this file.
-     */
-    @Override
-    protected long doGetLastModifiedTime() throws Exception {
-        final URLConnection conn = url.openConnection();
-        final InputStream in = conn.getInputStream();
-        try {
-            return conn.getLastModified();
-        } finally {
-            in.close();
         }
     }
 
@@ -130,13 +129,5 @@ public class UrlFileObject extends AbstractFileObject<UrlFileSystem> {
     @Override
     protected String[] doListChildren() throws Exception {
         throw new FileSystemException("Not implemented.");
-    }
-
-    /**
-     * Creates an input stream to read the file content from.
-     */
-    @Override
-    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
-        return url.openStream();
     }
 }

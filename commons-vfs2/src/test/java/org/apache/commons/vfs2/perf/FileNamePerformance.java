@@ -23,6 +23,7 @@ import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
 
 public class FileNamePerformance {
+
     private final static int NUOF_RESOLVES = 100000;
 
     public static void main(final String[] args) throws FileSystemException {
@@ -38,6 +39,21 @@ public class FileNamePerformance {
         testFiles(mgr);
     }
 
+    private static void testChildren(final FileObject root) throws FileSystemException {
+        for (int i = 0; i < 10; i++) {
+            // warmup jvm
+            root.resolveFile("/many/path/elements/with%25esc/any%25where/to/file.txt");
+        }
+
+        final long startMillis = System.currentTimeMillis();
+        for (int i = 0; i < NUOF_RESOLVES; i++) {
+            root.resolveFile("/many/path/elements/with%25esc/any%25where/to/file.txt");
+        }
+        final long endMillis = System.currentTimeMillis();
+
+        System.err.println("time to resolve " + NUOF_RESOLVES + " children: " + (endMillis - startMillis) + " milliseconds");
+    }
+
     private static void testFiles(final FileSystemManager mgr) throws FileSystemException {
         for (int i = 0; i < 10; i++) {
             // warmup jvm
@@ -45,29 +61,14 @@ public class FileNamePerformance {
                     "smb://HOME\\vfsusr:vfs%2f%25\\te:st@10.0.1.54/vfsusr/many/path/elements/with%25esc/any%25where/to/file.txt");
         }
 
-        final long start = System.currentTimeMillis();
+        final long startMillis = System.currentTimeMillis();
         for (int i = 0; i < NUOF_RESOLVES; i++) {
             mgr.resolveFile(
                     "smb://HOME\\vfsusr:vfs%2f%25\\te:st@10.0.1.54/vfsusr/many/path/elements/with%25esc/any%25where/to/file.txt");
         }
-        final long end = System.currentTimeMillis();
+        final long endMillis = System.currentTimeMillis();
 
-        System.err.println("time to resolve " + NUOF_RESOLVES + " files: " + (end - start) + "ms");
-    }
-
-    private static void testChildren(final FileObject root) throws FileSystemException {
-        for (int i = 0; i < 10; i++) {
-            // warmup jvm
-            root.resolveFile("/many/path/elements/with%25esc/any%25where/to/file.txt");
-        }
-
-        final long start = System.currentTimeMillis();
-        for (int i = 0; i < NUOF_RESOLVES; i++) {
-            root.resolveFile("/many/path/elements/with%25esc/any%25where/to/file.txt");
-        }
-        final long end = System.currentTimeMillis();
-
-        System.err.println("time to resolve " + NUOF_RESOLVES + " children: " + (end - start) + "ms");
+        System.err.println("time to resolve " + NUOF_RESOLVES + " files: " + (endMillis - startMillis) + " milliseconds");
     }
 
     private static void testNames(final FileSystemManager mgr, final FileName rootName) throws FileSystemException {
@@ -76,12 +77,13 @@ public class FileNamePerformance {
             mgr.resolveName(rootName, "/many/path/elements/with%25esc/any%25where/to/file.txt");
         }
 
-        final long start = System.currentTimeMillis();
+        final long startMillis = System.currentTimeMillis();
         for (int i = 0; i < NUOF_RESOLVES; i++) {
             mgr.resolveName(rootName, "/many/path/elements/with%25esc/any%25where/to/file.txt");
         }
-        final long end = System.currentTimeMillis();
+        final long endMillis = System.currentTimeMillis();
 
-        System.err.println("time to resolve " + NUOF_RESOLVES + " names: " + (end - start) + "ms");
+        System.err.println("time to resolve " + NUOF_RESOLVES + " names: " + (endMillis - startMillis) + " milliseconds");
     }
+
 }

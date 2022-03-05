@@ -18,11 +18,12 @@ package org.apache.commons.vfs2.provider.local;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -49,10 +50,8 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
      * @param fileSystem the file system this file belongs to.
      * @param rootFile the root file for the file system.
      * @param name the file name on this file system.
-     * @throws FileSystemException if an error occurs.
      */
-    protected LocalFile(final LocalFileSystem fileSystem, final String rootFile, final AbstractFileName name)
-            throws FileSystemException {
+    protected LocalFile(final LocalFileSystem fileSystem, final String rootFile, final AbstractFileName name) {
         super(name, fileSystem);
         this.rootFile = rootFile;
     }
@@ -100,7 +99,7 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
     }
 
     /**
-     * Creates an input stream to read the content from.
+     * Creates an input stream to read the file contents.
      */
     @Override
     protected InputStream doGetInputStream(final int bufferSize) throws Exception {
@@ -117,7 +116,7 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
         try {
             return Files.getLastModifiedTime(file.toPath()).toMillis();
         } catch (final IOException e) {
-            throw new FileSystemException(file.toString(), e);
+            throw new FileSystemException("vfs.provider/get-last-modified.error", file, e);
         }
     }
 
@@ -125,8 +124,13 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
      * Creates an output stream to write the file content to.
      */
     @Override
-    protected OutputStream doGetOutputStream(final boolean bAppend) throws Exception {
-        return new FileOutputStream(file.getPath(), bAppend);
+    protected OutputStream doGetOutputStream(final boolean append) throws Exception {
+        // TODO Reuse Apache Commons IO
+        // @formatter:off
+        return Files.newOutputStream(file.toPath(), append ?
+            new OpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.APPEND} :
+            new OpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING});
+        // @formatter:on
     }
 
     @Override
@@ -138,24 +142,14 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
      * Returns the file's type.
      */
     @Override
-    protected FileType doGetType() throws Exception {
-        // JDK BUG: 6192331
-        // if (!file.exists())
-        if (!file.exists() && file.length() < 1) {
+    protected FileType doGetType() {
+        if (!file.exists()) {
             return FileType.IMAGINARY;
         }
-
         if (file.isDirectory()) {
             return FileType.FOLDER;
         }
-
-        // In doubt, treat an existing file as file
-        // if (file.isFile())
-        // {
         return FileType.FILE;
-        // }
-
-        // throw new FileSystemException("vfs.provider.local/get-type.error", file);
     }
 
     /**
@@ -201,20 +195,21 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
     }
 
     /**
-     * Determines if this file can be written to.
-     */
-    @Override
-    protected boolean doIsWriteable() throws FileSystemException {
-        return file.canWrite();
-    }
-
-    /**
      * Determines if this file is a symbolic link.
+     *
      * @since 2.4
      */
     @Override
     protected boolean doIsSymbolicLink() throws FileSystemException {
         return Files.isSymbolicLink(file.toPath());
+    }
+
+    /**
+     * Determines if this file can be written to.
+     */
+    @Override
+    protected boolean doIsWriteable() throws FileSystemException {
+        return file.canWrite();
     }
 
     /**
@@ -263,7 +258,7 @@ public class LocalFile extends AbstractFileObject<LocalFileSystem> {
     }
 
     /**
-     * Returns the local file that this file object represents.
+     * Gets the local file that this file object represents.
      *
      * @return the local file that this file object represents.
      */

@@ -14,14 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.vfs2;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.file.Paths;
 
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VFSTest {
 
@@ -37,18 +40,31 @@ public class VFSTest {
             VFS.setManager(fileSystemManager);
             VFS.setManager(null);
         }
-        Assert.assertNotNull(VFS.getManager());
-        Assert.assertFalse(VFS.getManager().resolveFile(Paths.get("DoesNotExist.not").toUri()).exists());
+        assertNotNull(VFS.getManager());
+        assertFalse(VFS.getManager().resolveFile(Paths.get("DoesNotExist.not").toUri()).exists());
     }
 
     @Test
     public void test_setManager() throws FileSystemException {
         final StandardFileSystemManager fileSystemManager = new StandardFileSystemManager();
         VFS.setManager(fileSystemManager);
-        Assert.assertEquals(fileSystemManager, VFS.getManager());
+        assertEquals(fileSystemManager, VFS.getManager());
         // Reset global for other tests
         VFS.setManager(null);
-        Assert.assertNotNull(VFS.getManager());
-        Assert.assertNotEquals(fileSystemManager, VFS.getManager());
+        assertNotNull(VFS.getManager());
+        assertNotEquals(fileSystemManager, VFS.getManager());
     }
+
+    @Test
+    public void testStaticClose() throws FileSystemException {
+        final FileSystemManager manager = VFS.getManager();
+        VFS.close();
+        assertNotEquals(manager, VFS.getManager());
+    }
+    @Test
+    public void testStaticCloseRepeatable() {
+        VFS.close();
+        VFS.close();
+    }
+
 }

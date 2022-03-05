@@ -19,6 +19,7 @@ package org.apache.commons.vfs2.tasks;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.Date;
 
 import org.apache.commons.vfs2.FileContent;
@@ -36,21 +37,46 @@ public class ShowFileTask extends VfsTask {
     private boolean recursive;
 
     /**
+     * Executes the task.
+     *
+     * @throws BuildException if any exception is thrown.
+     */
+    @Override
+    public void execute() throws BuildException {
+        try {
+            try (FileObject file = resolveFile(url)) {
+                log("Details of " + file.getPublicURIString());
+                showFile(file, INDENT);
+            }
+        } catch (final Exception e) {
+            throw new BuildException(e);
+        }
+    }
+
+    /**
+     * Writes the content of the file to Ant log.
+     */
+    private void logContent(final FileObject file, final String prefix) throws Exception {
+        try (FileContent content = file.getContent();
+            InputStream instr = content.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(instr, Charset.defaultCharset()))) {
+            while (true) {
+                final String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                log(prefix + line);
+            }
+        }
+    }
+
+    /**
      * The URL of the file to display.
      *
      * @param url The url of the file.
      */
     public void setFile(final String url) {
         this.url = url;
-    }
-
-    /**
-     * Shows the content. Assumes the content is text, encoded using the platform's default encoding.
-     *
-     * @param showContent true if the content should be shown.
-     */
-    public void setShowContent(final boolean showContent) {
-        this.showContent = showContent;
     }
 
     /**
@@ -63,20 +89,12 @@ public class ShowFileTask extends VfsTask {
     }
 
     /**
-     * Executes the task.
+     * Shows the content. Assumes the content is text, encoded using the platform's default encoding.
      *
-     * @throws BuildException if any exception is thrown.
+     * @param showContent true if the content should be shown.
      */
-    @Override
-    public void execute() throws BuildException {
-        try {
-            try (final FileObject file = resolveFile(url)) {
-                log("Details of " + file.getPublicURIString());
-                showFile(file, INDENT);
-            }
-        } catch (final Exception e) {
-            throw new BuildException(e);
-        }
+    public void setShowContent(final boolean showContent) {
+        this.showContent = showContent;
     }
 
     /**
@@ -98,7 +116,7 @@ public class ShowFileTask extends VfsTask {
         if (file.exists()) {
             final String newPrefix = prefix + INDENT;
             if (file.getType().hasContent()) {
-                try (final FileContent content = file.getContent()) {
+                try (FileContent content = file.getContent()) {
                     log(newPrefix + "Content-Length: " + content.getSize());
                     log(newPrefix + "Last-Modified" + new Date(content.getLastModifiedTime()));
                 }
@@ -116,24 +134,6 @@ public class ShowFileTask extends VfsTask {
                         log(newPrefix + child.getName().getBaseName());
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Writes the content of the file to Ant log.
-     */
-    private void logContent(final FileObject file, final String prefix) throws Exception {
-        try (
-            final InputStream instr = file.getContent().getInputStream();
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(instr)); )
-        {
-            while (true) {
-                final String line = reader.readLine();
-                if (line == null) {
-                    break;
-                }
-                log(prefix + line);
             }
         }
     }

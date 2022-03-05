@@ -28,8 +28,17 @@ import org.apache.commons.vfs2.filter.FileFileFilter;
  * Example for using {@link FileFileFilter}.
  */
 // CHECKSTYLE:OFF Example code
-public class FileFileFilterExample {
+public final class FileFileFilterExample {
+    private FileFileFilterExample() {
+        /* main class not instantiated. */
+    }
 
+    /**
+     * Invokes this example from the command line.
+     *
+     * @param args Arguments TODO
+     * @throws Exception If anything goes wrong.
+     */
     public static void main(final String[] args) throws Exception {
 
         // Example, how to print out a list of the real files within the current
@@ -37,7 +46,7 @@ public class FileFileFilterExample {
         final FileSystemManager fsManager = VFS.getManager();
         final FileObject dir = fsManager.toFileObject(new File("."));
         final FileObject[] files = dir.findFiles(new FileFilterSelector(FileFileFilter.FILE));
-        for (FileObject file : files) {
+        for (final FileObject file : files) {
             System.out.println(file);
         }
     }

@@ -16,9 +16,10 @@
  */
 package org.apache.commons.vfs2.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  */
@@ -37,11 +38,12 @@ public class EncryptDecryptTest {
         assertEquals(source, decrypted);
     }
 
-    @Test(expected=IllegalArgumentException.class)
-    public void testInvalidDecrypt() throws Exception {
+    @Test
+    public void testInvalidDecrypt() {
     	// provider.HostFileNameParser.extractToPath(String, StringBuilder) catches `Exception`
     	final String broken = "91458";
         final Cryptor cryptor = CryptorFactory.getCryptor();
-        /* ignored */ cryptor.decrypt(broken);
+        assertThrows(IllegalArgumentException.class, () -> cryptor.decrypt(broken));
     }
+
 }

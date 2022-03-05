@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
@@ -30,7 +31,6 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.provider.AbstractOriginatingFileProvider;
 import org.apache.commons.vfs2.provider.LocalFileProvider;
 import org.apache.commons.vfs2.provider.UriParser;
-import org.apache.commons.vfs2.util.Os;
 
 /**
  * A file system provider, which uses direct file access.
@@ -49,9 +49,7 @@ public class DefaultLocalFileProvider extends AbstractOriginatingFileProvider im
      * Constructs a new provider.
      */
     public DefaultLocalFileProvider() {
-        super();
-
-        if (Os.isFamily(Os.OS_FAMILY_WINDOWS)) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             setFileNameParser(new WindowsFileNameParser());
         } else {
             setFileNameParser(new GenericFileNameParser());
@@ -59,14 +57,27 @@ public class DefaultLocalFileProvider extends AbstractOriginatingFileProvider im
     }
 
     /**
-     * Determines if a name is an absolute file name.
-     *
-     * @param name The file name.
-     * @return true if the name is absolute, false otherwise.
+     * Creates the file system.
      */
     @Override
-    public boolean isAbsoluteLocalName(final String name) {
-        return ((LocalFileNameParser) getFileNameParser()).isAbsoluteName(name);
+    protected FileSystem doCreateFileSystem(final FileName name, final FileSystemOptions fileSystemOptions)
+            throws FileSystemException {
+        // Create the file system
+        final LocalFileName rootName = (LocalFileName) name;
+        return new LocalFileSystem(rootName, rootName.getRootFile(), fileSystemOptions);
+    }
+
+    /**
+     * Finds a local file.
+     *
+     * @param file The File to locate.
+     * @return the located FileObject.
+     * @throws FileSystemException if an error occurs.
+     */
+    @Override
+    public FileObject findLocalFile(final File file) throws FileSystemException {
+        return findLocalFile(UriParser.encode(file.getAbsolutePath()));
+        // return findLocalFile(file.getAbsolutePath());
     }
 
     /**
@@ -86,32 +97,19 @@ public class DefaultLocalFileProvider extends AbstractOriginatingFileProvider im
         return findFile(fileName, null);
     }
 
-    /**
-     * Finds a local file.
-     *
-     * @param file The File to locate.
-     * @return the located FileObject.
-     * @throws FileSystemException if an error occurs.
-     */
-    @Override
-    public FileObject findLocalFile(final File file) throws FileSystemException {
-        return findLocalFile(UriParser.encode(file.getAbsolutePath()));
-        // return findLocalFile(file.getAbsolutePath());
-    }
-
-    /**
-     * Creates the file system.
-     */
-    @Override
-    protected FileSystem doCreateFileSystem(final FileName name, final FileSystemOptions fileSystemOptions)
-            throws FileSystemException {
-        // Create the file system
-        final LocalFileName rootName = (LocalFileName) name;
-        return new LocalFileSystem(rootName, rootName.getRootFile(), fileSystemOptions);
-    }
-
     @Override
     public Collection<Capability> getCapabilities() {
         return capabilities;
+    }
+
+    /**
+     * Determines if a name is an absolute file name.
+     *
+     * @param name The file name.
+     * @return true if the name is absolute, false otherwise.
+     */
+    @Override
+    public boolean isAbsoluteLocalName(final String name) {
+        return ((LocalFileNameParser) getFileNameParser()).isAbsoluteName(name);
     }
 }

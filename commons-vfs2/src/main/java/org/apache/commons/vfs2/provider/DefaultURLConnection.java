@@ -30,11 +30,17 @@ import org.apache.commons.vfs2.FileSystemException;
  */
 public final class DefaultURLConnection extends URLConnection {
 
-    private final FileContent content;
+    private final FileContent fileContent;
 
-    public DefaultURLConnection(final URL url, final FileContent content) {
+    /**
+     * Constructs a new instance.
+     *
+     * @param url The URL to connect.
+     * @param fileContent The URL fileContent.
+     */
+    public DefaultURLConnection(final URL url, final FileContent fileContent) {
         super(url);
-        this.content = content;
+        this.fileContent = fileContent;
     }
 
     @Override
@@ -43,28 +49,18 @@ public final class DefaultURLConnection extends URLConnection {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
-        return content.getInputStream();
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        return content.getOutputStream();
-    }
-
-    @Override
-    public long getLastModified() {
+    public String getContentEncoding() {
         try {
-            return content.getLastModifiedTime();
-        } catch (final FileSystemException ignored) {
-            return -1; // TODO: report?
+            return fileContent.getContentInfo().getContentEncoding();
+        } catch (final FileSystemException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
     @Override
     public int getContentLength() {
         try {
-            return (int) content.getSize();
+            return (int) fileContent.getSize();
         } catch (final FileSystemException fse) {
             return -1; // TODO: report?
         }
@@ -73,19 +69,29 @@ public final class DefaultURLConnection extends URLConnection {
     @Override
     public String getContentType() {
         try {
-            return content.getContentInfo().getContentType();
+            return fileContent.getContentInfo().getContentType();
         } catch (final FileSystemException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
     @Override
-    public String getContentEncoding() {
+    public InputStream getInputStream() throws IOException {
+        return fileContent.getInputStream();
+    }
+
+    @Override
+    public long getLastModified() {
         try {
-            return content.getContentInfo().getContentEncoding();
-        } catch (final FileSystemException e) {
-            throw new RuntimeException(e.getMessage());
+            return fileContent.getLastModifiedTime();
+        } catch (final FileSystemException ignored) {
+            return -1; // TODO: report?
         }
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return fileContent.getOutputStream();
     }
 
     /*

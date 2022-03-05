@@ -33,9 +33,13 @@ import org.apache.commons.vfs2.provider.LayeredFileName;
  */
 public abstract class CompressedFileFileProvider extends AbstractLayeredFileProvider {
 
+    /**
+     * Constructs a new instance.
+     */
     public CompressedFileFileProvider() {
-        super();
     }
+
+    protected abstract FileSystem createFileSystem(FileName name, FileObject file, FileSystemOptions fileSystemOptions) throws FileSystemException;
 
     /**
      * Creates a layered file system. This method is called if the file system is not cached.
@@ -50,9 +54,6 @@ public abstract class CompressedFileFileProvider extends AbstractLayeredFileProv
         final FileName name = new LayeredFileName(scheme, file.getName(), FileName.ROOT_PATH, FileType.FOLDER);
         return createFileSystem(name, file, fileSystemOptions);
     }
-
-    protected abstract FileSystem createFileSystem(final FileName name, final FileObject file,
-            final FileSystemOptions fileSystemOptions) throws FileSystemException;
 
     @Override
     public abstract Collection<Capability> getCapabilities();

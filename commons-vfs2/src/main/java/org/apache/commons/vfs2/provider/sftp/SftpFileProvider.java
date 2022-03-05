@@ -42,14 +42,20 @@ public class SftpFileProvider extends AbstractOriginatingFileProvider {
     public static final String ATTR_USER_INFO = "UI";
 
     /** Authentication types. */
-    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = new UserAuthenticationData.Type[] {
+    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = {
             UserAuthenticationData.USERNAME, UserAuthenticationData.PASSWORD };
 
     /** The provider's capabilities. */
-    protected static final Collection<Capability> capabilities = Collections.unmodifiableCollection(Arrays.asList(Capability.CREATE, Capability.DELETE, Capability.RENAME, Capability.GET_TYPE,
-            Capability.LIST_CHILDREN, Capability.READ_CONTENT, Capability.URI, Capability.WRITE_CONTENT,
-            Capability.GET_LAST_MODIFIED, Capability.SET_LAST_MODIFIED_FILE, Capability.RANDOM_ACCESS_READ,
-            Capability.APPEND_CONTENT));
+    protected static final Collection<Capability> capabilities = Collections.unmodifiableCollection(Arrays.asList(Capability.CREATE, Capability.DELETE,
+        Capability.RENAME, Capability.GET_TYPE, Capability.LIST_CHILDREN, Capability.READ_CONTENT, Capability.URI, Capability.WRITE_CONTENT,
+        Capability.GET_LAST_MODIFIED, Capability.SET_LAST_MODIFIED_FILE, Capability.RANDOM_ACCESS_READ, Capability.APPEND_CONTENT));
+
+    /**
+     * Constructs a new provider.
+     */
+    public SftpFileProvider() {
+        setFileNameParser(SftpFileNameParser.getInstance());
+    }
 
     /**
      * Creates a new Session.
@@ -76,14 +82,6 @@ public class SftpFileProvider extends AbstractOriginatingFileProvider {
     }
 
     /**
-     * Constructs a new provider.
-     */
-    public SftpFileProvider() {
-        super();
-        setFileNameParser(SftpFileNameParser.getInstance());
-    }
-
-    /**
      * Creates a {@link FileSystem}.
      */
     @Override
@@ -95,12 +93,12 @@ public class SftpFileProvider extends AbstractOriginatingFileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return SftpFileSystemConfigBuilder.getInstance();
+    public Collection<Capability> getCapabilities() {
+        return capabilities;
     }
 
     @Override
-    public Collection<Capability> getCapabilities() {
-        return capabilities;
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return SftpFileSystemConfigBuilder.getInstance();
     }
 }

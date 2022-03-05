@@ -26,10 +26,10 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSelector;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link DirectoryFileFilter} and {@link FileFileFilter}.
@@ -59,7 +59,28 @@ public class DirectoryAndFileFilterTest extends BaseFilterTest {
 
     private static FileObject zipFileObj;
 
-    @BeforeClass
+    @AfterAll
+    public static void afterClass() throws IOException {
+
+        file = null;
+        fileInfo = null;
+
+        dir = null;
+        dirInfo = null;
+
+        notExistingFileInfo = null;
+        notExistingFile = null;
+
+        zipFileObj.close();
+        FileUtils.deleteQuietly(zipFile);
+        zipFile = null;
+
+        FileUtils.deleteDirectory(testDir);
+
+        testDir = null;
+    }
+
+    @BeforeAll
     public static void beforeClass() throws IOException {
 
         testDir = getTestDir(DirectoryAndFileFilterTest.class.getName());
@@ -79,51 +100,6 @@ public class DirectoryAndFileFilterTest extends BaseFilterTest {
         zipFile = new File(getTempDir(), DirectoryAndFileFilterTest.class.getName() + ".zip");
         zipDir(testDir, "", zipFile);
         zipFileObj = getZipFileObject(zipFile);
-
-    }
-
-    @AfterClass
-    public static void afterClass() throws IOException {
-
-        file = null;
-        fileInfo = null;
-
-        dir = null;
-        dirInfo = null;
-
-        notExistingFileInfo = null;
-        notExistingFile = null;
-
-        zipFileObj.close();
-        FileUtils.deleteQuietly(zipFile);
-        zipFile = null;
-
-        FileUtils.deleteDirectory(testDir);
-
-        testDir = null;
-
-    }
-
-    @Test
-    public void testDirectoryFileFilter() throws FileSystemException {
-
-        final FileFilter testee = DirectoryFileFilter.DIRECTORY;
-
-        Assert.assertTrue(testee.accept(dirInfo));
-        Assert.assertFalse(testee.accept(fileInfo));
-        Assert.assertFalse(testee.accept(notExistingFileInfo));
-
-    }
-
-    @Test
-    public void testFileFileFilter() throws FileSystemException {
-
-        final FileFilter testee = FileFileFilter.FILE;
-
-        Assert.assertTrue(testee.accept(fileInfo));
-        Assert.assertFalse(testee.accept(dirInfo));
-        Assert.assertFalse(testee.accept(notExistingFileInfo));
-
     }
 
     @Test
@@ -134,13 +110,13 @@ public class DirectoryAndFileFilterTest extends BaseFilterTest {
         // FILE Filter
         files = zipFileObj.findFiles(new FileSelector() {
             @Override
-            public boolean traverseDescendents(final FileSelectInfo fileInfo) throws Exception {
-                return true;
+            public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
+                return FileFileFilter.FILE.accept(fileInfo);
             }
 
             @Override
-            public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
-                return FileFileFilter.FILE.accept(fileInfo);
+            public boolean traverseDescendents(final FileSelectInfo fileInfo) throws Exception {
+                return true;
             }
         });
         assertContains(files, FILE);
@@ -150,7 +126,26 @@ public class DirectoryAndFileFilterTest extends BaseFilterTest {
         files = zipFileObj.findFiles(new FileFilterSelector(DirectoryFileFilter.DIRECTORY));
         assertContains(files, DIR);
         Assert.assertEquals(1, files.length);
+    }
 
+    @Test
+    public void testDirectoryFileFilter() throws FileSystemException {
+
+        final FileFilter testee = DirectoryFileFilter.DIRECTORY;
+
+        Assert.assertTrue(testee.accept(dirInfo));
+        Assert.assertFalse(testee.accept(fileInfo));
+        Assert.assertFalse(testee.accept(notExistingFileInfo));
+    }
+
+    @Test
+    public void testFileFileFilter() throws FileSystemException {
+
+        final FileFilter testee = FileFileFilter.FILE;
+
+        Assert.assertTrue(testee.accept(fileInfo));
+        Assert.assertFalse(testee.accept(dirInfo));
+        Assert.assertFalse(testee.accept(notExistingFileInfo));
     }
 
 }

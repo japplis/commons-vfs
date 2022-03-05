@@ -24,10 +24,10 @@ import org.apache.commons.vfs2.FileFilterSelector;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link CanWriteFileFilter}.
@@ -35,15 +35,15 @@ import org.junit.Test;
 // CHECKSTYLE:OFF Test code
 public class CanWriteFileFilterTest extends BaseFilterTest {
 
-    private static final String WRITEABLE = "writeable.txt";
+    private static final String WRITABLE = "writable.txt";
 
     private static final String READONLY = "readonly.txt";
 
     private static File testDir;
 
-    private static File writeableFile;
+    private static File writableFile;
 
-    private static FileSelectInfo writeableFileInfo;
+    private static FileSelectInfo writableFileInfo;
 
     private static File readOnlyFile;
 
@@ -57,36 +57,12 @@ public class CanWriteFileFilterTest extends BaseFilterTest {
 
     private static FileObject zipFileObj;
 
-    @BeforeClass
-    public static void beforeClass() throws IOException {
-
-        testDir = getTestDir(CanWriteFileFilterTest.class.getName());
-
-        writeableFile = new File(testDir, WRITEABLE);
-        writeableFileInfo = createFileSelectInfo(writeableFile);
-        FileUtils.touch(writeableFile);
-
-        readOnlyFile = new File(testDir, READONLY);
-        readOnlyFileInfo = createFileSelectInfo(readOnlyFile);
-        FileUtils.touch(readOnlyFile);
-        readOnlyFile.setReadable(true);
-        readOnlyFile.setWritable(false);
-
-        notExistingFile = new File(testDir, "not-existing-file.txt");
-        notExistingFileInfo = createFileSelectInfo(notExistingFile);
-
-        zipFile = new File(getTempDir(), CanWriteFileFilterTest.class.getName() + ".zip");
-        zipDir(testDir, "", zipFile);
-        zipFileObj = getZipFileObject(zipFile);
-
-    }
-
-    @AfterClass
+    @AfterAll
     public static void afterClass() throws IOException {
 
-        writeableFileInfo = null;
-        writeableFile.delete();
-        writeableFile = null;
+        writableFileInfo = null;
+        writableFile.delete();
+        writableFile = null;
 
         readOnlyFileInfo = null;
         readOnlyFile.delete();
@@ -101,25 +77,45 @@ public class CanWriteFileFilterTest extends BaseFilterTest {
 
         FileUtils.deleteDirectory(testDir);
         testDir = null;
-
     }
 
-    @Test
-    public void testAcceptCanWrite() throws FileSystemException {
+    @BeforeAll
+    public static void beforeClass() throws IOException {
 
-        Assert.assertTrue(CanWriteFileFilter.CAN_WRITE.accept(writeableFileInfo));
-        Assert.assertFalse(CanWriteFileFilter.CAN_WRITE.accept(readOnlyFileInfo));
-        Assert.assertTrue(CanWriteFileFilter.CAN_WRITE.accept(notExistingFileInfo));
+        testDir = getTestDir(CanWriteFileFilterTest.class.getName());
 
+        writableFile = new File(testDir, WRITABLE);
+        writableFileInfo = createFileSelectInfo(writableFile);
+        FileUtils.touch(writableFile);
+
+        readOnlyFile = new File(testDir, READONLY);
+        readOnlyFileInfo = createFileSelectInfo(readOnlyFile);
+        FileUtils.touch(readOnlyFile);
+        readOnlyFile.setReadable(true);
+        readOnlyFile.setWritable(false);
+
+        notExistingFile = new File(testDir, "not-existing-file.txt");
+        notExistingFileInfo = createFileSelectInfo(notExistingFile);
+
+        zipFile = new File(getTempDir(), CanWriteFileFilterTest.class.getName() + ".zip");
+        zipDir(testDir, "", zipFile);
+        zipFileObj = getZipFileObject(zipFile);
     }
 
     @Test
     public void testAcceptCannotWrite() throws FileSystemException {
 
-        Assert.assertFalse(CanWriteFileFilter.CANNOT_WRITE.accept(writeableFileInfo));
+        Assert.assertFalse(CanWriteFileFilter.CANNOT_WRITE.accept(writableFileInfo));
         Assert.assertTrue(CanWriteFileFilter.CANNOT_WRITE.accept(readOnlyFileInfo));
         Assert.assertFalse(CanWriteFileFilter.CANNOT_WRITE.accept(notExistingFileInfo));
+    }
 
+    @Test
+    public void testAcceptCanWrite() throws FileSystemException {
+
+        Assert.assertTrue(CanWriteFileFilter.CAN_WRITE.accept(writableFileInfo));
+        Assert.assertFalse(CanWriteFileFilter.CAN_WRITE.accept(readOnlyFileInfo));
+        Assert.assertTrue(CanWriteFileFilter.CAN_WRITE.accept(notExistingFileInfo));
     }
 
     @Test
@@ -133,9 +129,8 @@ public class CanWriteFileFilterTest extends BaseFilterTest {
 
         // CANNOT_WRITE Filter
         files = zipFileObj.findFiles(new FileFilterSelector(CanWriteFileFilter.CANNOT_WRITE));
-        assertContains(files, READONLY, WRITEABLE);
+        assertContains(files, READONLY, WRITABLE);
         Assert.assertEquals(2, files.length);
-
     }
 
 }

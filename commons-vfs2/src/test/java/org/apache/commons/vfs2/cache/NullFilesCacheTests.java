@@ -21,27 +21,19 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FilesCache;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
-import org.junit.Assert;
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.Test;
 
 /**
  * Tests for {@link NullFilesCache} used by {@link NullFilesCacheTestCase}.
  */
 public class NullFilesCacheTests extends AbstractFilesCacheTestsBase {
-    public void testFilesCache() throws Exception {
-        final FileObject scratchFolder = getWriteFolder();
-        Assert.assertNotNull("This test should not have a null FileObject scratch folder", scratchFolder);
-
-        final FileObject dir1 = scratchFolder.resolveFile("dir1");
-        final FileObject dir1_2 = scratchFolder.resolveFile("dir1");
-
-        assertNotSame("Should always be new instance with NullCache", dir1, dir1_2);
-    }
 
     @Override
+    @Test
     public void testBasicCacheOps() throws Exception {
         final DefaultFileSystemManager manager = getManager();
-        Assert.assertNotNull("This test should not have a null DefaultFileSystemManager", manager);
+        Assertions.assertNotNull(manager, "This test should not have a null DefaultFileSystemManager");
         // the basic test looks different for a null cache:
         final FilesCache cache = manager.getFilesCache();
         final FileObject fo = getWriteFolder().resolveFile("dir1");
@@ -61,9 +53,22 @@ public class NullFilesCacheTests extends AbstractFilesCacheTestsBase {
         assertNull(cache.getFile(fs, fn));
     }
 
+    @Test
     public void testClass() {
         final DefaultFileSystemManager manager = getManager();
-        Assert.assertNotNull("This test should not have a null DefaultFileSystemManager", manager);
+        Assertions.assertNotNull(manager, "This test should not have a null DefaultFileSystemManager");
         assertTrue(manager.getFilesCache() instanceof NullFilesCache);
     }
+
+    @Test
+    public void testFilesCache() throws Exception {
+        final FileObject scratchFolder = getWriteFolder();
+        Assertions.assertNotNull(scratchFolder, "This test should not have a null FileObject scratch folder");
+
+        final FileObject dir1 = scratchFolder.resolveFile("dir1");
+        final FileObject dir1_2 = scratchFolder.resolveFile("dir1");
+
+        assertNotSame("Should always be new instance with NullCache", dir1, dir1_2);
+    }
+
 }

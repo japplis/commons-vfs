@@ -27,16 +27,18 @@ import org.apache.commons.vfs2.util.CryptorFactory;
 /**
  * Implementation for any URL based file system.
  * <p>
- * Parses the URL into user/password/host/port/path. Does not handle a query string (after ?)
+ * Parses the URL into user/password/host/port/path. Does not handle a query string (after ?).
  * </p>
  *
- * @see URLFileNameParser URLFileNameParser for the implementation which also handles the query string too
+ * @see URLFileNameParser URLFileNameParser for the implementation which also handles the query string too.
  */
 public class HostFileNameParser extends AbstractFileNameParser {
+
     /**
      * Parsed authority info (scheme, hostname, username/password, port).
      */
     protected static class Authority {
+
         private String hostName;
         private String password;
         private int port;
@@ -146,7 +148,12 @@ public class HostFileNameParser extends AbstractFileNameParser {
 
     private final int defaultPort;
 
-    public HostFileNameParser(final int defaultPort) {
+    /**
+     * Constructs a new instance.
+     *
+     * @param defaultPort The default port.
+     */
+     public HostFileNameParser(final int defaultPort) {
         this.defaultPort = defaultPort;
     }
 
@@ -236,9 +243,9 @@ public class HostFileNameParser extends AbstractFileNameParser {
 
         final FileSystemManager fsm;
         if (context != null) {
-        	fsm = context.getFileSystemManager();
+            fsm = context.getFileSystemManager();
         } else {
-        	fsm = VFS.getManager();
+            fsm = VFS.getManager();
         }
 
         // Extract the scheme
@@ -279,7 +286,7 @@ public class HostFileNameParser extends AbstractFileNameParser {
             }
         }
 
-        // Extract hostname, and normalise (lowercase)
+        // Extract hostname, and normalize (lowercase)
         final String hostName = extractHostName(name);
         if (hostName == null) {
             throw new FileSystemException("vfs.provider/missing-hostname.error", uri);
@@ -323,6 +330,11 @@ public class HostFileNameParser extends AbstractFileNameParser {
         return null;
     }
 
+    /**
+     * Gets the default port.
+     *
+     * @return the default port.
+     */
     public int getDefaultPort() {
         return defaultPort;
     }
@@ -336,7 +348,7 @@ public class HostFileNameParser extends AbstractFileNameParser {
         // Extract the scheme and authority parts
         final Authority auth = extractToPath(context, fileName, name);
 
-        // Decode and normalise the file name
+        // Decode and normalize the file name
         UriParser.canonicalizePath(name, 0, name.length(), this);
         UriParser.fixSeparators(name);
         final FileType fileType = UriParser.normalisePath(name);

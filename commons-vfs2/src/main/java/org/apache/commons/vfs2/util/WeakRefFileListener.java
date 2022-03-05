@@ -48,56 +48,7 @@ public class WeakRefFileListener implements FileListener {
      * @param listener The FileListener
      */
     public static void installListener(final FileObject file, final FileListener listener) {
-        final WeakRefFileListener weakListener = new WeakRefFileListener(file, listener);
-
-        file.getFileSystem().addListener(file, new WeakRefFileListener(file, weakListener));
-    }
-
-    /**
-     * Gets the wrapped listener. If it is gone, the WeakRefFileListener wrapper will remove itself from the list of
-     * listeners.
-     *
-     * @return The FileListener.
-     * @throws Exception if an error occurs.
-     */
-    protected FileListener getListener() throws Exception {
-        final FileListener listener = this.listener.get();
-        if (listener == null) {
-            try (final FileObject fileObject = fs.resolveFile(name)) {
-                fileObject.getFileSystem().removeListener(fileObject, this);
-            }
-        }
-        return listener;
-    }
-
-    /**
-     * Called when a file is created.
-     *
-     * @param event The FileChangeEvent.
-     * @throws Exception if an error occurs.
-     */
-    @Override
-    public void fileCreated(final FileChangeEvent event) throws Exception {
-        final FileListener listener = getListener();
-        if (listener == null) {
-            return;
-        }
-        listener.fileCreated(event);
-    }
-
-    /**
-     * Called when a file is deleted.
-     *
-     * @param event The FileChangeEvent.
-     * @throws Exception if an error occurs.
-     */
-    @Override
-    public void fileDeleted(final FileChangeEvent event) throws Exception {
-        final FileListener listener = getListener();
-        if (listener == null) {
-            return;
-        }
-        listener.fileDeleted(event);
+        file.getFileSystem().addListener(file, new WeakRefFileListener(file, new WeakRefFileListener(file, listener)));
     }
 
     /**
@@ -112,9 +63,53 @@ public class WeakRefFileListener implements FileListener {
     @Override
     public void fileChanged(final FileChangeEvent event) throws Exception {
         final FileListener listener = getListener();
-        if (listener == null) {
-            return;
+        if (listener != null) {
+            listener.fileChanged(event);
         }
-        listener.fileChanged(event);
+    }
+
+    /**
+     * Called when a file is created.
+     *
+     * @param event The FileChangeEvent.
+     * @throws Exception if an error occurs.
+     */
+    @Override
+    public void fileCreated(final FileChangeEvent event) throws Exception {
+        final FileListener listener = getListener();
+        if (listener != null) {
+            listener.fileCreated(event);
+        }
+    }
+
+    /**
+     * Called when a file is deleted.
+     *
+     * @param event The FileChangeEvent.
+     * @throws Exception if an error occurs.
+     */
+    @Override
+    public void fileDeleted(final FileChangeEvent event) throws Exception {
+        final FileListener listener = getListener();
+        if (listener != null) {
+            listener.fileDeleted(event);
+        }
+    }
+
+    /**
+     * Gets the wrapped listener. If it is gone, the WeakRefFileListener wrapper will remove itself from the list of
+     * listeners.
+     *
+     * @return The FileListener.
+     * @throws Exception if an error occurs.
+     */
+    protected FileListener getListener() throws Exception {
+        final FileListener listener = this.listener.get();
+        if (listener == null) {
+            try (FileObject fileObject = fs.resolveFile(name)) {
+                fileObject.getFileSystem().removeListener(fileObject, this);
+            }
+        }
+        return listener;
     }
 }

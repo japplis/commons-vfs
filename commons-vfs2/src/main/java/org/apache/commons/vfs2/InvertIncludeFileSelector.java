@@ -25,11 +25,16 @@ import java.util.Objects;
  */
 public class InvertIncludeFileSelector implements FileSelector {
 
+    private final FileSelector delegateFileSelector;
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param delegateFileSelector Delegate to this FileSelector.
+     */
     public InvertIncludeFileSelector(final FileSelector delegateFileSelector) {
         this.delegateFileSelector = Objects.requireNonNull(delegateFileSelector, "delegateFileSelector");
     }
-
-    private final FileSelector delegateFileSelector;
 
     /**
      * Inverts the result of calling {@link #includeFile(FileSelectInfo)} on the delegate.

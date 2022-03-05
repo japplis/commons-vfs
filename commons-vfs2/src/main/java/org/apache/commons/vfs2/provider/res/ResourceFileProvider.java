@@ -39,10 +39,16 @@ public class ResourceFileProvider extends AbstractFileProvider {
     protected static final Collection<Capability> capabilities = Collections
             .unmodifiableCollection(Arrays.asList(Capability.DISPATCHER));
 
-    private static final int BUFFER_SIZE = 80;
-
+    /**
+     * Constructs a new instance.
+     */
     public ResourceFileProvider() {
         setFileNameParser(ResourceFileNameParser.getInstance());
+    }
+
+    @Override
+    public void closeFileSystem(final FileSystem filesystem) {
+        // no filesystem created here - so nothing to do
     }
 
     /**
@@ -56,12 +62,11 @@ public class ResourceFileProvider extends AbstractFileProvider {
      */
     @Override
     public FileObject findFile(final FileObject baseFile, final String uri, final FileSystemOptions fileSystemOptions)
-            throws FileSystemException {
+        throws FileSystemException {
         final FileName fileName;
         if (baseFile != null) {
             fileName = parseUri(baseFile.getName(), uri);
-        }
-        else {
+        } else {
             fileName = parseUri(null, uri);
         }
         final String resourceName = fileName.getPath();
@@ -79,17 +84,12 @@ public class ResourceFileProvider extends AbstractFileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return org.apache.commons.vfs2.provider.res.ResourceFileSystemConfigBuilder.getInstance();
-    }
-
-    @Override
-    public void closeFileSystem(final FileSystem filesystem) {
-        // no filesystem created here - so nothing to do
-    }
-
-    @Override
     public Collection<Capability> getCapabilities() {
         return capabilities;
+    }
+
+    @Override
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return org.apache.commons.vfs2.provider.res.ResourceFileSystemConfigBuilder.getInstance();
     }
 }

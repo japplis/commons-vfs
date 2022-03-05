@@ -14,22 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.vfs2;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FileChangeEventTest {
 
     @Test
     public void testFileObject() throws FileSystemException {
-        try (final FileObject baseFile = VFS.getManager().toFileObject(new File("."))) {
-            Assert.assertNotNull(baseFile);
+        try (FileObject baseFile = VFS.getManager().toFileObject(new File("."))) {
+            assertNotNull(baseFile);
             final FileChangeEvent fileChangeEvent = new FileChangeEvent(baseFile);
-            Assert.assertEquals(fileChangeEvent.getFile(), fileChangeEvent.getFileObject());
+            assertEquals(fileChangeEvent.getFile(), fileChangeEvent.getFileObject());
         }
     }
+
 }

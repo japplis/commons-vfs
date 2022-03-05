@@ -31,28 +31,20 @@ public class FileFilterSelector extends FileDepthSelector {
      */
     private final FileFilter fileFilter;
 
+    /**
+     * Constructs a new instance without a FileFilter.
+     */
     public FileFilterSelector() {
         this(null);
     }
 
+    /**
+     * Constructs a new instance with a FileFilter.
+     * @param fileFilter the FileFilter.
+     */
     public FileFilterSelector(final FileFilter fileFilter) {
         super(1, 1);
         this.fileFilter = fileFilter;
-    }
-
-    /**
-     * Determines if a file or folder should be selected.
-     *
-     * @param fileInfo The file selection information.
-     * @return true if the file or folder should be included, false otherwise.
-     */
-    @Override
-    public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
-        if (!super.includeFile(fileInfo)) {
-            return false;
-        }
-
-        return accept(fileInfo);
     }
 
     /**
@@ -68,5 +60,16 @@ public class FileFilterSelector extends FileDepthSelector {
         }
 
         throw new IllegalArgumentException(Messages.getString("vfs.selectors/filefilter.missing.error"));
+    }
+
+    /**
+     * Determines if a file or folder should be selected.
+     *
+     * @param fileInfo The file selection information.
+     * @return true if the file or folder should be included, false otherwise.
+     */
+    @Override
+    public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
+        return super.includeFile(fileInfo) && accept(fileInfo);
     }
 }

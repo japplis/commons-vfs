@@ -55,15 +55,6 @@ public class NameFileFilter implements FileFilter, Serializable {
     private final List<String> names;
 
     /**
-     * Constructs a new case-sensitive name file filter for a list of names.
-     *
-     * @param names the names to allow, must not be null
-     */
-    public NameFileFilter(final List<String> names) {
-        this((IOCase) null, names);
-    }
-
-    /**
      * Constructs a new name file filter for a list of names specifying
      * case-sensitivity.
      *
@@ -77,19 +68,6 @@ public class NameFileFilter implements FileFilter, Serializable {
         }
         this.names = new ArrayList<>(names);
         this.caseSensitivity = caseSensitivity == null ? IOCase.SENSITIVE : caseSensitivity;
-    }
-
-    /**
-     * Constructs a new case-sensitive name file filter for an array of names.
-     * <p>
-     * The array is not cloned, so could be changed after constructing the instance.
-     * This would be inadvisable however.
-     * </p>
-     *
-     * @param names the names to allow, must not be null
-     */
-    public NameFileFilter(final String... names) {
-        this((IOCase) null, names);
     }
 
     /**
@@ -109,15 +87,37 @@ public class NameFileFilter implements FileFilter, Serializable {
     }
 
     /**
+     * Constructs a new case-sensitive name file filter for a list of names.
+     *
+     * @param names the names to allow, must not be null
+     */
+    public NameFileFilter(final List<String> names) {
+        this((IOCase) null, names);
+    }
+
+    /**
+     * Constructs a new case-sensitive name file filter for an array of names.
+     * <p>
+     * The array is not cloned, so could be changed after constructing the instance.
+     * This would be inadvisable however.
+     * </p>
+     *
+     * @param names the names to allow, must not be null
+     */
+    public NameFileFilter(final String... names) {
+        this((IOCase) null, names);
+    }
+
+    /**
      * Checks to see if the file name matches.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return true if the file name matches
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
-        final String name = fileInfo.getFile().getName().getBaseName();
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
+        final String name = fileSelectInfo.getFile().getName().getBaseName();
         for (final String name2 : this.names) {
             if (caseSensitivity.checkEquals(name, name2)) {
                 return true;

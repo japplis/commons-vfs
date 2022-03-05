@@ -16,31 +16,28 @@
  */
 package org.apache.commons.vfs2.util;
 
+import org.apache.commons.lang3.SystemUtils;
+
 /**
  * An enumerated type, which represents an OS family.
+ *
+ * @deprecated Use Apache Commons Lang's {@link SystemUtils}. Remove in 3.0.
  */
+@Deprecated
 public final class OsFamily {
 
+    static final OsFamily[] EMPTY_OS_FAMILY_ARRAY = {};
     private final String name;
     private final OsFamily[] families;
 
     OsFamily(final String name) {
         this.name = name;
-        families = new OsFamily[0];
+        families = EMPTY_OS_FAMILY_ARRAY;
     }
 
     OsFamily(final String name, final OsFamily[] families) {
         this.name = name;
         this.families = families;
-    }
-
-    /**
-     * Returns the name of this family.
-     *
-     * @return The name of this family.
-     */
-    public String getName() {
-        return name;
     }
 
     /**
@@ -50,5 +47,14 @@ public final class OsFamily {
      */
     public OsFamily[] getFamilies() {
         return families;
+    }
+
+    /**
+     * Returns the name of this family.
+     *
+     * @return The name of this family.
+     */
+    public String getName() {
+        return name;
     }
 }

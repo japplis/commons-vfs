@@ -33,8 +33,39 @@ import org.apache.commons.vfs2.provider.VfsComponentContext;
 final class DefaultVfsComponentContext implements VfsComponentContext {
     private final DefaultFileSystemManager manager;
 
-    public DefaultVfsComponentContext(final DefaultFileSystemManager manager) {
+    DefaultVfsComponentContext(final DefaultFileSystemManager manager) {
         this.manager = manager;
+    }
+
+    /**
+     * Returns the file system manager for the current context
+     *
+     * @return the file system manager
+     */
+    @Override
+    public FileSystemManager getFileSystemManager() {
+        return manager;
+    }
+
+    /**
+     * Locates a file replicator for the provider to use.
+     */
+    @Override
+    public FileReplicator getReplicator() throws FileSystemException {
+        return manager.getReplicator();
+    }
+
+    /**
+     * Locates a temporary file store for the provider to use.
+     */
+    @Override
+    public TemporaryFileStore getTemporaryFileStore() throws FileSystemException {
+        return manager.getTemporaryFileStore();
+    }
+
+    @Override
+    public FileName parseURI(final String uri) throws FileSystemException {
+        return manager.resolveURI(uri);
     }
 
     /**
@@ -55,42 +86,11 @@ final class DefaultVfsComponentContext implements VfsComponentContext {
         return manager.resolveFile(name, fileSystemOptions);
     }
 
-    @Override
-    public FileName parseURI(final String uri) throws FileSystemException {
-        return manager.resolveURI(uri);
-    }
-
     /**
      * Returns a {@link FileObject} for a local file.
      */
     @Override
     public FileObject toFileObject(final File file) throws FileSystemException {
         return manager.toFileObject(file);
-    }
-
-    /**
-     * Locates a file replicator for the provider to use.
-     */
-    @Override
-    public FileReplicator getReplicator() throws FileSystemException {
-        return manager.getReplicator();
-    }
-
-    /**
-     * Locates a temporary file store for the provider to use.
-     */
-    @Override
-    public TemporaryFileStore getTemporaryFileStore() throws FileSystemException {
-        return manager.getTemporaryFileStore();
-    }
-
-    /**
-     * Returns the file system manager for the current context
-     *
-     * @return the file system manager
-     */
-    @Override
-    public FileSystemManager getFileSystemManager() {
-        return manager;
     }
 }

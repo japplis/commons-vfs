@@ -42,8 +42,17 @@ public enum CacheStrategy {
      */
     private final String realName;
 
-    private CacheStrategy(final String name) {
+    CacheStrategy(final String name) {
         this.realName = name;
+    }
+
+    /**
+     * Returns the name of the scope.
+     *
+     * @return the name of the scope.
+     */
+    public String getName() {
+        return realName;
     }
 
     /**
@@ -53,15 +62,6 @@ public enum CacheStrategy {
      */
     @Override
     public String toString() {
-        return realName;
-    }
-
-    /**
-     * Returns the name of the scope.
-     *
-     * @return the name of the scope.
-     */
-    public String getName() {
         return realName;
     }
 }

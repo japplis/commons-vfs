@@ -27,9 +27,11 @@
 
     <menu name="Commons&#xA0;VFS" inherit="top">
       <item name="Overview"                href="/index.html"/>
-      <item name="Download and Build"      href="/download.html"/>
+      <item name="Download"                href="/download_vfs.html"/>
+      <item name="Build"                   href="/build.html"/>
       <item name="Using the API"           href="/api.html"/>
-      <item name="API Javadocs"            href="/commons-vfs2/apidocs/index.html"/>
+      <item name="Javadocs"                href="/commons-vfs2/apidocs/index.html"/>
+      <item name="Javadocs Archive"        href="https://javadoc.io/doc/org.apache.commons/commons-vfs2/latest/index.html"/>
       <item name="File Systems"            href="/filesystems.html"/>
       <item name="Ant Tasks"               href="/anttasks.html"/>
       <item name="Wiki"                    href="http://wiki.apache.org/commons/VFS"/>

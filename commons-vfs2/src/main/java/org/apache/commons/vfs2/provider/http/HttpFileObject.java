@@ -56,12 +56,12 @@ public class HttpFileObject<FS extends HttpFileSystem> extends AbstractFileObjec
     static class HttpInputStream extends MonitorInputStream {
         private final GetMethod method;
 
-        public HttpInputStream(final GetMethod method) throws IOException {
+        HttpInputStream(final GetMethod method) throws IOException {
             super(method.getResponseBodyAsStream());
             this.method = method;
         }
 
-        public HttpInputStream(final GetMethod method, final int bufferSize) throws IOException {
+        HttpInputStream(final GetMethod method, final int bufferSize) throws IOException {
             super(method.getResponseBodyAsStream(), bufferSize);
             this.method = method;
         }
@@ -78,7 +78,6 @@ public class HttpFileObject<FS extends HttpFileSystem> extends AbstractFileObjec
     private final String urlCharset;
     private final String userAgent;
     private final boolean followRedirect;
-
     private HeadMethod method;
 
     protected HttpFileObject(final AbstractFileName name, final FS fileSystem) {
@@ -169,11 +168,11 @@ public class HttpFileObject<FS extends HttpFileSystem> extends AbstractFileObjec
         if (status == HttpURLConnection.HTTP_OK
                 || status == HttpURLConnection.HTTP_BAD_METHOD /* method is bad, but resource exist */) {
             return FileType.FILE;
-        } else if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_GONE) {
-            return FileType.IMAGINARY;
-        } else {
-            throw new FileSystemException("vfs.provider.http/head.error", getName(), Integer.valueOf(status));
         }
+        if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_GONE) {
+            return FileType.IMAGINARY;
+        }
+        throw new FileSystemException("vfs.provider.http/head.error", getName(), Integer.valueOf(status));
     }
 
     @Override
@@ -202,10 +201,6 @@ public class HttpFileObject<FS extends HttpFileSystem> extends AbstractFileObjec
         return followRedirect;
     }
 
-    protected String getUserAgent() {
-        return userAgent;
-    }
-
     HeadMethod getHeadMethod() throws IOException {
         if (method != null) {
             return method;
@@ -223,6 +218,10 @@ public class HttpFileObject<FS extends HttpFileSystem> extends AbstractFileObjec
 
     protected String getUrlCharset() {
         return urlCharset;
+    }
+
+    protected String getUserAgent() {
+        return userAgent;
     }
 
     /**

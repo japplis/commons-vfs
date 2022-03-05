@@ -27,12 +27,13 @@ import org.apache.commons.vfs2.FileType;
  * </p>
  */
 public class LayeredFileNameParser extends AbstractFileNameParser {
+
     private static final LayeredFileNameParser INSTANCE = new LayeredFileNameParser();
 
     /**
-     * Returns the Parser.
+     * Gets the singleton instance.
      *
-     * @return The Parser.
+     * @return the singleton instance.
      */
     public static LayeredFileNameParser getInstance() {
         return INSTANCE;
@@ -46,7 +47,37 @@ public class LayeredFileNameParser extends AbstractFileNameParser {
      */
     @Override
     public boolean encodeCharacter(final char ch) {
-        return super.encodeCharacter(ch) || ch == '!';
+        return super.encodeCharacter(ch) || ch == LayeredFileName.LAYER_SEPARATOR;
+    }
+
+    /**
+     * Pops the root prefix off a URI, which has had the scheme removed.
+     *
+     * @param uri string builder which gets modified.
+     * @return the extracted root name.
+     */
+    protected String extractRootName(final StringBuilder uri) {
+        // Looking for <name>!<abspath> (staring at the end)
+        final int maxlen = uri.length();
+        int pos = maxlen - 1;
+        for (; pos > 0 && uri.charAt(pos) != LayeredFileName.LAYER_SEPARATOR; pos--) {
+        }
+
+        if (pos == 0 && uri.charAt(pos) != LayeredFileName.LAYER_SEPARATOR) {
+            // not ! found, so take the whole path a root
+            // e.g. zip:/my/zip/file.zip
+            pos = maxlen;
+        }
+
+        // Extract the name
+        final String prefix = uri.substring(0, pos);
+        if (pos < maxlen) {
+            uri.delete(0, pos + 1);
+        } else {
+            uri.setLength(0);
+        }
+
+        return prefix;
     }
 
     /**
@@ -80,37 +111,6 @@ public class LayeredFileNameParser extends AbstractFileNameParser {
         final String path = name.toString();
 
         return new LayeredFileName(scheme, rootUri, path, fileType);
-    }
-
-    /**
-     * Pops the root prefix off a URI, which has had the scheme removed.
-     *
-     * @param uri string builder which gets modified.
-     * @return the extracted root name.
-     * @throws FileSystemException if error occurs.
-     */
-    protected String extractRootName(final StringBuilder uri) throws FileSystemException {
-        // Looking for <name>!<abspath> (staring at the end)
-        final int maxlen = uri.length();
-        int pos = maxlen - 1;
-        for (; pos > 0 && uri.charAt(pos) != '!'; pos--) {
-        }
-
-        if (pos == 0 && uri.charAt(pos) != '!') {
-            // not ! found, so take the whole path a root
-            // e.g. zip:/my/zip/file.zip
-            pos = maxlen;
-        }
-
-        // Extract the name
-        final String prefix = uri.substring(0, pos);
-        if (pos < maxlen) {
-            uri.delete(0, pos + 1);
-        } else {
-            uri.setLength(0);
-        }
-
-        return prefix;
     }
 
 }

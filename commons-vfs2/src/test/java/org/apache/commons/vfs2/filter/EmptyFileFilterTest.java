@@ -25,10 +25,10 @@ import org.apache.commons.vfs2.FileFilterSelector;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link EmptyFileFilter}.
@@ -62,7 +62,29 @@ public class EmptyFileFilterTest extends BaseFilterTest {
 
     private static FileObject zipFileObj;
 
-    @BeforeClass
+    @AfterAll
+    public static void afterClass() throws IOException {
+
+        notEmptyFile = null;
+        notEmptyFileInfo = null;
+        emptyFile = null;
+        emptyFileInfo = null;
+        notEmptyDir = null;
+        notEmptyDirInfo = null;
+        emptyDir = null;
+        emptyDirInfo = null;
+        notExistingFile = null;
+        notExistingFileInfo = null;
+
+        zipFileObj.close();
+        FileUtils.deleteQuietly(zipFile);
+        zipFile = null;
+
+        FileUtils.deleteDirectory(testDir);
+        testDir = null;
+    }
+
+    @BeforeAll
     public static void beforeClass() throws IOException {
         testDir = getTestDir(EmptyFileFilterTest.class.getName());
         testDir.mkdir();
@@ -91,29 +113,6 @@ public class EmptyFileFilterTest extends BaseFilterTest {
         zipFile = new File(getTempDir(), EmptyFileFilterTest.class.getName() + ".zip");
         zipDir(testDir, "", zipFile);
         zipFileObj = getZipFileObject(zipFile);
-
-    }
-
-    @AfterClass
-    public static void afterClass() throws IOException {
-
-        notEmptyFile = null;
-        notEmptyFileInfo = null;
-        emptyFile = null;
-        emptyFileInfo = null;
-        notEmptyDir = null;
-        notEmptyDirInfo = null;
-        emptyDir = null;
-        emptyDirInfo = null;
-        notExistingFile = null;
-        notExistingFileInfo = null;
-
-        zipFileObj.close();
-        FileUtils.deleteQuietly(zipFile);
-        zipFile = null;
-
-        FileUtils.deleteDirectory(testDir);
-        testDir = null;
     }
 
     @Test
@@ -126,7 +125,6 @@ public class EmptyFileFilterTest extends BaseFilterTest {
         Assert.assertFalse(testee.accept(notEmptyDirInfo));
         Assert.assertTrue(testee.accept(emptyDirInfo));
         Assert.assertTrue(testee.accept(notExistingFileInfo));
-
     }
 
     @Test
@@ -139,7 +137,6 @@ public class EmptyFileFilterTest extends BaseFilterTest {
         Assert.assertTrue(testee.accept(notEmptyDirInfo));
         Assert.assertFalse(testee.accept(emptyDirInfo));
         Assert.assertFalse(testee.accept(notExistingFileInfo));
-
     }
 
     @Test
@@ -155,7 +152,6 @@ public class EmptyFileFilterTest extends BaseFilterTest {
         files = zipFileObj.findFiles(new FileFilterSelector(EmptyFileFilter.NOT_EMPTY));
         assertContains(files, notEmptyFile.getName(), notEmptyDir.getName());
         Assert.assertEquals(2, files.length);
-
     }
 
 }

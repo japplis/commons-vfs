@@ -28,8 +28,17 @@ import org.apache.commons.vfs2.filter.AgeFileFilter;
  * Example for using {@link AgeFileFilter}.
  */
 // CHECKSTYLE:OFF Example code
-public class AgeFileFilterExample {
+public final class AgeFileFilterExample {
+    private AgeFileFilterExample() {
+        /* main class not instantiated. */
+    }
 
+    /**
+     * Invokes this example from the command line.
+     *
+     * @param args Arguments TODO
+     * @throws Exception If anything goes wrong.
+     */
     public static void main(final String[] args) throws Exception {
 
         final FileSystemManager fsManager = VFS.getManager();
@@ -40,7 +49,7 @@ public class AgeFileFilterExample {
         final AgeFileFilter filter = new AgeFileFilter(cutoff);
 
         final FileObject[] files = dir.findFiles(new FileFilterSelector(filter));
-        for (FileObject file : files) {
+        for (final FileObject file : files) {
             System.out.println(file);
         }
 
@@ -48,4 +57,3 @@ public class AgeFileFilterExample {
 
 }
 // CHECKSTYLE:ON
-

@@ -16,6 +16,8 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import java.util.stream.Stream;
+
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
@@ -27,16 +29,11 @@ public abstract class CompositeFileProvider extends AbstractFileProvider {
 
     private static final int INITIAL_BUFSZ = 80;
 
-    public CompositeFileProvider() {
-        super();
-    }
-
     /**
-     * The schemes known.
-     *
-     * @return Array of supported schemes.
+     * Constructs a new instance.
      */
-    protected abstract String[] getSchemes();
+    public CompositeFileProvider() {
+    }
 
     /**
      * Locates a file object, by absolute URI.
@@ -53,14 +50,15 @@ public abstract class CompositeFileProvider extends AbstractFileProvider {
         final StringBuilder buf = new StringBuilder(INITIAL_BUFSZ);
 
         UriParser.extractScheme(getContext().getFileSystemManager().getSchemes(), uri, buf);
+        Stream.of(getSchemes()).forEach(scheme -> buf.insert(0, scheme + ":"));
 
-        final String[] schemes = getSchemes();
-        for (final String scheme : schemes) {
-            buf.insert(0, ":");
-            buf.insert(0, scheme);
-        }
-
-        final FileObject fo = getContext().getFileSystemManager().resolveFile(buf.toString(), fileSystemOptions);
-        return fo;
+        return getContext().getFileSystemManager().resolveFile(buf.toString(), fileSystemOptions);
     }
+
+    /**
+     * The schemes known.
+     *
+     * @return Array of supported schemes.
+     */
+    protected abstract String[] getSchemes();
 }

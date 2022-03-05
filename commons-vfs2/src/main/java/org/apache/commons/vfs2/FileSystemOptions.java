@@ -44,21 +44,7 @@ import java.util.TreeMap;
  * @see org.apache.commons.vfs2.provider.zip.ZipFileSystemConfigBuilder
  *
  */
-public final class FileSystemOptions implements Cloneable {
-
-    /** The options */
-    private final Map<FileSystemOptionKey, Object> options;
-
-    /**
-     * Creates a new instance.
-     */
-    public FileSystemOptions() {
-        this(new TreeMap<FileSystemOptionKey, Object>());
-    }
-
-    protected FileSystemOptions(final Map<FileSystemOptionKey, Object> options) {
-        this.options = options;
-    }
+public final class FileSystemOptions implements Cloneable, Comparable<FileSystemOptions> {
 
     /**
      * Keys in the options Map.
@@ -103,11 +89,7 @@ public final class FileSystemOptions implements Cloneable {
             if (!fileSystemClass.equals(that.fileSystemClass)) {
                 return false;
             }
-            if (!name.equals(that.name)) {
-                return false;
-            }
-
-            return true;
+            return name.equals(that.name);
         }
 
         @Override
@@ -124,20 +106,31 @@ public final class FileSystemOptions implements Cloneable {
         }
     }
 
-    void setOption(final Class<? extends FileSystem> fileSystemClass, final String name, final Object value) {
-        options.put(new FileSystemOptionKey(fileSystemClass, name), value);
+    /** The options */
+    private final Map<FileSystemOptionKey, Object> options;
+
+    /**
+     * Constructs a new instance.
+     */
+    public FileSystemOptions() {
+        this(new TreeMap<>());
     }
 
-    Object getOption(final Class<? extends FileSystem> fileSystemClass, final String name) {
-        final FileSystemOptionKey key = new FileSystemOptionKey(fileSystemClass, name);
-        return options.get(key);
+    protected FileSystemOptions(final Map<FileSystemOptionKey, Object> options) {
+        this.options = options;
     }
 
-    boolean hasOption(final Class<? extends FileSystem> fileSystemClass, final String name) {
-        final FileSystemOptionKey key = new FileSystemOptionKey(fileSystemClass, name);
-        return options.containsKey(key);
+    /**
+     * {@inheritDoc}
+     *
+     * @since 2.0
+     */
+    @Override
+    public Object clone() {
+        return new FileSystemOptions(new TreeMap<>(options));
     }
 
+    @Override
     public int compareTo(final FileSystemOptions other) {
         if (this == other) {
             // the same instance
@@ -173,34 +166,11 @@ public final class FileSystemOptions implements Cloneable {
             }
         }
 
-        final Object[] array = new Object[propsSz];
-        final int hash = Arrays.deepHashCode(myOptions.values().toArray(array));
-        final int hashFk = Arrays.deepHashCode(theirOptions.values().toArray(array));
-        if (hash < hashFk) {
-            return -1;
-        }
-        if (hash > hashFk) {
-            return 1;
-        }
+        final int hash = Arrays.deepHashCode(myOptions.values().toArray());
+        final int hashFk = Arrays.deepHashCode(theirOptions.values().toArray());
+        return Integer.compare(hash, hashFk);
 
         // TODO: compare Entry by Entry ??
-        return 0;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        if (options == null) {
-            result = prime * result;
-        } else {
-            final SortedMap<FileSystemOptionKey, Object> myOptions = options instanceof SortedMap
-                    ? (SortedMap<FileSystemOptionKey, Object>) options
-                    : new TreeMap<>(options);
-            result = prime * result + myOptions.keySet().hashCode();
-            result = prime * result + Arrays.deepHashCode(myOptions.values().toArray(new Object[options.size()]));
-        }
-        return result;
     }
 
     @Override
@@ -218,17 +188,41 @@ public final class FileSystemOptions implements Cloneable {
         return compareTo(other) == 0;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0
-     */
-    @Override
-    public Object clone() {
-        return new FileSystemOptions(new TreeMap<>(options));
+    <T> T getOption(final Class<? extends FileSystem> fileSystemClass, final String name) {
+        final FileSystemOptionKey key = new FileSystemOptionKey(fileSystemClass, name);
+        return (T) options.get(key);
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        if (options == null) {
+            result = prime * result;
+        } else {
+            final SortedMap<FileSystemOptionKey, Object> myOptions = options instanceof SortedMap
+                    ? (SortedMap<FileSystemOptionKey, Object>) options
+                    : new TreeMap<>(options);
+            result = prime * result + myOptions.keySet().hashCode();
+            result = prime * result + Arrays.deepHashCode(myOptions.values().toArray());
+        }
+        return result;
+    }
+
+    boolean hasOption(final Class<? extends FileSystem> fileSystemClass, final String name) {
+        final FileSystemOptionKey key = new FileSystemOptionKey(fileSystemClass, name);
+        return options.containsKey(key);
+    }
+
+    void setOption(final Class<? extends FileSystem> fileSystemClass, final String name, final Object value) {
+        options.put(new FileSystemOptionKey(fileSystemClass, name), value);
+    }
+
+    int size() {
+        return options.size();
+    }
+
+     @Override
     public String toString() {
         return options.toString();
     }

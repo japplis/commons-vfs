@@ -20,26 +20,40 @@ import java.io.IOException;
 
 import org.apache.commons.vfs2.util.MonitorInputStream;
 import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.io.entity.NullEntity;
 
 /**
  * An InputStream that cleans up the {@code org.apache.hc.core5.http.ClassicHttpResponse} on close.
  */
-class MonitoredHttpResponseContentInputStream extends MonitorInputStream {
+final class MonitoredHttpResponseContentInputStream extends MonitorInputStream {
 
     private final ClassicHttpResponse httpResponse;
 
-    public MonitoredHttpResponseContentInputStream(final ClassicHttpResponse httpResponse) throws IOException {
+    MonitoredHttpResponseContentInputStream(final ClassicHttpResponse httpResponse) throws IOException {
         super(httpResponse.getEntity().getContent());
         this.httpResponse = httpResponse;
     }
 
-    public MonitoredHttpResponseContentInputStream(final ClassicHttpResponse httpResponse, final int bufferSize) throws IOException {
+    MonitoredHttpResponseContentInputStream(final ClassicHttpResponse httpResponse, final int bufferSize) throws IOException {
         super(httpResponse.getEntity().getContent(), bufferSize);
         this.httpResponse = httpResponse;
     }
 
+    /**
+     * Prevent closing the stream itself if the httpResponse is closeable.
+     * Closing the stream may consume all remaining data no matter how large (VFS-805).
+     */
+    @Override
+    protected void closeSuper() throws IOException {
+        // Suppressed close() invocation on the underlying input stream
+    }
+
     @Override
     protected void onClose() throws IOException {
+        // Replace the response's entity with a dummy entity in order to prevent
+        // exhausting all data (VFS-805)
+        httpResponse.setEntity(NullEntity.INSTANCE);
+        // Note that this also calls close on the dummy entity
         httpResponse.close();
     }
 

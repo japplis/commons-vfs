@@ -37,9 +37,24 @@ public class LocalFileSystem extends AbstractFileSystem {
 
     private final String rootFile;
 
-    public LocalFileSystem(final FileName rootName, final String rootFile, final FileSystemOptions opts) {
-        super(rootName, null, opts);
+    /**
+     * Constructs a new instance.
+     *
+     * @param rootFileName The root file name of this file system.
+     * @param rootFile The root of this file system.
+     * @param fileSystemOptions Options to build this file system.
+     */
+    public LocalFileSystem(final FileName rootFileName, final String rootFile, final FileSystemOptions fileSystemOptions) {
+        super(rootFileName, null, fileSystemOptions);
         this.rootFile = rootFile;
+    }
+
+    /**
+     * Returns the capabilities of this file system.
+     */
+    @Override
+    protected void addCapabilities(final Collection<Capability> caps) {
+        caps.addAll(DefaultLocalFileProvider.capabilities);
     }
 
     /**
@@ -52,14 +67,6 @@ public class LocalFileSystem extends AbstractFileSystem {
     }
 
     /**
-     * Returns the capabilities of this file system.
-     */
-    @Override
-    protected void addCapabilities(final Collection<Capability> caps) {
-        caps.addAll(DefaultLocalFileProvider.capabilities);
-    }
-
-    /**
      * Creates a temporary local copy of a file and its descendants.
      */
     @Override
@@ -68,8 +75,7 @@ public class LocalFileSystem extends AbstractFileSystem {
         final File file = localFile.getLocalFile();
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            final FilePermission requiredPerm = new FilePermission(file.getAbsolutePath(), "read");
-            sm.checkPermission(requiredPerm);
+            sm.checkPermission(new FilePermission(file.getAbsolutePath(), "read"));
         }
         return file;
     }

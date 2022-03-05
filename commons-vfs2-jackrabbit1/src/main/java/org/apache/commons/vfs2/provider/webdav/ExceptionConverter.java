@@ -32,37 +32,48 @@ import org.w3c.dom.Element;
  */
 public final class ExceptionConverter {
 
-    // avoid instanciation
+    // avoid instantiation.
     private ExceptionConverter() {
     }
 
-    public static FileSystemException generate(final DavException davExc) throws FileSystemException {
-        return generate(davExc, null);
+    /**
+     * Generates a new instance of FileSystemException.
+     *
+     * @param cause The cause of the new exception.
+     * @return A new FileSystemException.
+     * @throws FileSystemException If an Exception is caught while generating a new instance.
+     */
+    public static FileSystemException generate(final DavException cause) throws FileSystemException {
+        return generate(cause, null);
     }
 
-    public static FileSystemException generate(final DavException davExc, final DavMethod method)
-            throws FileSystemException {
-        String msg = davExc.getMessage();
-        if (davExc.hasErrorCondition()) {
+    /**
+     * Generates a new instance of FileSystemException.
+     *
+     * @param cause The cause of the new exception.
+     * @param davMethod Ignored.
+     * @return A new FileSystemException.
+     * @throws FileSystemException If an Exception is caught while generating a new instance.
+     */
+    public static FileSystemException generate(final DavException cause, final DavMethod davMethod) throws FileSystemException {
+        String msg = cause.getMessage();
+        if (cause.hasErrorCondition()) {
             try {
-                final Element error = davExc.toXml(DomUtil.BUILDER_FACTORY.newDocumentBuilder().newDocument());
-                if (DomUtil.matches(error, DavException.XML_ERROR, DavConstants.NAMESPACE)) {
-                    if (DomUtil.hasChildElement(error, "exception", null)) {
-                        final Element exc = DomUtil.getChildElement(error, "exception", null);
-                        if (DomUtil.hasChildElement(exc, "message", null)) {
-                            msg = DomUtil.getChildText(exc, "message", null);
+                final Element error = cause.toXml(DomUtil.BUILDER_FACTORY.newDocumentBuilder().newDocument());
+                if (DomUtil.matches(error, DavException.XML_ERROR, DavConstants.NAMESPACE) && DomUtil.hasChildElement(error, "exception", null)) {
+                    final Element exc = DomUtil.getChildElement(error, "exception", null);
+                    if (DomUtil.hasChildElement(exc, "message", null)) {
+                        msg = DomUtil.getChildText(exc, "message", null);
+                    }
+                    if (DomUtil.hasChildElement(exc, "class", null)) {
+                        final Class<?> cl = Class.forName(DomUtil.getChildText(exc, "class", null));
+                        final Constructor<?> excConstr = cl.getConstructor(String.class);
+                        final Object o = excConstr.newInstance(msg);
+                        if (o instanceof FileSystemException) {
+                            return (FileSystemException) o;
                         }
-                        if (DomUtil.hasChildElement(exc, "class", null)) {
-                            final Class<?> cl = Class.forName(DomUtil.getChildText(exc, "class", null));
-                            final Constructor<?> excConstr = cl.getConstructor(new Class[] { String.class });
-                            if (excConstr != null) {
-                                final Object o = excConstr.newInstance(new Object[] { msg });
-                                if (o instanceof FileSystemException) {
-                                    return (FileSystemException) o;
-                                } else if (o instanceof Exception) {
-                                    return new FileSystemException(msg, (Exception) o);
-                                }
-                            }
+                        if (o instanceof Exception) {
+                            return new FileSystemException(msg, (Exception) o);
                         }
                     }
                 }

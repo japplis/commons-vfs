@@ -18,13 +18,16 @@ package org.apache.commons.vfs2.provider.sftp;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Objects;
 import java.util.Properties;
 
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.time.DurationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
-import org.apache.commons.vfs2.util.Os;
 
 import com.jcraft.jsch.ConfigRepository;
 import com.jcraft.jsch.JSch;
@@ -42,258 +45,10 @@ import com.jcraft.jsch.UserInfo;
  */
 public final class SftpClientFactory {
 
-    private static final String SSH_DIR_NAME = ".ssh";
-    private static final String OPENSSH_CONFIG_NAME = "config";
-    private static final Log LOG = LogFactory.getLog(SftpClientFactory.class);
-
-    static {
-        JSch.setLogger(new JSchLogger());
-    }
-
-    private SftpClientFactory() {
-    }
-
-    /**
-     * Creates a new connection to the server.
-     *
-     * @param hostname The name of the host to connect to.
-     * @param port The port to use.
-     * @param username The user's id.
-     * @param password The user's password.
-     * @param fileSystemOptions The FileSystem options.
-     * @return A Session, never null.
-     * @throws FileSystemException if an error occurs.
-     */
-    public static Session createConnection(final String hostname, final int port, final char[] username,
-            final char[] password, final FileSystemOptions fileSystemOptions) throws FileSystemException {
-        final JSch jsch = new JSch();
-
-        File sshDir = null;
-
-        // new style - user passed
-        final SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
-        final File knownHostsFile = builder.getKnownHosts(fileSystemOptions);
-        final IdentityProvider[] identities = builder.getIdentityProvider(fileSystemOptions);
-        final IdentityRepositoryFactory repositoryFactory = builder.getIdentityRepositoryFactory(fileSystemOptions);
-        final ConfigRepository configRepository = builder.getConfigRepository(fileSystemOptions);
-        final boolean loadOpenSSHConfig = builder.isLoadOpenSSHConfig(fileSystemOptions);
-
-        sshDir = findSshDir();
-
-        setKnownHosts(jsch, sshDir, knownHostsFile);
-
-        if (repositoryFactory != null) {
-            jsch.setIdentityRepository(repositoryFactory.create(jsch));
-        }
-
-        addIdentities(jsch, sshDir, identities);
-        setConfigRepository(jsch, sshDir, configRepository, loadOpenSSHConfig);
-
-        Session session;
-        try {
-            session = jsch.getSession(new String(username), hostname, port);
-            if (password != null) {
-                session.setPassword(new String(password));
-            }
-
-            final Integer sessionTimeout = builder.getSessionTimeoutMillis(fileSystemOptions);
-            if (sessionTimeout != null) {
-                session.setTimeout(sessionTimeout.intValue());
-            }
-
-            final UserInfo userInfo = builder.getUserInfo(fileSystemOptions);
-            if (userInfo != null) {
-                session.setUserInfo(userInfo);
-            }
-
-            final Properties config = new Properties();
-
-            // set StrictHostKeyChecking property
-            final String strictHostKeyChecking = builder.getStrictHostKeyChecking(fileSystemOptions);
-            if (strictHostKeyChecking != null) {
-                config.setProperty("StrictHostKeyChecking", strictHostKeyChecking);
-            }
-            // set PreferredAuthentications property
-            final String preferredAuthentications = builder.getPreferredAuthentications(fileSystemOptions);
-            if (preferredAuthentications != null) {
-                config.setProperty("PreferredAuthentications", preferredAuthentications);
-            }
-
-            // set compression property
-            final String compression = builder.getCompression(fileSystemOptions);
-            if (compression != null) {
-                config.setProperty("compression.s2c", compression);
-                config.setProperty("compression.c2s", compression);
-            }
-
-            final String keyExchangeAlgorithm = builder.getKeyExchangeAlgorithm(fileSystemOptions);
-            if (keyExchangeAlgorithm != null) {
-                config.setProperty("kex", keyExchangeAlgorithm);
-            }
-
-            final String proxyHost = builder.getProxyHost(fileSystemOptions);
-            if (proxyHost != null) {
-                final int proxyPort = builder.getProxyPort(fileSystemOptions);
-                final SftpFileSystemConfigBuilder.ProxyType proxyType = builder.getProxyType(fileSystemOptions);
-                final String proxyUser =  builder.getProxyUser(fileSystemOptions);
-                final String proxyPassword = builder.getProxyPassword(fileSystemOptions);
-                Proxy proxy = null;
-                if (SftpFileSystemConfigBuilder.PROXY_HTTP.equals(proxyType)) {
-                    proxy = createProxyHTTP(proxyHost, proxyPort);
-                    ((ProxyHTTP)proxy).setUserPasswd(proxyUser, proxyPassword);
-                } else if (SftpFileSystemConfigBuilder.PROXY_SOCKS5.equals(proxyType)) {
-                    proxy = createProxySOCKS5(proxyHost, proxyPort);
-                    ((ProxySOCKS5)proxy).setUserPasswd(proxyUser, proxyPassword);
-                } else if (SftpFileSystemConfigBuilder.PROXY_STREAM.equals(proxyType)) {
-                    proxy = createStreamProxy(proxyHost, proxyPort, fileSystemOptions, builder);
-                }
-
-                if (proxy != null) {
-                    session.setProxy(proxy);
-                }
-            }
-
-            // set properties for the session
-            if (config.size() > 0) {
-                session.setConfig(config);
-            }
-            session.setDaemonThread(true);
-            session.connect();
-        } catch (final Exception exc) {
-            throw new FileSystemException("vfs.provider.sftp/connect.error", exc, hostname);
-        }
-
-        return session;
-    }
-
-    private static void addIdentities(final JSch jsch, final File sshDir, final IdentityProvider[] identities)
-            throws FileSystemException {
-        if (identities != null) {
-            for (final IdentityProvider info : identities) {
-                addIdentity(jsch, info);
-            }
-        } else {
-            // Load the private key (rsa-key only)
-            final File privateKeyFile = new File(sshDir, "id_rsa");
-            if (privateKeyFile.isFile() && privateKeyFile.canRead()) {
-                addIdentity(jsch, new IdentityInfo(privateKeyFile));
-            }
-        }
-    }
-
-    private static void setConfigRepository(final JSch jsch, final File sshDir, final ConfigRepository configRepository, final boolean loadOpenSSHConfig) throws FileSystemException {
-        if (configRepository != null) {
-            jsch.setConfigRepository(configRepository);
-        } else if (loadOpenSSHConfig) {
-            try {
-                // loading openssh config (~/.ssh/config)
-                final ConfigRepository openSSHConfig = OpenSSHConfig.parseFile(new File(sshDir, OPENSSH_CONFIG_NAME).getAbsolutePath());
-                jsch.setConfigRepository(openSSHConfig);
-            } catch (final IOException e) {
-                throw new FileSystemException("vfs.provider.sftp/load-openssh-config.error", e);
-            }
-        }
-    }
-
-    private static void addIdentity(final JSch jsch, final IdentityProvider identity) throws FileSystemException {
-        try {
-            identity.addIdentity(jsch);
-        } catch (final JSchException e) {
-            throw new FileSystemException("vfs.provider.sftp/load-private-key.error", identity, e);
-        }
-    }
-
-    private static void setKnownHosts(final JSch jsch, final File sshDir, File knownHostsFile)
-            throws FileSystemException {
-        try {
-            if (knownHostsFile != null) {
-                jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
-            } else {
-                // Load the known hosts file
-                knownHostsFile = new File(sshDir, "known_hosts");
-                if (knownHostsFile.isFile() && knownHostsFile.canRead()) {
-                    jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
-                }
-            }
-        } catch (final JSchException e) {
-            throw new FileSystemException("vfs.provider.sftp/known-hosts.error", knownHostsFile.getAbsolutePath(), e);
-        }
-
-    }
-
-    private static Proxy createStreamProxy(final String proxyHost, final int proxyPort,
-            final FileSystemOptions fileSystemOptions, final SftpFileSystemConfigBuilder builder) {
-        Proxy proxy;
-        // Use a stream proxy, i.e. it will use a remote host as a proxy
-        // and run a command (e.g. netcat) that forwards input/output
-        // to the target host.
-
-        // Here we get the settings for connecting to the proxy:
-        // user, password, options and a command
-        final String proxyUser = builder.getProxyUser(fileSystemOptions);
-        final String proxyPassword = builder.getProxyPassword(fileSystemOptions);
-        final FileSystemOptions proxyOptions = builder.getProxyOptions(fileSystemOptions);
-
-        final String proxyCommand = builder.getProxyCommand(fileSystemOptions);
-
-        // Create the stream proxy
-        proxy = new SftpStreamProxy(proxyCommand, proxyUser, proxyHost, proxyPort, proxyPassword, proxyOptions);
-        return proxy;
-    }
-
-    private static ProxySOCKS5 createProxySOCKS5(final String proxyHost, final int proxyPort) {
-        return proxyPort == 0 ? new ProxySOCKS5(proxyHost) : new ProxySOCKS5(proxyHost, proxyPort);
-    }
-
-    private static ProxyHTTP createProxyHTTP(final String proxyHost, final int proxyPort) {
-        return proxyPort == 0 ? new ProxyHTTP(proxyHost) : new ProxyHTTP(proxyHost, proxyPort);
-    }
-
-    /**
-     * Finds the {@code .ssh} directory.
-     * <p>
-     * The lookup order is:
-     * </p>
-     * <ol>
-     * <li>The system property {@code vfs.sftp.sshdir} (the override mechanism)</li>
-     * <li>{@code user.home}/.ssh</li>
-     * <li>On Windows only: {@code C:\cygwin\home[user.name]\.ssh}</li>
-     * <li>The current directory, as a last resort.</li>
-     * </ol>
-     *
-     * <h2>Windows Notes</h2>
-     * <p>
-     * The default installation directory for Cygwin is {@code C:\cygwin}. On my set up (Gary here), I have Cygwin in
-     * {@code C:\bin\cygwin}, not the default. Also, my .ssh directory was created in the {@code user.home} directory.
-     * </p>
-     *
-     * @return The {@code .ssh} directory
-     */
-    private static File findSshDir() {
-        String sshDirPath;
-        sshDirPath = System.getProperty("vfs.sftp.sshdir");
-        if (sshDirPath != null) {
-            final File sshDir = new File(sshDirPath);
-            if (sshDir.exists()) {
-                return sshDir;
-            }
-        }
-
-        File sshDir = new File(System.getProperty("user.home"), SSH_DIR_NAME);
-        if (sshDir.exists()) {
-            return sshDir;
-        }
-
-        if (Os.isFamily(Os.OS_FAMILY_WINDOWS)) {
-            // TODO - this may not be true
-            final String userName = System.getProperty("user.name");
-            sshDir = new File("C:\\cygwin\\home\\" + userName + "\\" + SSH_DIR_NAME);
-            if (sshDir.exists()) {
-                return sshDir;
-            }
-        }
-        return new File("");
-    }
+    private static final String KEY_COMPRESSION_C2S = "compression.c2s";
+    private static final String KEY_COMPRESSION_S2C = "compression.s2c";
+    private static final String KEY_PREFERRED_AUTHENTICATIONS = "PreferredAuthentications";
+    private static final String KEY_STRICT_HOST_KEY_CHECKING = "StrictHostKeyChecking";
 
     /** Interface JSchLogger with JCL. */
     private static class JSchLogger implements Logger {
@@ -312,7 +67,6 @@ public final class SftpClientFactory {
                 return LOG.isInfoEnabled();
             default:
                 return LOG.isDebugEnabled();
-
             }
         }
 
@@ -338,5 +92,256 @@ public final class SftpClientFactory {
                 LOG.debug(msg);
             }
         }
+    }
+
+    private static final String SSH_DIR_NAME = ".ssh";
+    private static final String OPENSSH_CONFIG_NAME = "config";
+    private static final Log LOG = LogFactory.getLog(SftpClientFactory.class);
+
+    static {
+        JSch.setLogger(new JSchLogger());
+    }
+
+    private SftpClientFactory() {
+    }
+
+    private static void addIdentities(final JSch jsch, final File sshDir, final IdentityProvider[] identities)
+            throws FileSystemException {
+        if (identities != null) {
+            for (final IdentityProvider info : identities) {
+                addIdentity(jsch, info);
+            }
+        } else {
+            // Load the private key (rsa-key only)
+            final File privateKeyFile = new File(sshDir, "id_rsa");
+            if (privateKeyFile.isFile() && privateKeyFile.canRead()) {
+                addIdentity(jsch, new IdentityInfo(privateKeyFile));
+            }
+        }
+    }
+
+    private static void addIdentity(final JSch jsch, final IdentityProvider identity) throws FileSystemException {
+        try {
+            identity.addIdentity(jsch);
+        } catch (final JSchException e) {
+            throw new FileSystemException("vfs.provider.sftp/load-private-key.error", identity, e);
+        }
+    }
+
+    /**
+     * Creates a new connection to the server.
+     *
+     * @param hostname The name of the host to connect to.
+     * @param port The port to use.
+     * @param username The user's id.
+     * @param password The user's password.
+     * @param fileSystemOptions The FileSystem options.
+     * @return A Session, never null.
+     * @throws FileSystemException if an error occurs.
+     */
+    public static Session createConnection(final String hostname, final int port, final char[] username,
+        final char[] password, final FileSystemOptions fileSystemOptions) throws FileSystemException {
+        Objects.requireNonNull(username, "username");
+        final JSch jsch = new JSch();
+
+        // new style - user passed
+        final SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
+        final File knownHostsFile = builder.getKnownHosts(fileSystemOptions);
+        final IdentityProvider[] identities = builder.getIdentityProvider(fileSystemOptions);
+        final IdentityRepositoryFactory repositoryFactory = builder.getIdentityRepositoryFactory(fileSystemOptions);
+        final ConfigRepository configRepository = builder.getConfigRepository(fileSystemOptions);
+        final boolean loadOpenSSHConfig = builder.isLoadOpenSSHConfig(fileSystemOptions);
+
+        final File sshDir = findSshDir();
+
+        setKnownHosts(jsch, sshDir, knownHostsFile);
+
+        if (repositoryFactory != null) {
+            jsch.setIdentityRepository(repositoryFactory.create(jsch));
+        }
+
+        addIdentities(jsch, sshDir, identities);
+        setConfigRepository(jsch, sshDir, configRepository, loadOpenSSHConfig);
+
+        final Session session;
+        try {
+            session = jsch.getSession(new String(username), hostname, port);
+            if (password != null) {
+                session.setPassword(new String(password));
+            }
+
+            final Duration sessionTimeout = builder.getSessionTimeout(fileSystemOptions);
+            if (sessionTimeout != null) {
+                session.setTimeout(DurationUtils.toMillisInt(sessionTimeout));
+            }
+
+            final UserInfo userInfo = builder.getUserInfo(fileSystemOptions);
+            if (userInfo != null) {
+                session.setUserInfo(userInfo);
+            }
+
+            final Properties config = new Properties();
+
+            // set StrictHostKeyChecking property
+            final String strictHostKeyChecking = builder.getStrictHostKeyChecking(fileSystemOptions);
+            if (strictHostKeyChecking != null) {
+                config.setProperty(KEY_STRICT_HOST_KEY_CHECKING, strictHostKeyChecking);
+            }
+            // set PreferredAuthentications property
+            final String preferredAuthentications = builder.getPreferredAuthentications(fileSystemOptions);
+            if (preferredAuthentications != null) {
+                config.setProperty(KEY_PREFERRED_AUTHENTICATIONS, preferredAuthentications);
+            }
+
+            // set compression property
+            final String compression = builder.getCompression(fileSystemOptions);
+            if (compression != null) {
+                config.setProperty(KEY_COMPRESSION_S2C, compression);
+                config.setProperty(KEY_COMPRESSION_C2S, compression);
+            }
+
+            final String keyExchangeAlgorithm = builder.getKeyExchangeAlgorithm(fileSystemOptions);
+            if (keyExchangeAlgorithm != null) {
+                config.setProperty("kex", keyExchangeAlgorithm);
+            }
+
+            final String proxyHost = builder.getProxyHost(fileSystemOptions);
+            if (proxyHost != null) {
+                final int proxyPort = builder.getProxyPort(fileSystemOptions);
+                final SftpFileSystemConfigBuilder.ProxyType proxyType = builder.getProxyType(fileSystemOptions);
+                final String proxyUser = builder.getProxyUser(fileSystemOptions);
+                final String proxyPassword = builder.getProxyPassword(fileSystemOptions);
+                Proxy proxy = null;
+                if (SftpFileSystemConfigBuilder.PROXY_HTTP.equals(proxyType)) {
+                    proxy = createProxyHTTP(proxyHost, proxyPort);
+                    ((ProxyHTTP) proxy).setUserPasswd(proxyUser, proxyPassword);
+                } else if (SftpFileSystemConfigBuilder.PROXY_SOCKS5.equals(proxyType)) {
+                    proxy = createProxySOCKS5(proxyHost, proxyPort);
+                    ((ProxySOCKS5) proxy).setUserPasswd(proxyUser, proxyPassword);
+                } else if (SftpFileSystemConfigBuilder.PROXY_STREAM.equals(proxyType)) {
+                    proxy = createStreamProxy(proxyHost, proxyPort, fileSystemOptions, builder);
+                }
+
+                if (proxy != null) {
+                    session.setProxy(proxy);
+                }
+            }
+
+            // set properties for the session
+            if (!config.isEmpty()) {
+                session.setConfig(config);
+            }
+            session.setDaemonThread(true);
+            session.connect();
+        } catch (final Exception exc) {
+            throw new FileSystemException("vfs.provider.sftp/connect.error", exc, hostname);
+        }
+
+        return session;
+    }
+
+    private static ProxyHTTP createProxyHTTP(final String proxyHost, final int proxyPort) {
+        return proxyPort == 0 ? new ProxyHTTP(proxyHost) : new ProxyHTTP(proxyHost, proxyPort);
+    }
+
+    private static ProxySOCKS5 createProxySOCKS5(final String proxyHost, final int proxyPort) {
+        return proxyPort == 0 ? new ProxySOCKS5(proxyHost) : new ProxySOCKS5(proxyHost, proxyPort);
+    }
+
+    private static Proxy createStreamProxy(final String proxyHost, final int proxyPort,
+            final FileSystemOptions fileSystemOptions, final SftpFileSystemConfigBuilder builder) {
+        // Use a stream proxy, i.e. it will use a remote host as a proxy
+        // and run a command (e.g. netcat) that forwards input/output
+        // to the target host.
+
+        // Here we get the settings for connecting to the proxy:
+        // user, password, options and a command
+        final String proxyUser = builder.getProxyUser(fileSystemOptions);
+        final String proxyPassword = builder.getProxyPassword(fileSystemOptions);
+        final FileSystemOptions proxyOptions = builder.getProxyOptions(fileSystemOptions);
+
+        final String proxyCommand = builder.getProxyCommand(fileSystemOptions);
+
+        // Create the stream proxy
+        return new SftpStreamProxy(proxyCommand, proxyUser, proxyHost, proxyPort, proxyPassword, proxyOptions);
+    }
+
+    /**
+     * Finds the {@code .ssh} directory.
+     * <p>
+     * The lookup order is:
+     * </p>
+     * <ol>
+     * <li>The system property {@code vfs.sftp.sshdir} (the override mechanism)</li>
+     * <li>{@code user.home}/.ssh</li>
+     * <li>On Windows only: {@code C:\cygwin\home[user.name]\.ssh}</li>
+     * <li>The current directory, as a last resort.</li>
+     * </ol>
+     *
+     * <h2>Windows Notes</h2>
+     * <p>
+     * The default installation directory for Cygwin is {@code C:\cygwin}. On my set up (Gary here), I have Cygwin in
+     * {@code C:\bin\cygwin}, not the default. Also, my .ssh directory was created in the {@code user.home} directory.
+     * </p>
+     *
+     * @return The {@code .ssh} directory
+     */
+    private static File findSshDir() {
+        final String sshDirPath;
+        sshDirPath = System.getProperty("vfs.sftp.sshdir");
+        if (sshDirPath != null) {
+            final File sshDir = new File(sshDirPath);
+            if (sshDir.exists()) {
+                return sshDir;
+            }
+        }
+
+        File sshDir = new File(System.getProperty("user.home"), SSH_DIR_NAME);
+        if (sshDir.exists()) {
+            return sshDir;
+        }
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            // TODO - this may not be true
+            final String userName = System.getProperty("user.name");
+            sshDir = new File("C:\\cygwin\\home\\" + userName + "\\" + SSH_DIR_NAME);
+            if (sshDir.exists()) {
+                return sshDir;
+            }
+        }
+        return new File("");
+    }
+
+    private static void setConfigRepository(final JSch jsch, final File sshDir, final ConfigRepository configRepository, final boolean loadOpenSSHConfig)
+        throws FileSystemException {
+        if (configRepository != null) {
+            jsch.setConfigRepository(configRepository);
+        } else if (loadOpenSSHConfig) {
+            try {
+                // loading openssh config (~/.ssh/config)
+                final ConfigRepository openSSHConfig = OpenSSHConfig.parseFile(new File(sshDir, OPENSSH_CONFIG_NAME).getAbsolutePath());
+                jsch.setConfigRepository(openSSHConfig);
+            } catch (final IOException e) {
+                throw new FileSystemException("vfs.provider.sftp/load-openssh-config.error", e);
+            }
+        }
+    }
+
+    private static void setKnownHosts(final JSch jsch, final File sshDir, File knownHostsFile)
+            throws FileSystemException {
+        try {
+            if (knownHostsFile != null) {
+                jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
+            } else {
+                // Load the known hosts file
+                knownHostsFile = new File(sshDir, "known_hosts");
+                if (knownHostsFile.isFile() && knownHostsFile.canRead()) {
+                    jsch.setKnownHosts(knownHostsFile.getAbsolutePath());
+                }
+            }
+        } catch (final JSchException e) {
+            throw new FileSystemException("vfs.provider.sftp/known-hosts.error", knownHostsFile.getAbsolutePath(), e);
+        }
+
     }
 }

@@ -16,19 +16,16 @@
  */
 package org.apache.commons.vfs2.provider.ram;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.vfs2.Capability;
+import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -41,8 +38,6 @@ import org.apache.commons.vfs2.provider.AbstractFileSystem;
  * A RAM File System.
  */
 public class RamFileSystem extends AbstractFileSystem implements Serializable {
-
-    private static final int BUFFER_SIZE = 512;
 
     /**
      * serialVersionUID format is YYYYMMDD for the date of the last binary change.
@@ -60,22 +55,12 @@ public class RamFileSystem extends AbstractFileSystem implements Serializable {
      */
     protected RamFileSystem(final FileName rootName, final FileSystemOptions fileSystemOptions) {
         super(rootName, null, fileSystemOptions);
-        this.cache = Collections.synchronizedMap(new HashMap<FileName, RamFileData>());
+        this.cache = Collections.synchronizedMap(new HashMap<>());
         // create root
         final RamFileData rootData = new RamFileData(rootName);
         rootData.setType(FileType.FOLDER);
         rootData.setLastModified(System.currentTimeMillis());
         this.cache.put(rootName, rootData);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.commons.vfs2.provider.AbstractFileSystem#createFile(org.apache.commons.vfs2.FileName)
-     */
-    @Override
-    protected FileObject createFile(final AbstractFileName name) throws Exception {
-        return new RamFileObject(name, this);
     }
 
     /*
@@ -89,37 +74,45 @@ public class RamFileSystem extends AbstractFileSystem implements Serializable {
     }
 
     /**
-     * @param name The name of the file.
-     * @return children The names of the children.
+     * Attaches this instance to the given RamFileObject.
+     *
+     * @param ramFileObject A RAM file object.
      */
-    String[] listChildren(final FileName name) {
-        final RamFileData data = this.cache.get(name);
-        if (data == null || !data.getType().hasChildren()) {
-            return null;
+    public void attach(final RamFileObject ramFileObject) {
+        if (ramFileObject.getName() == null) {
+            throw new IllegalArgumentException("Null argument");
         }
-        final Collection<RamFileData> children = data.getChildren();
-        String[] names;
-
-        synchronized (children) {
-            names = new String[children.size()];
-
-            int pos = 0;
-            final Iterator<RamFileData> iter = children.iterator();
-            while (iter.hasNext()) {
-                final RamFileData childData = iter.next();
-                names[pos] = childData.getName().getBaseName();
-                pos++;
-            }
+        RamFileData data = this.cache.get(ramFileObject.getName());
+        if (data == null) {
+            data = new RamFileData(ramFileObject.getName());
         }
+        ramFileObject.setData(data);
+    }
 
-        return names;
+    /**
+     * Close the RAMFileSystem.
+     */
+    @Override
+    public void close() {
+        this.cache.clear();
+        super.close();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.commons.vfs2.provider.AbstractFileSystem#createFile(org.apache.commons.vfs2.FileName)
+     */
+    @Override
+    protected FileObject createFile(final AbstractFileName name) throws Exception {
+        return new RamFileObject(name, this);
     }
 
     /**
      * Delete a file
      *
-     * @param file
-     * @throws FileSystemException
+     * @param file the {@link RamFileObject} file to delete.
+     * @throws FileSystemException Thrown for file system errors.
      */
     void delete(final RamFileObject file) throws FileSystemException {
         // root is read only check
@@ -137,10 +130,56 @@ public class RamFileSystem extends AbstractFileSystem implements Serializable {
     }
 
     /**
+     * Import a Tree.
+     *
+     * @param file The File
+     * @throws FileSystemException if an error occurs.
+     */
+    public void importTree(final File file) throws FileSystemException {
+        final FileObject fileFo = getFileSystemManager().toFileObject(file);
+        this.toRamFileObject(fileFo, fileFo);
+    }
+
+    /**
+     * @param name The name of the file.
+     * @return children The names of the children.
+     */
+    String[] listChildren(final FileName name) {
+        final RamFileData data = this.cache.get(name);
+        if (data == null || !data.getType().hasChildren()) {
+            return null;
+        }
+        final Collection<RamFileData> children = data.getChildren();
+
+        synchronized (children) {
+            return children.stream().map(childData -> childData.getName().getBaseName()).toArray(String[]::new);
+        }
+    }
+
+    /**
+     * @param from The original file.
+     * @param to The new file.
+     * @throws FileSystemException if an error occurs.
+     */
+    void rename(final RamFileObject from, final RamFileObject to) throws FileSystemException {
+        if (!this.cache.containsKey(from.getName())) {
+            throw new FileSystemException("File does not exist: " + from.getName());
+        }
+        // Copy data
+
+        to.getData().setContent(from.getData().getContent());
+        to.getData().setLastModified(from.getData().getLastModified());
+        to.getData().setType(from.getData().getType());
+
+        this.save(to);
+        this.delete(from);
+    }
+
+    /**
      * Saves a file
      *
-     * @param file
-     * @throws FileSystemException
+     * @param file the {@link RamFileObject} file to save.
+     * @throws FileSystemException Thrown for file system errors.
      */
     void save(final RamFileObject file) throws FileSystemException {
 
@@ -166,54 +205,26 @@ public class RamFileSystem extends AbstractFileSystem implements Serializable {
     }
 
     /**
-     * @param from The original file.
-     * @param to The new file.
-     * @throws FileSystemException if an error occurs.
+     * @return Returns the size of the FileSystem
      */
-    void rename(final RamFileObject from, final RamFileObject to) throws FileSystemException {
-        if (!this.cache.containsKey(from.getName())) {
-            throw new FileSystemException("File does not exist: " + from.getName());
+    long size() {
+        long size = 0;
+        synchronized (cache) {
+            for (final RamFileData data : cache.values()) {
+                size += data.size();
+            }
         }
-        // Copy data
-
-        to.getData().setContent(from.getData().getContent());
-        to.getData().setLastModified(from.getData().getLastModified());
-        to.getData().setType(from.getData().getType());
-
-        this.save(to);
-        this.delete(from);
-    }
-
-    public void attach(final RamFileObject fo) {
-        if (fo.getName() == null) {
-            throw new IllegalArgumentException("Null argument");
-        }
-        RamFileData data = this.cache.get(fo.getName());
-        if (data == null) {
-            data = new RamFileData(fo.getName());
-        }
-        fo.setData(data);
-    }
-
-    /**
-     * Import a Tree.
-     *
-     * @param file The File
-     * @throws FileSystemException if an error occurs.
-     */
-    public void importTree(final File file) throws FileSystemException {
-        final FileObject fileFo = getFileSystemManager().toFileObject(file);
-        this.toRamFileObject(fileFo, fileFo);
+        return size;
     }
 
     /**
      * Import the given file with the name relative to the given root
      *
-     * @param fo
-     * @param root
-     * @throws FileSystemException
+     * @param fo the source {@link FileObject} file to import.
+     * @param root the {@link FileObject} root.
+     * @throws FileSystemException Thrown for file system errors.
      */
-    void toRamFileObject(final FileObject fo, final FileObject root) throws FileSystemException {
+    private void toRamFileObject(final FileObject fo, final FileObject root) throws FileSystemException {
         final RamFileObject memFo = (RamFileObject) this
                 .resolveFile(fo.getName().getPath().substring(root.getName().getPath().length()));
         if (fo.getType().hasChildren()) {
@@ -225,53 +236,14 @@ public class RamFileSystem extends AbstractFileSystem implements Serializable {
                 this.toRamFileObject(child, root);
             }
         } else if (fo.isFile()) {
-            // Read bytes
-            try {
-                final InputStream is = fo.getContent().getInputStream();
-                try {
-                    final OutputStream os = new BufferedOutputStream(memFo.getOutputStream(), BUFFER_SIZE);
-                    int i;
-                    while ((i = is.read()) != -1) {
-                        os.write(i);
-                    }
-                    os.close();
-                } finally {
-                    try {
-                        is.close();
-                    } catch (final IOException ignored) {
-                        /* ignore on close exception. */
-                    }
-                    // TODO: close os
-                }
+            // Copy bytes
+            try (FileContent content = fo.getContent()) {
+                content.write(memFo);
             } catch (final IOException e) {
                 throw new FileSystemException(e.getClass().getName() + " " + e.getMessage());
             }
         } else {
             throw new FileSystemException("File is not a folder nor a file " + memFo);
         }
-    }
-
-    /**
-     * @return Returns the size of the FileSystem
-     */
-    long size() {
-        long size = 0;
-        synchronized (cache) {
-            final Iterator<RamFileData> iter = cache.values().iterator();
-            while (iter.hasNext()) {
-                final RamFileData data = iter.next();
-                size += data.size();
-            }
-        }
-        return size;
-    }
-
-    /**
-     * Close the RAMFileSystem.
-     */
-    @Override
-    public void close() {
-        this.cache.clear();
-        super.close();
     }
 }

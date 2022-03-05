@@ -29,19 +29,21 @@ public class TgzFileProvider extends CompositeFileProvider {
     /** The provider's capabilities */
     protected static final Collection<Capability> capabilities = TarFileProvider.capabilities;
 
-    private static final String[] SCHEMES = new String[] { "gz", "tar" };
+    private static final String[] SCHEMES = {"gz", "tar"};
 
+    /**
+     * Constructs a new instance.
+     */
     public TgzFileProvider() {
-        super();
-    }
-
-    @Override
-    protected String[] getSchemes() {
-        return SCHEMES;
     }
 
     @Override
     public Collection<Capability> getCapabilities() {
         return capabilities;
+    }
+
+    @Override
+    protected String[] getSchemes() {
+        return SCHEMES;
     }
 }

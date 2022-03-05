@@ -38,18 +38,19 @@ import org.apache.commons.vfs2.provider.zip.ZipFileProvider;
  */
 public class JarFileProvider extends ZipFileProvider {
 
-    static final Collection<Capability> capabilities;
+    static final Collection<Capability> CAPABILITIES;
 
     static {
-        final Collection<Capability> combined = new ArrayList<>();
-        combined.addAll(ZipFileProvider.capabilities);
+        final Collection<Capability> combined = new ArrayList<>(ZipFileProvider.capabilities);
         combined.addAll(Arrays.asList(Capability.ATTRIBUTES, Capability.FS_ATTRIBUTES, Capability.SIGNING,
                 Capability.MANIFEST_ATTRIBUTES, Capability.VIRTUAL));
-        capabilities = Collections.unmodifiableCollection(combined);
+        CAPABILITIES = Collections.unmodifiableCollection(combined);
     }
 
+    /**
+     * Constructs a new instance.
+     */
     public JarFileProvider() {
-        super();
     }
 
     /**
@@ -68,6 +69,6 @@ public class JarFileProvider extends ZipFileProvider {
 
     @Override
     public Collection<Capability> getCapabilities() {
-        return capabilities;
+        return CAPABILITIES;
     }
 }

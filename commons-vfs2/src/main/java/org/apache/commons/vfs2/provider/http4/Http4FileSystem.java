@@ -66,27 +66,23 @@ public class Http4FileSystem extends AbstractFileSystem {
 
         final String rootURI = getRootURI();
         final int offset = rootURI.indexOf(':');
-        final char lastCharOfScheme = (offset > 0) ? rootURI.charAt(offset - 1) : 0;
+        final char lastCharOfScheme = offset > 0 ? rootURI.charAt(offset - 1) : 0;
 
         // if scheme is 'http*s' or 'HTTP*S', then the internal base URI should be 'https'. 'http' otherwise.
-        if (lastCharOfScheme == 's' || lastCharOfScheme == 'S') {
-            this.internalBaseURI = URI.create("https" + rootURI.substring(offset));
-        } else {
-            this.internalBaseURI = URI.create("http" + rootURI.substring(offset));
-        }
-
+        final String scheme  = lastCharOfScheme == 's' || lastCharOfScheme == 'S' ? "https" : "http";
+        this.internalBaseURI = URI.create(scheme + rootURI.substring(offset));
         this.httpClient = httpClient;
         this.httpClientContext = httpClientContext;
     }
 
     @Override
-    protected FileObject createFile(final AbstractFileName name) throws Exception {
-        return new Http4FileObject<>(name, this);
+    protected void addCapabilities(final Collection<Capability> caps) {
+        caps.addAll(Http4FileProvider.CAPABILITIES);
     }
 
     @Override
-    protected void addCapabilities(final Collection<Capability> caps) {
-        caps.addAll(Http4FileProvider.capabilities);
+    protected FileObject createFile(final AbstractFileName name) throws Exception {
+        return new Http4FileObject<>(name, this);
     }
 
     @Override

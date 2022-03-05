@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -28,9 +29,7 @@ import org.apache.commons.vfs2.FileType;
 /**
  * RAM File Object Data.
  */
-class RamFileData implements Serializable {
-
-    static final byte[] EMPTY = new byte[0];
+final class RamFileData implements Serializable {
 
     /**
      * serialVersionUID format is YYYYMMDD for the date of the last binary change.
@@ -55,7 +54,7 @@ class RamFileData implements Serializable {
     /**
      * Last modified time
      */
-    private long lastModified;
+    private long lastModifiedMillis;
 
     /**
      * Children
@@ -67,88 +66,13 @@ class RamFileData implements Serializable {
      *
      * @param name The file name.
      */
-    public RamFileData(final FileName name) {
-        super();
-        this.children = Collections.synchronizedCollection(new ArrayList<RamFileData>());
+    RamFileData(final FileName name) {
+        this.children = Collections.synchronizedCollection(new ArrayList<>());
         this.clear();
         if (name == null) {
             throw new IllegalArgumentException("name can not be null");
         }
         this.name = name;
-    }
-
-    /**
-     * @return Returns the buffer.
-     */
-    byte[] getContent() {
-        return content;
-    }
-
-    /**
-     * @param content The buffer.
-     */
-    void setContent(final byte[] content) {
-        updateLastModified();
-        this.content = content;
-    }
-
-    /**
-     * @return Returns the lastModified.
-     */
-    long getLastModified() {
-        return lastModified;
-    }
-
-    /**
-     * @param lastModified The lastModified to set.
-     */
-    void setLastModified(final long lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    /**
-     * @return Returns the type.
-     */
-    FileType getType() {
-        return type;
-    }
-
-    /**
-     * @param type The type to set.
-     */
-    void setType(final FileType type) {
-        this.type = type;
-    }
-
-    /**
-     */
-    void clear() {
-        this.content = EMPTY;
-        updateLastModified();
-        this.type = FileType.IMAGINARY;
-        this.children.clear();
-        this.name = null;
-    }
-
-    void updateLastModified() {
-        this.lastModified = System.currentTimeMillis();
-    }
-
-    /**
-     * @return Returns the name.
-     */
-    FileName getName() {
-        return name;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return this.name.toString();
     }
 
     /**
@@ -173,30 +97,13 @@ class RamFileData implements Serializable {
     }
 
     /**
-     * Remove a child.
-     *
-     * @param data The file data.
-     * @throws FileSystemException if an error occurs.
      */
-    void removeChild(final RamFileData data) throws FileSystemException {
-        if (!this.getType().hasChildren()) {
-            throw new FileSystemException("A child can only be removed from a folder");
-        }
-        if (!this.children.contains(data)) {
-            throw new FileSystemException("Child not found. " + data);
-        }
-        this.children.remove(data);
+    void clear() {
+        this.content = ArrayUtils.EMPTY_BYTE_ARRAY;
         updateLastModified();
-    }
-
-    /**
-     * @return Returns the children.
-     */
-    Collection<RamFileData> getChildren() {
-        if (name == null) {
-            throw new IllegalStateException("Data is clear");
-        }
-        return children;
+        this.type = FileType.IMAGINARY;
+        this.children.clear();
+        this.name = null;
     }
 
     /*
@@ -216,6 +123,48 @@ class RamFileData implements Serializable {
         return this.getName().equals(data.getName());
     }
 
+    /**
+     * @return Returns the children.
+     */
+    Collection<RamFileData> getChildren() {
+        if (name == null) {
+            throw new IllegalStateException("Data is clear");
+        }
+        return children;
+    }
+
+    /**
+     * @return Returns the buffer.
+     */
+    byte[] getContent() {
+        return content;
+    }
+
+    /**
+     * @return Returns the lastModified.
+     */
+    long getLastModified() {
+        return lastModifiedMillis;
+    }
+
+    /**
+     * @return Returns the name.
+     */
+    FileName getName() {
+        return name;
+    }
+
+    /**
+     * @return Returns the type.
+     */
+    FileType getType() {
+        return type;
+    }
+
+    boolean hasChildren(final RamFileData data) {
+        return this.children.contains(data);
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -226,15 +175,21 @@ class RamFileData implements Serializable {
         return this.getName().hashCode();
     }
 
-    boolean hasChildren(final RamFileData data) {
-        return this.children.contains(data);
-    }
-
     /**
-     * @return Returns the size of the buffer
+     * Remove a child.
+     *
+     * @param data The file data.
+     * @throws FileSystemException if an error occurs.
      */
-    int size() {
-        return content.length;
+    void removeChild(final RamFileData data) throws FileSystemException {
+        if (!this.getType().hasChildren()) {
+            throw new FileSystemException("A child can only be removed from a folder");
+        }
+        if (!this.children.contains(data)) {
+            throw new FileSystemException("Child not found. " + data);
+        }
+        this.children.remove(data);
+        updateLastModified();
     }
 
     /**
@@ -254,6 +209,49 @@ class RamFileData implements Serializable {
         System.arraycopy(this.content, 0, newBuf, 0, Math.min(resize, size));
         this.content = newBuf;
         updateLastModified();
+    }
+
+    /**
+     * @param content The buffer.
+     */
+    void setContent(final byte[] content) {
+        updateLastModified();
+        this.content = content;
+    }
+
+    /**
+     * @param lastModified The lastModified to set.
+     */
+    void setLastModified(final long lastModified) {
+        this.lastModifiedMillis = lastModified;
+    }
+
+    /**
+     * @param type The type to set.
+     */
+    void setType(final FileType type) {
+        this.type = type;
+    }
+
+    /**
+     * @return Returns the size of the buffer
+     */
+    int size() {
+        return content.length;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return this.name.toString();
+    }
+
+    void updateLastModified() {
+        this.lastModifiedMillis = System.currentTimeMillis();
     }
 
 }

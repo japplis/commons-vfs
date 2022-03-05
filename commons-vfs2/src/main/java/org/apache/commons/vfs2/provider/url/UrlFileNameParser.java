@@ -31,57 +31,13 @@ import org.apache.commons.vfs2.provider.local.GenericFileNameParser;
  */
 public class UrlFileNameParser extends AbstractFileNameParser {
 
-    private final URLFileNameParser url = new URLFileNameParser(80);
-    private final GenericFileNameParser generic = new GenericFileNameParser();
+    private final URLFileNameParser urlFileNameParser = new URLFileNameParser(80);
+    private final GenericFileNameParser genericFileNameParser = new GenericFileNameParser();
 
+    /**
+     * Constructs a new instance.
+     */
     public UrlFileNameParser() {
-        super();
-    }
-
-    @Override
-    public boolean encodeCharacter(final char ch) {
-        return super.encodeCharacter(ch) || ch == '?';
-    }
-
-    /**
-     * Parse a URI.
-     *
-     * @param context The component context.
-     * @param base The base FileName.
-     * @param uri The target file name.
-     * @return The FileName.
-     * @throws FileSystemException if an error occurs
-     */
-    @Override
-    public FileName parseUri(final VfsComponentContext context, final FileName base, final String uri)
-            throws FileSystemException {
-        if (isUrlBased(base, uri)) {
-            return url.parseUri(context, base, uri);
-        }
-
-        return generic.parseUri(context, base, uri);
-    }
-
-    /**
-     * Guess if the given file name is an URL with host or not.
-     * <p>
-     * VFS treats such URLs differently.
-     * </p>
-     * <p>
-     * A file name is URL-based if the base is a {@code URLFileName} or there are only 2 slashes after the scheme. e.g:
-     * {@code http://host/path}, {@code file:/path/to/file}, {@code file:///path/to/file}.
-     * </p>
-     *
-     * @param base The file name is relative to this base.
-     * @param fileName The file name.
-     * @return true if file name contains two slashes or base was URLFileName.
-     */
-    protected boolean isUrlBased(final FileName base, final String fileName) {
-        if (base instanceof URLFileName) {
-            return true;
-        }
-
-        return countSlashes(fileName) == 2;
     }
 
     /**
@@ -104,13 +60,57 @@ public class UrlFileNameParser extends AbstractFileNameParser {
                     continue;
                 }
             } else if (state == 1) {
-                if (c == '/') {
-                    nuofSlash++;
-                } else {
+                if (c != '/') {
                     return nuofSlash;
                 }
+                nuofSlash++;
             }
         }
         return nuofSlash;
+    }
+
+    @Override
+    public boolean encodeCharacter(final char ch) {
+        return super.encodeCharacter(ch) || ch == '?';
+    }
+
+    /**
+     * Guess if the given file name is a URL with host or not.
+     * <p>
+     * VFS treats such URLs differently.
+     * </p>
+     * <p>
+     * A file name is URL-based if the base is a {@code URLFileName} or there are only 2 slashes after the scheme. e.g:
+     * {@code http://host/path}, {@code file:/path/to/file}, {@code file:///path/to/file}.
+     * </p>
+     *
+     * @param base The file name is relative to this base.
+     * @param fileName The file name.
+     * @return true if file name contains two slashes or base was URLFileName.
+     */
+    protected boolean isUrlBased(final FileName base, final String fileName) {
+        if (base instanceof URLFileName) {
+            return true;
+        }
+
+        return countSlashes(fileName) == 2;
+    }
+
+    /**
+     * Parse a URI.
+     *
+     * @param context The component context.
+     * @param base The base FileName.
+     * @param uri The target file name.
+     * @return The FileName.
+     * @throws FileSystemException if an error occurs
+     */
+    @Override
+    public FileName parseUri(final VfsComponentContext context, final FileName base, final String uri)
+            throws FileSystemException {
+        if (isUrlBased(base, uri)) {
+            return urlFileNameParser.parseUri(context, base, uri);
+        }
+        return genericFileNameParser.parseUri(context, base, uri);
     }
 }

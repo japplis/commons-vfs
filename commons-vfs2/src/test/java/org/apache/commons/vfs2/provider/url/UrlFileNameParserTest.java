@@ -14,25 +14,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.vfs2.provider.url;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URI;
 
 import org.apache.commons.vfs2.FileName;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class UrlFileNameParserTest {
 
-    @Test
-    public void testJira739() throws Exception {
-        final String uriStr = "maprfs:///";
+    private void testJira739(final String uriStr) throws Exception {
         // Check that we have a valid URI
         final URI uri = new URI(uriStr);
         // VFS-739 shows that parseUri throws an NPE:
         final FileName fileName = new UrlFileNameParser().parseUri(null, null, uriStr);
-        Assert.assertEquals(uriStr, fileName.getURI());
-        Assert.assertEquals(uri.getScheme(), fileName.getScheme());
+        assertEquals(uriStr, fileName.getURI());
+        assertEquals(uri.getScheme(), fileName.getScheme());
     }
+
+    @Test
+    public void testJira739_scheme_file() throws Exception {
+        testJira739("file:///");
+    }
+
+    @Test
+    public void testJira739_scheme_maprfs() throws Exception {
+        testJira739("maprfs:///");
+    }
+
+    @Test
+    public void testJira739_scheme_ram() throws Exception {
+        testJira739("ram:///");
+    }
+
 }

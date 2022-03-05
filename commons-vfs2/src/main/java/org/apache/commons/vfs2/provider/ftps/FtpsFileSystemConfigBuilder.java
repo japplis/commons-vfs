@@ -29,14 +29,15 @@ import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
  * @since 2.0
  */
 public final class FtpsFileSystemConfigBuilder extends FtpFileSystemConfigBuilder {
-    private static final String _PREFIX = FtpsFileSystemConfigBuilder.class.getName();
+
+    private static final String PREFIX = FtpsFileSystemConfigBuilder.class.getName();
 
     private static final FtpsFileSystemConfigBuilder BUILDER = new FtpsFileSystemConfigBuilder();
 
-    private static final String FTPS_MODE = _PREFIX + ".FTPS_MODE";
-    private static final String PROT = _PREFIX + ".PROT";
-    private static final String KEY_MANAGER = _PREFIX + ".KEY_MANAGER";
-    private static final String TRUST_MANAGER = _PREFIX + ".TRUST_MANAGER";
+    private static final String FTPS_MODE = PREFIX + ".FTPS_MODE";
+    private static final String PROT = PREFIX + ".PROT";
+    private static final String KEY_MANAGER = PREFIX + ".KEY_MANAGER";
+    private static final String TRUST_MANAGER = PREFIX + ".TRUST_MANAGER";
 
     private FtpsFileSystemConfigBuilder() {
         super("ftps.");
@@ -49,6 +50,88 @@ public final class FtpsFileSystemConfigBuilder extends FtpFileSystemConfigBuilde
      */
     public static FtpsFileSystemConfigBuilder getInstance() {
         return BUILDER;
+    }
+
+    /**
+     * Gets the data channel protection level (PROT).
+     *
+     * @param opts The FileSystemOptions.
+     * @return The PROT value.
+     * @see org.apache.commons.net.ftp.FTPSClient#execPROT(String)
+     * @since 2.1
+     */
+    public FtpsDataChannelProtectionLevel getDataChannelProtectionLevel(final FileSystemOptions opts) {
+        return getEnum(FtpsDataChannelProtectionLevel.class, opts, PROT);
+    }
+
+    /**
+     * Returns the FTPS mode. Defaults to "explicit" if not defined.
+     *
+     * @param opts The FileSystemOptions.
+     * @return The file type.
+     * @see #setFtpsType
+     */
+    public FtpsMode getFtpsMode(final FileSystemOptions opts) {
+        return getEnum(FtpsMode.class, opts, FTPS_MODE, FtpsMode.EXPLICIT);
+    }
+
+    /**
+     * Returns the FTPS type. Defaults to "explicit" if not defined.
+     *
+     * @param opts The FileSystemOptions.
+     * @return The file type.
+     * @see #setFtpsType
+     * @deprecated As of 2.1, use {@link #getFtpsMode(FileSystemOptions)}
+     */
+    @Deprecated
+    public String getFtpsType(final FileSystemOptions opts) {
+        return getFtpsMode(opts).name().toLowerCase();
+    }
+
+    /**
+     * Gets the KeyManager used to provide a client-side certificate if the FTPS server requests it.
+     *
+     * @param opts The FileSystemOptions.
+     * @return the key manager instance or {@code null}
+     * @see org.apache.commons.net.ftp.FTPSClient#setKeyManager(KeyManager)
+     * @since 2.1
+     */
+    public KeyManager getKeyManager(final FileSystemOptions opts) {
+        return getParam(opts, KEY_MANAGER);
+    }
+
+    /**
+     * Gets the TrustManager that validates the FTPS server's certificate.
+     * <p>
+     * If the params do not contain the key for the trust manager, it will return a trust manger that simply checks this
+     * certificate for validity.
+     * </p>
+     *
+     * @param opts The FileSystemOptions.
+     * @return the trust manager instance or {@code null}
+     * @see org.apache.commons.net.ftp.FTPSClient#setTrustManager(TrustManager)
+     * @since 2.1
+     */
+    public TrustManager getTrustManager(final FileSystemOptions opts) {
+        final TrustManager trustManager;
+        if (hasParam(opts, TRUST_MANAGER)) {
+            trustManager = getParam(opts, TRUST_MANAGER);
+        } else {
+            trustManager = TrustManagerUtils.getValidateServerCertificateTrustManager();
+        }
+        return trustManager;
+    }
+
+    /**
+     * Sets the data channel protection level (PROT).
+     *
+     * @param opts The FileSystemOptions.
+     * @param prot The PROT value, {@code null} has no effect.
+     * @see org.apache.commons.net.ftp.FTPSClient#execPROT(String)
+     * @since 2.1
+     */
+    public void setDataChannelProtectionLevel(final FileSystemOptions opts, final FtpsDataChannelProtectionLevel prot) {
+        setParam(opts, PROT, prot);
     }
 
     /**
@@ -67,17 +150,6 @@ public final class FtpsFileSystemConfigBuilder extends FtpFileSystemConfigBuilde
      */
     public void setFtpsMode(final FileSystemOptions opts, final FtpsMode ftpsMode) {
         setParam(opts, FTPS_MODE, ftpsMode);
-    }
-
-    /**
-     * Returns the FTPS mode. Defaults to "explicit" if not defined.
-     *
-     * @param opts The FileSystemOptions.
-     * @return The file type.
-     * @see #setFtpsType
-     */
-    public FtpsMode getFtpsMode(final FileSystemOptions opts) {
-        return getEnum(FtpsMode.class, opts, FTPS_MODE, FtpsMode.EXPLICIT);
     }
 
     /**
@@ -108,55 +180,6 @@ public final class FtpsFileSystemConfigBuilder extends FtpFileSystemConfigBuilde
     }
 
     /**
-     * Returns the FTPS type. Defaults to "explicit" if not defined.
-     *
-     * @param opts The FileSystemOptions.
-     * @return The file type.
-     * @see #setFtpsType
-     * @deprecated As of 2.1, use {@link #getFtpsMode(FileSystemOptions)}
-     */
-    @Deprecated
-    public String getFtpsType(final FileSystemOptions opts) {
-        return getFtpsMode(opts).name().toLowerCase();
-    }
-
-    /**
-     * Gets the data channel protection level (PROT).
-     *
-     * @param opts The FileSystemOptions.
-     * @return The PROT value.
-     * @see org.apache.commons.net.ftp.FTPSClient#execPROT(String)
-     * @since 2.1
-     */
-    public FtpsDataChannelProtectionLevel getDataChannelProtectionLevel(final FileSystemOptions opts) {
-        return getEnum(FtpsDataChannelProtectionLevel.class, opts, PROT);
-    }
-
-    /**
-     * Sets the data channel protection level (PROT).
-     *
-     * @param opts The FileSystemOptions.
-     * @param prot The PROT value, {@code null} has no effect.
-     * @see org.apache.commons.net.ftp.FTPSClient#execPROT(String)
-     * @since 2.1
-     */
-    public void setDataChannelProtectionLevel(final FileSystemOptions opts, final FtpsDataChannelProtectionLevel prot) {
-        setParam(opts, PROT, prot);
-    }
-
-    /**
-     * Gets the KeyManager used to provide a client-side certificate if the FTPS server requests it.
-     *
-     * @param opts The FileSystemOptions.
-     * @return the key manager instance or {@code null}
-     * @see org.apache.commons.net.ftp.FTPSClient#setKeyManager(KeyManager)
-     * @since 2.1
-     */
-    public KeyManager getKeyManager(final FileSystemOptions opts) {
-        return (KeyManager) getParam(opts, KEY_MANAGER);
-    }
-
-    /**
      * Sets the KeyManager used to provide a client-side certificate if the FTPS server requests it.
      *
      * @param opts The FileSystemOptions.
@@ -166,28 +189,6 @@ public final class FtpsFileSystemConfigBuilder extends FtpFileSystemConfigBuilde
      */
     public void setKeyManager(final FileSystemOptions opts, final KeyManager keyManager) {
         setParam(opts, KEY_MANAGER, keyManager);
-    }
-
-    /**
-     * Gets the TrustManager that validates the FTPS server's certificate.
-     * <p>
-     * If the params do not contain the key for the trust manager, it will return a trust manger that simply checks this
-     * certificate for validity.
-     * </p>
-     *
-     * @param opts The FileSystemOptions.
-     * @return the trust manager instance or {@code null}
-     * @see org.apache.commons.net.ftp.FTPSClient#setTrustManager(TrustManager)
-     * @since 2.1
-     */
-    public TrustManager getTrustManager(final FileSystemOptions opts) {
-        final TrustManager trustManager;
-        if (hasParam(opts, TRUST_MANAGER)) {
-            trustManager = (TrustManager) getParam(opts, TRUST_MANAGER);
-        } else {
-            trustManager = TrustManagerUtils.getValidateServerCertificateTrustManager();
-        }
-        return trustManager;
     }
 
     /**

@@ -56,15 +56,6 @@ public class SuffixFileFilter implements FileFilter, Serializable {
     private final List<String> suffixes;
 
     /**
-     * Constructs a new Suffix file filter for a list of suffixes.
-     *
-     * @param suffixes the suffixes to allow, must not be null
-     */
-    public SuffixFileFilter(final List<String> suffixes) {
-        this(IOCase.SENSITIVE, suffixes);
-    }
-
-    /**
      * Constructs a new Suffix file filter for a list of suffixes specifying
      * case-sensitivity.
      *
@@ -78,15 +69,6 @@ public class SuffixFileFilter implements FileFilter, Serializable {
         }
         this.suffixes = new ArrayList<>(suffixes);
         this.caseSensitivity = caseSensitivity == null ? IOCase.SENSITIVE : caseSensitivity;
-    }
-
-    /**
-     * Constructs a new Suffix file filter for an array of suffixes.
-     *
-     * @param suffixes the suffixes to allow, must not be null
-     */
-    public SuffixFileFilter(final String... suffixes) {
-        this(IOCase.SENSITIVE, suffixes);
     }
 
     /**
@@ -106,15 +88,33 @@ public class SuffixFileFilter implements FileFilter, Serializable {
     }
 
     /**
+     * Constructs a new Suffix file filter for a list of suffixes.
+     *
+     * @param suffixes the suffixes to allow, must not be null
+     */
+    public SuffixFileFilter(final List<String> suffixes) {
+        this(IOCase.SENSITIVE, suffixes);
+    }
+
+    /**
+     * Constructs a new Suffix file filter for an array of suffixes.
+     *
+     * @param suffixes the suffixes to allow, must not be null
+     */
+    public SuffixFileFilter(final String... suffixes) {
+        this(IOCase.SENSITIVE, suffixes);
+    }
+
+    /**
      * Checks to see if the file name ends with the suffix.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return true if the file name ends with one of our suffixes
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
-        final String name = fileInfo.getFile().getName().getBaseName();
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
+        final String name = fileSelectInfo.getFile().getName().getBaseName();
         for (final String suffix : this.suffixes) {
             if (caseSensitivity.checkEndsWith(name, suffix)) {
                 return true;

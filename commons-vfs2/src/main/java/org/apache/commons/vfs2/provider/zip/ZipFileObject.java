@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
@@ -37,31 +38,12 @@ public class ZipFileObject extends AbstractFileObject<ZipFileSystem> {
     private FileType type;
 
     protected ZipFileObject(final AbstractFileName name, final ZipEntry entry, final ZipFileSystem fs,
-            final boolean zipExists) throws FileSystemException {
+            final boolean zipExists) {
         super(name, fs);
         setZipEntry(entry);
         if (!zipExists) {
             type = FileType.IMAGINARY;
         }
-    }
-
-    /**
-     * Sets the details for this file object.
-     *
-     * @param entry ZIP information related to this file.
-     */
-    protected void setZipEntry(final ZipEntry entry) {
-        if (this.entry != null) {
-            return;
-        }
-
-        if (entry == null || entry.isDirectory()) {
-            type = FileType.FOLDER;
-        } else {
-            type = FileType.FILE;
-        }
-
-        this.entry = entry;
     }
 
     /**
@@ -77,15 +59,51 @@ public class ZipFileObject extends AbstractFileObject<ZipFileSystem> {
         children.add(childName.getBaseName());
     }
 
+    @Override
+    protected void doAttach() throws Exception {
+        getAbstractFileSystem().getZipFile();
+    }
+
+    @Override
+    protected void doDetach() throws Exception {
+        final ZipFileSystem afs = getAbstractFileSystem();
+        if (!afs.isOpen()) {
+            afs.close();
+        }
+    }
+
     /**
-     * Determines if this file can be written to.
-     *
-     * @return {@code true} if this file is writable, {@code false} if not.
-     * @throws FileSystemException if an error occurs.
+     * Returns the size of the file content (in bytes). Is only called if {@link #doGetType} returns
+     * {@link FileType#FILE}.
      */
     @Override
-    public boolean isWriteable() throws FileSystemException {
-        return false;
+    protected long doGetContentSize() {
+        return entry.getSize();
+    }
+
+    /**
+     * Creates an input stream to read the file content from. Is only called if {@link #doGetType} returns
+     * {@link FileType#FILE}. The input stream returned by this method is guaranteed to be closed before this method is
+     * called again.
+     */
+    @Override
+    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
+        // VFS-210: zip allows to gather an input stream even from a directory and will
+        // return -1 on the first read. getType should not be expensive and keeps the tests
+        // running
+        if (!getType().hasContent()) {
+            throw new FileSystemException("vfs.provider/read-not-file.error", getName());
+        }
+
+        return getAbstractFileSystem().getZipFile().getInputStream(entry);
+    }
+
+    /**
+     * Returns the last modified time of this file.
+     */
+    @Override
+    protected long doGetLastModifiedTime() throws Exception {
+        return entry.getTime();
     }
 
     /**
@@ -110,53 +128,36 @@ public class ZipFileObject extends AbstractFileObject<ZipFileSystem> {
             throw new RuntimeException(e);
         }
 
-        return children.toArray(new String[children.size()]);
+        return children.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
     /**
-     * Returns the size of the file content (in bytes). Is only called if {@link #doGetType} returns
-     * {@link FileType#FILE}.
+     * Determines if this file can be written to.
+     *
+     * @return {@code true} if this file is writable, {@code false} if not.
+     * @throws FileSystemException if an error occurs.
      */
     @Override
-    protected long doGetContentSize() {
-        return entry.getSize();
+    public boolean isWriteable() throws FileSystemException {
+        return false;
     }
 
     /**
-     * Returns the last modified time of this file.
+     * Sets the details for this file object.
+     *
+     * @param entry ZIP information related to this file.
      */
-    @Override
-    protected long doGetLastModifiedTime() throws Exception {
-        return entry.getTime();
-    }
-
-    /**
-     * Creates an input stream to read the file content from. Is only called if {@link #doGetType} returns
-     * {@link FileType#FILE}. The input stream returned by this method is guaranteed to be closed before this method is
-     * called again.
-     */
-    @Override
-    protected InputStream doGetInputStream(final int bufferSize) throws Exception {
-        // VFS-210: zip allows to gather an input stream even from a directory and will
-        // return -1 on the first read. getType should not be expensive and keeps the tests
-        // running
-        if (!getType().hasContent()) {
-            throw new FileSystemException("vfs.provider/read-not-file.error", getName());
+    protected void setZipEntry(final ZipEntry entry) {
+        if (this.entry != null) {
+            return;
         }
 
-        return getAbstractFileSystem().getZipFile().getInputStream(entry);
-    }
-
-    @Override
-    protected void doAttach() throws Exception {
-        getAbstractFileSystem().getZipFile();
-    }
-
-    @Override
-    protected void doDetach() throws Exception {
-        final ZipFileSystem afs = getAbstractFileSystem();
-        if (!afs.isOpen()) {
-            afs.close();
+        if (entry == null || entry.isDirectory()) {
+            type = FileType.FOLDER;
+        } else {
+            type = FileType.FILE;
         }
+
+        this.entry = entry;
     }
 }

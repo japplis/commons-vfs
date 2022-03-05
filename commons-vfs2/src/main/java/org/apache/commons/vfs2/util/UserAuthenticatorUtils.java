@@ -30,6 +30,46 @@ public final class UserAuthenticatorUtils {
     }
 
     /**
+     * Authenticates if there is an authenticator, else returns null.
+     *
+     * @param options The FileSystemOptions.
+     * @param authenticatorTypes An array of types describing the data to be retrieved.
+     * @return A UserAuthenticationData object containing the data requested.
+     */
+    public static UserAuthenticationData authenticate(final FileSystemOptions options,
+        final UserAuthenticationData.Type[] authenticatorTypes) {
+        final UserAuthenticator auth = DefaultFileSystemConfigBuilder.getInstance().getUserAuthenticator(options);
+        return authenticate(auth, authenticatorTypes);
+    }
+
+    /**
+     * Authenticates if there is an authenticator, else returns null.
+     *
+     * @param auth The UserAuthenticator.
+     * @param authenticatorTypes An array of types describing the data to be retrieved.
+     * @return A UserAuthenticationData object containing the data requested.
+     */
+    public static UserAuthenticationData authenticate(final UserAuthenticator auth,
+            final UserAuthenticationData.Type[] authenticatorTypes) {
+        if (auth == null) {
+            return null;
+        }
+
+        return auth.requestAuthentication(authenticatorTypes);
+    }
+
+    /**
+     * Cleans up the data in the UerAuthenticationData (null-safe).
+     *
+     * @param authData The UserAuthenticationDAta.
+     */
+    public static void cleanup(final UserAuthenticationData authData) {
+        if (authData != null) {
+            authData.cleanup();
+        }
+    }
+
+    /**
      * Gets data of given type from the UserAuthenticationData or null if there is no data or data of this type
      * available.
      *
@@ -52,35 +92,6 @@ public final class UserAuthenticatorUtils {
     }
 
     /**
-     * Authenticates if there is an authenticator, else returns null.
-     *
-     * @param opts The FileSystemOptions.
-     * @param authenticatorTypes An array of types describing the data to be retrieved.
-     * @return A UserAuthenticationData object containing the data requested.
-     */
-    public static UserAuthenticationData authenticate(final FileSystemOptions opts,
-            final UserAuthenticationData.Type[] authenticatorTypes) {
-        final UserAuthenticator auth = DefaultFileSystemConfigBuilder.getInstance().getUserAuthenticator(opts);
-        return authenticate(auth, authenticatorTypes);
-    }
-
-    /**
-     * Authenticates if there is an authenticator, else returns null.
-     *
-     * @param auth The UserAuthenticator.
-     * @param authenticatorTypes An array of types describing the data to be retrieved.
-     * @return A UserAuthenticationData object containing the data requested.
-     */
-    public static UserAuthenticationData authenticate(final UserAuthenticator auth,
-            final UserAuthenticationData.Type[] authenticatorTypes) {
-        if (auth == null) {
-            return null;
-        }
-
-        return auth.requestAuthentication(authenticatorTypes);
-    }
-
-    /**
      * Converts a string to a char array (null-safe).
      *
      * @param string The String to convert.
@@ -92,17 +103,6 @@ public final class UserAuthenticatorUtils {
         }
 
         return string.toCharArray();
-    }
-
-    /**
-     * Cleans up the data in the UerAuthenticationData (null-safe).
-     *
-     * @param authData The UserAuthenticationDAta.
-     */
-    public static void cleanup(final UserAuthenticationData authData) {
-        if (authData != null) {
-            authData.cleanup();
-        }
     }
 
     /**

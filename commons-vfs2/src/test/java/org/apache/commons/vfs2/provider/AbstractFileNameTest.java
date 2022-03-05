@@ -16,29 +16,32 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AbstractFileNameTest {
+
     @Test
     public void testHashSignEncoded() {
         final AbstractFileName fileName = new AbstractFileName("file", "/foo/bar/file#name.txt", FileType.FILE) {
-            @Override
-            public FileName createName(final String absolutePath, final FileType fileType) {
-                return null;
-            }
-
             @Override
             protected void appendRootUri(final StringBuilder buffer, final boolean addPassword) {
                 if (addPassword) {
                     buffer.append("pass");
                 }
             }
+
+            @Override
+            public FileName createName(final String absolutePath, final FileType fileType) {
+                return null;
+            }
         };
 
-        Assert.assertEquals("pass/foo/bar/file%23name.txt", fileName.getURI());
-        Assert.assertEquals("/foo/bar/file%23name.txt", fileName.getFriendlyURI());
+        assertEquals("pass/foo/bar/file%23name.txt", fileName.getURI());
+        assertEquals("/foo/bar/file%23name.txt", fileName.getFriendlyURI());
     }
+
 }

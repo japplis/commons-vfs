@@ -30,6 +30,25 @@ import org.apache.commons.vfs2.provider.VfsComponentContext;
  */
 public abstract class LocalFileNameParser extends AbstractFileNameParser {
 
+    protected abstract FileName createFileName(String scheme, String rootFile, String path, FileType type);
+
+    /**
+     * Pops the root prefix off a URI, which has had the scheme removed.
+     *
+     * @param name the URI to modify.
+     * @param uri the whole URI for error reporting.
+     * @return the root prefix extracted.
+     * @throws FileSystemException if an error occurs.
+     */
+    protected abstract String extractRootPrefix(String uri, StringBuilder name) throws FileSystemException;
+
+    private String[] getSchemes(final VfsComponentContext context, final FileName base, final String uri) {
+        if (context == null) {
+            return new String[] {base != null ? base.getScheme() : URI.create(uri).getScheme()};
+        }
+        return context.getFileSystemManager().getSchemes();
+    }
+
     /**
      * Determines if a name is an absolute file name.
      *
@@ -48,23 +67,13 @@ public abstract class LocalFileNameParser extends AbstractFileNameParser {
         }
     }
 
-    /**
-     * Pops the root prefix off a URI, which has had the scheme removed.
-     *
-     * @param name the URI to modify.
-     * @param uri the whole URI for error reporting.
-     * @return the root prefix extracted.
-     * @throws FileSystemException if an error occurs.
-     */
-    protected abstract String extractRootPrefix(final String uri, final StringBuilder name) throws FileSystemException;
-
     @Override
     public FileName parseUri(final VfsComponentContext context, final FileName base, final String uri)
             throws FileSystemException {
-        final StringBuilder name = new StringBuilder();
+        final StringBuilder nameBuilder = new StringBuilder();
 
         // Extract the scheme
-        String scheme = UriParser.extractScheme(getSchemes(context, base, uri), uri, name);
+        String scheme = UriParser.extractScheme(getSchemes(context, base, uri), uri, nameBuilder);
         if (scheme == null && base != null) {
             scheme = base.getScheme();
         }
@@ -73,28 +82,18 @@ public abstract class LocalFileNameParser extends AbstractFileNameParser {
         }
 
         // Remove encoding, and adjust the separators
-        UriParser.canonicalizePath(name, 0, name.length(), this);
+        UriParser.canonicalizePath(nameBuilder, 0, nameBuilder.length(), this);
 
-        UriParser.fixSeparators(name);
+        UriParser.fixSeparators(nameBuilder);
 
         // Extract the root prefix
-        final String rootFile = extractRootPrefix(uri, name);
+        final String rootFile = extractRootPrefix(uri, nameBuilder);
 
         // Normalise the path
-        final FileType fileType = UriParser.normalisePath(name);
+        final FileType fileType = UriParser.normalisePath(nameBuilder);
 
-        final String path = name.toString();
+        final String path = nameBuilder.toString();
 
         return createFileName(scheme, rootFile, path, fileType);
     }
-
-    private String[] getSchemes(final VfsComponentContext context, final FileName base, final String uri) {
-        if (context == null) {
-            return new String[] { base != null ? base.getScheme() : URI.create(uri).getScheme() };
-        }
-        return context.getFileSystemManager().getSchemes();
-    }
-
-    protected abstract FileName createFileName(String scheme, final String rootFile, final String path,
-            final FileType type);
 }

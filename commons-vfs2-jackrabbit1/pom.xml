@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-vfs2-project</artifactId>
-    <version>2.7.0-SNAPSHOT</version>
+    <version>2.10.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -57,7 +57,7 @@
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>jackrabbit-webdav</artifactId>
-      <version>${jackrabbit.version}</version>
+      <version>${jackrabbit1.version}</version>
     </dependency>
 
     <dependency>
@@ -68,8 +68,19 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -111,6 +122,14 @@
 
   <properties>
     <vfs.parent.dir>${basedir}/..</vfs.parent.dir>
+    <commons.componentid>vfs2-jackrabbit1</commons.componentid>
+    <commons.packageId>vfs2-jackrabbit1</commons.packageId>
+    <commons.module.name>org.apache.commons.vfs2.jackrabbit1</commons.module.name>
+    <commons.osgi.import>
+        org.apache.jackrabbit.*;resolution:=optional,
+        org.apache.commons.httpclient.*;resolution:=optional,
+        *
+    </commons.osgi.import>
   </properties>
 
   <build>
@@ -182,69 +201,34 @@
             <test.basedir.res>test-data</test.basedir.res>
             <derby.stream.error.file>target/derby.log</derby.stream.error.file>
           </systemPropertyVariables>
+          <excludes>
+            <!-- Need to port fully to JUnit 4 or 5. -->
+            <!-- *Tests.java files with @Test methods should not be run since these classes are in fact JUnit 3 classes used in custom JUnit 3 test suites. -->
+            <exclude>**/*Tests.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
-      <plugin>
-        <!-- Remove this after 2.5.0  -->
-        <groupId>com.github.siom79.japicmp</groupId>
-        <artifactId>japicmp-maven-plugin</artifactId>
-        <configuration>
-          <oldVersion>
-            <dependency>
-              <groupId>org.apache.commons</groupId>
-              <artifactId>commons-vfs2</artifactId>
-              <version>2.4.1</version>
-              <type>jar</type>
-            </dependency>
-          </oldVersion>
-          <parameter>
-            <includes>
-              <include>org.apache.commons.vfs2.provider.webdav</include>
-            </includes>
-            <overrideCompatibilityChangeParameters>
-              <overrideCompatibilityChangeParameter>
-                <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
-                <binaryCompatible>true</binaryCompatible>
-                <sourceCompatible>true</sourceCompatible>
-                <semanticVersionLevel>PATCH</semanticVersionLevel>
-              </overrideCompatibilityChangeParameter>
-            </overrideCompatibilityChangeParameters>
-          </parameter>
-        </configuration>
-      </plugin>    
     </plugins>
   </build>
 
-  <reporting>
-    <plugins>
-      <plugin>
-        <!-- Remove this after 2.5.0  -->
-        <groupId>com.github.siom79.japicmp</groupId>
-        <artifactId>japicmp-maven-plugin</artifactId>
-        <configuration>
-          <oldVersion>
-            <dependency>
-              <groupId>org.apache.commons</groupId>
-              <artifactId>commons-vfs2</artifactId>
-              <version>2.4.1</version>
-              <type>jar</type>
-            </dependency>
-          </oldVersion>
-          <parameter>
-            <includes>
-              <include>org.apache.commons.vfs2.provider.webdav</include>
-            </includes>
-            <overrideCompatibilityChangeParameters>
-              <overrideCompatibilityChangeParameter>
-                <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
-                <binaryCompatible>true</binaryCompatible>
-                <sourceCompatible>true</sourceCompatible>
-                <semanticVersionLevel>PATCH</semanticVersionLevel>
-              </overrideCompatibilityChangeParameter>
-            </overrideCompatibilityChangeParameters>
-          </parameter>
-        </configuration>
-      </plugin>    
-    </plugins>
-  </reporting>
+  <profiles>
+    <profile>
+      <id>java14</id>
+        <!-- Jackrabbit 1 does not run on Java 14 and above. -->
+        <activation>
+          <jdk>[14,)</jdk>
+        </activation>
+        <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <skipTests>true</skipTests>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

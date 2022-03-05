@@ -25,10 +25,10 @@ import org.apache.commons.vfs2.FileFilterSelector;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link HiddenFileFilter}.
@@ -54,7 +54,25 @@ public class HiddenFileFilterTest extends BaseFilterTest {
 
     private static FileObject zipFileObj;
 
-    @BeforeClass
+    @AfterAll
+    public static void afterClass() throws IOException {
+
+        visibleFile = null;
+        visibleFileInfo = null;
+        hiddenFile = null;
+        hiddenFileInfo = null;
+        notExistingFile = null;
+        notExistingFileInfo = null;
+
+        zipFileObj.close();
+        FileUtils.deleteQuietly(zipFile);
+        zipFile = null;
+
+        FileUtils.deleteDirectory(testDir);
+        testDir = null;
+    }
+
+    @BeforeAll
     public static void beforeClass() throws IOException {
         testDir = getTestDir(HiddenFileFilterTest.class.getName());
         testDir.mkdir();
@@ -75,25 +93,6 @@ public class HiddenFileFilterTest extends BaseFilterTest {
         zipFile = new File(getTempDir(), HiddenFileFilterTest.class.getName() + ".zip");
         zipDir(testDir, "", zipFile);
         zipFileObj = getZipFileObject(zipFile);
-
-    }
-
-    @AfterClass
-    public static void afterClass() throws IOException {
-
-        visibleFile = null;
-        visibleFileInfo = null;
-        hiddenFile = null;
-        hiddenFileInfo = null;
-        notExistingFile = null;
-        notExistingFileInfo = null;
-
-        zipFileObj.close();
-        FileUtils.deleteQuietly(zipFile);
-        zipFile = null;
-
-        FileUtils.deleteDirectory(testDir);
-        testDir = null;
     }
 
     @Test
@@ -105,7 +104,6 @@ public class HiddenFileFilterTest extends BaseFilterTest {
         // TODO xxx In Java 6 there is no way to hide a file
         // assertThat(testee.accept(hiddenFileInfo));
         Assert.assertFalse(testee.accept(notExistingFileInfo));
-
     }
 
     @Test
@@ -117,14 +115,13 @@ public class HiddenFileFilterTest extends BaseFilterTest {
         // TODO xxx In Java 6 there is no way to hide a file
         // assertThat(testee.accept(hiddenFileInfo));
         Assert.assertTrue(testee.accept(notExistingFileInfo));
-
     }
 
     @Test
     public void testZipFile() throws FileSystemException {
 
         // Same test with ZIP file
-        FileObject[] files;
+        final FileObject[] files;
 
         // TODO xxx In Java 6 there is no way to hide a file
         // files = zipFileObj.findFiles(new
@@ -135,7 +132,6 @@ public class HiddenFileFilterTest extends BaseFilterTest {
         files = zipFileObj.findFiles(new FileFilterSelector(HiddenFileFilter.VISIBLE));
         assertContains(files, visibleFile.getName());
         Assert.assertEquals(1, files.length);
-
     }
 
 }

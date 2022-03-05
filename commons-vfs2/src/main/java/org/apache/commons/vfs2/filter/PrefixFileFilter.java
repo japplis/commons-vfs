@@ -55,15 +55,6 @@ public class PrefixFileFilter implements FileFilter, Serializable {
     private final List<String> prefixes;
 
     /**
-     * Constructs a new Prefix file filter for a list of prefixes.
-     *
-     * @param prefixes the prefixes to allow, must not be null
-     */
-    public PrefixFileFilter(final List<String> prefixes) {
-        this(IOCase.SENSITIVE, prefixes);
-    }
-
-    /**
      * Constructs a new Prefix file filter for a list of prefixes specifying
      * case-sensitivity.
      *
@@ -77,18 +68,6 @@ public class PrefixFileFilter implements FileFilter, Serializable {
         }
         this.prefixes = new ArrayList<>(prefixes);
         this.caseSensitivity = caseSensitivity == null ? IOCase.SENSITIVE : caseSensitivity;
-    }
-
-    /**
-     * Constructs a new Prefix file filter for any of an array of prefixes.
-     * <p>
-     * The array is not cloned, so could be changed after constructing the instance.
-     * This would be inadvisable however.
-     *
-     * @param prefixes the prefixes to allow, must not be null
-     */
-    public PrefixFileFilter(final String... prefixes) {
-        this(IOCase.SENSITIVE, prefixes);
     }
 
     /**
@@ -108,15 +87,36 @@ public class PrefixFileFilter implements FileFilter, Serializable {
     }
 
     /**
+     * Constructs a new Prefix file filter for a list of prefixes.
+     *
+     * @param prefixes the prefixes to allow, must not be null
+     */
+    public PrefixFileFilter(final List<String> prefixes) {
+        this(IOCase.SENSITIVE, prefixes);
+    }
+
+    /**
+     * Constructs a new Prefix file filter for any of an array of prefixes.
+     * <p>
+     * The array is not cloned, so could be changed after constructing the instance.
+     * This would be inadvisable however.
+     *
+     * @param prefixes the prefixes to allow, must not be null
+     */
+    public PrefixFileFilter(final String... prefixes) {
+        this(IOCase.SENSITIVE, prefixes);
+    }
+
+    /**
      * Checks to see if the file name starts with the prefix.
      *
-     * @param fileInfo the File to check
+     * @param fileSelectInfo the File to check
      *
      * @return true if the file name starts with one of our prefixes
      */
     @Override
-    public boolean accept(final FileSelectInfo fileInfo) {
-        final String name = fileInfo.getFile().getName().getBaseName();
+    public boolean accept(final FileSelectInfo fileSelectInfo) {
+        final String name = fileSelectInfo.getFile().getName().getBaseName();
         for (final String prefix : this.prefixes) {
             if (caseSensitivity.checkStartsWith(name, prefix)) {
                 return true;

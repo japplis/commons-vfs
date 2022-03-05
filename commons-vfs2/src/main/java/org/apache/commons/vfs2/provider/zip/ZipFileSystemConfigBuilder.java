@@ -25,20 +25,34 @@ import org.apache.commons.vfs2.FileSystemOptions;
 
 public class ZipFileSystemConfigBuilder extends FileSystemConfigBuilder {
 
-    private static final String _PREFIX = ZipFileSystemConfigBuilder.class.getName();
+    private static final String PREFIX = ZipFileSystemConfigBuilder.class.getName();
     private static final ZipFileSystemConfigBuilder INSTANCE = new ZipFileSystemConfigBuilder();
-    private static final String KEY_CHARSET = _PREFIX + ".charset";
+    private static final String KEY_CHARSET = PREFIX + ".charset";
 
-    public static final ZipFileSystemConfigBuilder getInstance() {
-        return INSTANCE;
-    }
-
+    /**
+     * Constructs a new instance.
+     */
     private ZipFileSystemConfigBuilder() {
         super("zip.");
     }
 
-    public Charset getCharset(final FileSystemOptions opts) {
-        return (Charset) getParam(opts, KEY_CHARSET);
+    /**
+     * Gets the singleton instance.
+     *
+     * @return the singleton instance.
+     */
+    public static final ZipFileSystemConfigBuilder getInstance() {
+        return INSTANCE;
+    }
+
+    /**
+     * Gets the Charset from the FileSystemOptions.
+     *
+     * @param fileSystemOptions The source FileSystemOptions.
+     * @return the Charset from the FileSystemOptions.
+     */
+    public Charset getCharset(final FileSystemOptions fileSystemOptions) {
+        return getParam(fileSystemOptions, KEY_CHARSET);
     }
 
     @Override
@@ -46,8 +60,14 @@ public class ZipFileSystemConfigBuilder extends FileSystemConfigBuilder {
         return ZipFileSystem.class;
     }
 
-    public void setCharset(final FileSystemOptions opts, final Charset charset) {
-        setParam(opts, KEY_CHARSET, charset);
+    /**
+     * Sets the Charset in the FileSystemOptions.
+     *
+     * @param fileSystemOptions The target FileSystemOptions.
+     * @param charset The Charset to set.
+     */
+    public void setCharset(final FileSystemOptions fileSystemOptions, final Charset charset) {
+        setParam(fileSystemOptions, KEY_CHARSET, charset);
     }
 
 }

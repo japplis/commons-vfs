@@ -16,30 +16,22 @@
  */
 package org.apache.commons.vfs2;
 
+import org.apache.commons.lang3.Range;
+
 /**
  * A {@link FileSelector} that selects all files in a particular depth range.
  */
 public class FileDepthSelector implements FileSelector {
 
-    /**
-     * The minimum depth
-     */
-    private final int minDepth;
+    private final Range<Integer> range;
 
     /**
-     * The maximum depth
-     */
-    private final int maxDepth;
-
-    /**
-     * Creates a selector with the given minimum and maximum depths.
+     * Creates a selector with the same minimum and maximum depths of 0.
      *
-     * @param minDepth minimum depth
-     * @param maxDepth maximum depth
+     * @since 2.1
      */
-    public FileDepthSelector(final int minDepth, final int maxDepth) {
-        this.minDepth = minDepth;
-        this.maxDepth = maxDepth;
+    public FileDepthSelector() {
+        this(0, 0);
     }
 
     /**
@@ -53,12 +45,13 @@ public class FileDepthSelector implements FileSelector {
     }
 
     /**
-     * Creates a selector with the same minimum and maximum depths of 0.
+     * Creates a selector with the given minimum and maximum depths.
      *
-     * @since 2.1
+     * @param minDepth minimum depth
+     * @param maxDepth maximum depth
      */
-    public FileDepthSelector() {
-        this(0, 0);
+    public FileDepthSelector(final int minDepth, final int maxDepth) {
+        this.range = Range.between(minDepth, maxDepth);
     }
 
     /**
@@ -69,8 +62,7 @@ public class FileDepthSelector implements FileSelector {
      */
     @Override
     public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
-        final int depth = fileInfo.getDepth();
-        return minDepth <= depth && depth <= maxDepth;
+        return range.contains(fileInfo.getDepth());
     }
 
     /**
@@ -81,6 +73,6 @@ public class FileDepthSelector implements FileSelector {
      */
     @Override
     public boolean traverseDescendents(final FileSelectInfo fileInfo) throws Exception {
-        return fileInfo.getDepth() < maxDepth;
+        return fileInfo.getDepth() < range.getMaximum();
     }
 }

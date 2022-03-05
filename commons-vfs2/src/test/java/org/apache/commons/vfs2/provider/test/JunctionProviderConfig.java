@@ -20,38 +20,18 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FilesCache;
+import org.apache.commons.vfs2.ProviderTestConfig;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
-import org.apache.commons.vfs2.test.ProviderTestConfig;
 
 /**
  * A provider config that wraps another provider, to run the tests via junctions.
  */
 public class JunctionProviderConfig implements ProviderTestConfig {
+
     private final ProviderTestConfig config;
 
     public JunctionProviderConfig(final ProviderTestConfig config) {
         this.config = config;
-    }
-
-    /**
-     * Returns a DefaultFileSystemManager instance (or subclass instance).
-     */
-    @Override
-    public DefaultFileSystemManager getDefaultFileSystemManager() {
-        return config.getDefaultFileSystemManager();
-    }
-
-    @Override
-    public FilesCache getFilesCache() {
-        return config.getFilesCache();
-    }
-
-    /**
-     * Prepares the file system manager.
-     */
-    @Override
-    public void prepare(final DefaultFileSystemManager manager) throws Exception {
-        config.prepare(manager);
     }
 
     /**
@@ -69,8 +49,30 @@ public class JunctionProviderConfig implements ProviderTestConfig {
         return newFs.resolveFile(junctionPoint);
     }
 
+    /**
+     * Returns a DefaultFileSystemManager instance (or subclass instance).
+     */
+    @Override
+    public DefaultFileSystemManager getDefaultFileSystemManager() {
+        return config.getDefaultFileSystemManager();
+    }
+
+    @Override
+    public FilesCache getFilesCache() {
+        return config.getFilesCache();
+    }
+
     @Override
     public boolean isFileSystemRootAccessible() {
         return true;
     }
+
+    /**
+     * Prepares the file system manager.
+     */
+    @Override
+    public void prepare(final DefaultFileSystemManager manager) throws Exception {
+        config.prepare(manager);
+    }
+
 }

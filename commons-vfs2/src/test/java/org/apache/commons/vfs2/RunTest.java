@@ -23,6 +23,7 @@ import junit.framework.Test;
 import junit.framework.TestResult;
 
 public class RunTest {
+
     public static void main(final String[] args) throws Exception {
         final String ip = "192.168.0.128";
 
@@ -40,7 +41,7 @@ public class RunTest {
         //props.setProperty("test.webdav.uri", "webdav://vfsusr:vfs%2f%25\\te:st@" + ip + "/vfstest");
         props.setProperty("test.sftp.uri", "sftp://vfsusr:vfs%2f%25\\te:st@" + ip + "/vfstest");
 
-        final Test tests[] = new Test[] {
+        final Test[] tests = {
                 // LocalProviderTestCase.suite(),
                 // FtpProviderTestCase.suite(),
                 // UrlProviderHttpTestCase.suite(),
@@ -68,17 +69,6 @@ public class RunTest {
 
         final TestResult result = new TestResult() {
             @Override
-            public void startTest(final Test test) {
-                System.out.println("start " + test);
-                System.out.flush();
-            }
-
-            @Override
-            public void endTest(final Test test) {
-                // System.err.println("end " + test);
-            }
-
-            @Override
             public synchronized void addError(final Test test, final Throwable throwable) {
                 // throw new RuntimeException(throwable.getMessage());
                 throwable.printStackTrace();
@@ -88,6 +78,17 @@ public class RunTest {
             public synchronized void addFailure(final Test test, final AssertionFailedError assertionFailedError) {
                 // throw new RuntimeException(assertionFailedError.getMessage());
                 assertionFailedError.printStackTrace();
+            }
+
+            @Override
+            public void endTest(final Test test) {
+                // System.err.println("end " + test);
+            }
+
+            @Override
+            public void startTest(final Test test) {
+                System.out.println("start " + test);
+                System.out.flush();
             }
         };
 
@@ -101,4 +102,5 @@ public class RunTest {
             // break;
         }
     }
+
 }

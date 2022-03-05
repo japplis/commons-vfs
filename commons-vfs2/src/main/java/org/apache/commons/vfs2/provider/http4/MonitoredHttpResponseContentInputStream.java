@@ -25,18 +25,29 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 /**
  * An InputStream that cleans up the {@code org.apache.http.client.methods.CloseableHttpResponse} on close.
  */
-class MonitoredHttpResponseContentInputStream extends MonitorInputStream {
+final class MonitoredHttpResponseContentInputStream extends MonitorInputStream {
 
     private final HttpResponse httpResponse;
 
-    public MonitoredHttpResponseContentInputStream(final HttpResponse httpResponse) throws IOException {
+    MonitoredHttpResponseContentInputStream(final HttpResponse httpResponse) throws IOException {
         super(httpResponse.getEntity().getContent());
         this.httpResponse = httpResponse;
     }
 
-    public MonitoredHttpResponseContentInputStream(final HttpResponse httpResponse, final int bufferSize) throws IOException {
+    MonitoredHttpResponseContentInputStream(final HttpResponse httpResponse, final int bufferSize) throws IOException {
         super(httpResponse.getEntity().getContent(), bufferSize);
         this.httpResponse = httpResponse;
+    }
+
+    /**
+     * Prevent closing the stream itself if the httpResponse is closeable.
+     * Closing the stream may consume all remaining data no matter how large (VFS-805).
+     */
+    @Override
+    protected void closeSuper() throws IOException {
+        if (!(httpResponse instanceof CloseableHttpResponse)) {
+            super.closeSuper();
+        }
     }
 
     @Override

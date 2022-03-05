@@ -16,10 +16,12 @@
  */
 package org.apache.commons.vfs2.provider.webdav.test;
 
+import static org.apache.commons.vfs2.VfsTestUtils.getTestDirectory;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -31,15 +33,15 @@ import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.vfs2.AbstractProviderTestConfig;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.ProviderTestSuite;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.apache.commons.vfs2.provider.temp.TemporaryFileProvider;
 import org.apache.commons.vfs2.provider.webdav.WebdavFileProvider;
 import org.apache.commons.vfs2.provider.webdav.WebdavFileSystemConfigBuilder;
-import org.apache.commons.vfs2.test.AbstractProviderTestConfig;
-import org.apache.commons.vfs2.test.ProviderTestSuite;
 import org.apache.commons.vfs2.util.FreeSocketPortUtil;
 import org.apache.jackrabbit.core.TransientRepository;
 import org.apache.log4j.Level;
@@ -49,10 +51,10 @@ import junit.framework.Test;
 
 /**
  * Test cases for the WebDAV provider.
- *
  */
 public class WebdavProviderTestCase extends AbstractProviderTestConfig {
-    private static final char[] PASSWORD = new char[0];
+
+    private static final char[] PASSWORD = {};
 
     private static final String USER_ID = "admin";
 
@@ -69,7 +71,15 @@ public class WebdavProviderTestCase extends AbstractProviderTestConfig {
 
     private static File RepoDirectory;
 
-    private static boolean DEBUG = Boolean.getBoolean("WebdavProviderTestCase.Debug");
+    private static final boolean DEBUG = Boolean.getBoolean("WebdavProviderTestCase.Debug");
+
+    public WebdavProviderTestCase() throws IOException {
+        SocketPort = FreeSocketPortUtil.findFreeLocalPort();
+        message("FreeSocketPortUtil.findFreeLocalPort() = " + SocketPort);
+        // Use %40 for @ in a URL
+        // Any user id and password will do with the default Jackrabbit set up.
+        ConnectionUri = String.format("webdav://%s@localhost:%d/repository/default", USER_ID, SocketPort);
+    }
 
     static File createTempDirectory() throws IOException {
         // create base folder
@@ -110,11 +120,7 @@ public class WebdavProviderTestCase extends AbstractProviderTestConfig {
         // First output the node path
         message(node.getPath());
         // Skip the virtual (and large!) jcr:system subtree
-        if (node.getName().equals("jcr:system")) {
-            return;
-        }
-
-        if (node.getName().equals("jcr:content")) {
+        if (node.getName().equals("jcr:system") || node.getName().equals("jcr:content")) {
             return;
         }
 
@@ -172,12 +178,9 @@ public class WebdavProviderTestCase extends AbstractProviderTestConfig {
         final File[] files = sourceDir.listFiles();
         for (final File file : files) {
             if (file.isFile()) {
-                final InputStream data = new FileInputStream(file);
-                try {
+                try (InputStream data = Files.newInputStream(file.toPath())) {
                     message("Importing file " + file);
                     JcrUtils.putFile(parent, file.getName(), "application/octet-stream", data);
-                } finally {
-                    data.close();
                 }
             } else if (file.isDirectory()) {
                 message("Importing folder " + file);
@@ -285,14 +288,6 @@ public class WebdavProviderTestCase extends AbstractProviderTestConfig {
                 RepoDirectory.deleteOnExit();
             }
         }
-    }
-
-    public WebdavProviderTestCase() throws IOException {
-        SocketPort = FreeSocketPortUtil.findFreeLocalPort();
-        message("FreeSocketPortUtil.findFreeLocalPort() = " + SocketPort);
-        // Use %40 for @ in a URL
-        // Any user id and password will do with the default Jackrabbit set up.
-        ConnectionUri = String.format("webdav://%s@localhost:%d/repository/default", USER_ID, SocketPort);
     }
 
     /**

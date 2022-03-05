@@ -16,6 +16,9 @@
  */
 package org.apache.commons.vfs2.filter;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +26,79 @@ import java.util.List;
 import org.apache.commons.vfs2.FileFilter;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // CHECKSTYLE:OFF Test code
 public class AndFileFilterTest extends BaseFilterTest {
+
+    /**
+     * Just a filter class.
+     */
+    private static class DummyFilter implements FileFilter {
+
+        @Override
+        public boolean accept(final FileSelectInfo fileSelectInfo) {
+            return false;
+        }
+
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testAccept() throws FileSystemException {
+
+        final FileSelectInfo any = createFileSelectInfo(new File("anyfile"));
+
+        // Empty
+        assertFalse(new AndFileFilter().accept(any));
+
+        // True
+        assertTrue(new AndFileFilter(new AlwaysTrueFileFilter()).accept(any));
+        assertTrue(new AndFileFilter(new AlwaysTrueFileFilter(), new AlwaysTrueFileFilter()).accept(any));
+
+        // False
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter(), new AlwaysFalseFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter(), new AlwaysTrueFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysTrueFileFilter(), new AlwaysFalseFileFilter()).accept(any));
+    }
+
+    @Test
+    public void testAcceptChecked() throws FileSystemException {
+
+        final FileSelectInfo any = createFileSelectInfo(new File("anyfile"));
+
+        // Empty
+        assertFalse(new AndFileFilter().accept(any));
+
+        // True
+        assertTrue(new AndFileFilter(new AlwaysTrueFileFilter()).accept(any));
+        assertTrue(new AndFileFilter(new AlwaysTrueFileFilter(), new AlwaysTrueFileFilter()).accept(any));
+
+        // False
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter(), new AlwaysFalseFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysFalseFileFilter(), new AlwaysTrueFileFilter()).accept(any));
+        assertFalse(new AndFileFilter(new AlwaysTrueFileFilter(), new AlwaysFalseFileFilter()).accept(any));
+    }
+
+    @Test
+    public void testAddFileFilter() {
+
+        // PREPARE
+        final FileFilter filter1 = new DummyFilter();
+        final FileFilter filter2 = new DummyFilter();
+        final FileFilter filter3 = new DummyFilter();
+
+        // TEST
+        final AndFileFilter testee = new AndFileFilter();
+        testee.addFileFilter(filter1);
+        testee.addFileFilter(filter2);
+        testee.addFileFilter(filter3);
+
+        // VERIFY
+        assertContainsOnly(testee.getFileFilters(), filter1, filter2, filter3);
+    }
 
     @Test
     public void testAndFileFilterFileFilter() {
@@ -42,7 +113,6 @@ public class AndFileFilterTest extends BaseFilterTest {
 
         // VERIFY
         assertContainsOnly(testee.getFileFilters(), filter1, filter2, filter3);
-
     }
 
     @Test
@@ -62,26 +132,6 @@ public class AndFileFilterTest extends BaseFilterTest {
 
         // VERIFY
         assertContainsOnly(testee.getFileFilters(), filter1, filter2, filter3);
-
-    }
-
-    @Test
-    public void testAddFileFilter() {
-
-        // PREPARE
-        final FileFilter filter1 = new DummyFilter();
-        final FileFilter filter2 = new DummyFilter();
-        final FileFilter filter3 = new DummyFilter();
-
-        // TEST
-        final AndFileFilter testee = new AndFileFilter();
-        testee.addFileFilter(filter1);
-        testee.addFileFilter(filter2);
-        testee.addFileFilter(filter3);
-
-        // VERIFY
-        assertContainsOnly(testee.getFileFilters(), filter1, filter2, filter3);
-
     }
 
     @Test
@@ -98,7 +148,6 @@ public class AndFileFilterTest extends BaseFilterTest {
 
         // VERIFY
         assertContainsOnly(testee.getFileFilters(), filter1, filter3);
-
     }
 
     @Test
@@ -119,84 +168,6 @@ public class AndFileFilterTest extends BaseFilterTest {
 
         // VERIFY
         assertContainsOnly(testee.getFileFilters(), filter1, filter2, filter3);
-
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testAccept() throws FileSystemException {
-
-        final FileSelectInfo any = createFileSelectInfo(new File("anyfile"));
-
-        // Empty
-        Assert.assertFalse(new AndFileFilter().accept(any));
-
-        // True
-        Assert.assertTrue(new AndFileFilter(new True()).accept(any));
-        Assert.assertTrue(new AndFileFilter(new True(), new True()).accept(any));
-
-        // False
-        Assert.assertFalse(new AndFileFilter(new False()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new False(), new False()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new False(), new True()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new True(), new False()).accept(any));
-
-    }
-
-    @Test
-    public void testAcceptChecked() throws FileSystemException {
-
-        final FileSelectInfo any = createFileSelectInfo(new File("anyfile"));
-
-        // Empty
-        Assert.assertFalse(new AndFileFilter().accept(any));
-
-        // True
-        Assert.assertTrue(new AndFileFilter(new True()).accept(any));
-        Assert.assertTrue(new AndFileFilter(new True(), new True()).accept(any));
-
-        // False
-        Assert.assertFalse(new AndFileFilter(new False()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new False(), new False()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new False(), new True()).accept(any));
-        Assert.assertFalse(new AndFileFilter(new True(), new False()).accept(any));
-
-    }
-
-    /**
-     * Just a filter class.
-     */
-    private static class DummyFilter implements FileFilter {
-
-        @Override
-        public boolean accept(final FileSelectInfo fileInfo) {
-            return false;
-        }
-
-    }
-
-    /**
-     * Always TRUE.
-     */
-    private static class True implements FileFilter {
-
-        @Override
-        public boolean accept(final FileSelectInfo fileInfo) {
-            return true;
-        }
-
-    }
-
-    /**
-     * Always FALSE.
-     */
-    private static class False implements FileFilter {
-
-        @Override
-        public boolean accept(final FileSelectInfo fileInfo) {
-            return false;
-        }
-
     }
 
 }

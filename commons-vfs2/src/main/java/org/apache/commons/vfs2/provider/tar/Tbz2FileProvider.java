@@ -29,19 +29,21 @@ public class Tbz2FileProvider extends CompositeFileProvider {
     /** The provider's capabilities */
     protected static final Collection<Capability> capabilities = TarFileProvider.capabilities;
 
-    private static final String[] SCHEMES = new String[] { "bz2", "tar" };
+    private static final String[] SCHEMES = {"bz2", "tar"};
 
+    /**
+     * Constructs a new instance.
+     */
     public Tbz2FileProvider() {
-        super();
-    }
-
-    @Override
-    protected String[] getSchemes() {
-        return SCHEMES;
     }
 
     @Override
     public Collection<Capability> getCapabilities() {
         return capabilities;
+    }
+
+    @Override
+    protected String[] getSchemes() {
+        return SCHEMES;
     }
 }

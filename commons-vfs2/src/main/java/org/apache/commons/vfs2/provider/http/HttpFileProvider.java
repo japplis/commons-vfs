@@ -38,10 +38,10 @@ import org.apache.commons.vfs2.util.UserAuthenticatorUtils;
 public class HttpFileProvider extends AbstractOriginatingFileProvider {
 
     /** Authenticator information. */
-    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = new UserAuthenticationData.Type[] {
+    public static final UserAuthenticationData.Type[] AUTHENTICATOR_TYPES = {
             UserAuthenticationData.USERNAME, UserAuthenticationData.PASSWORD };
 
-    static final Collection<Capability> capabilities = Collections
+    static final Collection<Capability> CAPABILITIES = Collections
             .unmodifiableCollection(Arrays.asList(Capability.GET_TYPE, Capability.READ_CONTENT, Capability.URI, Capability.GET_LAST_MODIFIED,
                     Capability.ATTRIBUTES, Capability.RANDOM_ACCESS_READ, Capability.DIRECTORY_READ_CONTENT));
 
@@ -49,7 +49,6 @@ public class HttpFileProvider extends AbstractOriginatingFileProvider {
      * Constructs a new provider.
      */
     public HttpFileProvider() {
-        super();
         setFileNameParser(HttpFileNameParser.getInstance());
     }
 
@@ -69,7 +68,7 @@ public class HttpFileProvider extends AbstractOriginatingFileProvider {
 
             final String fileScheme = rootName.getScheme();
             final char lastChar = fileScheme.charAt(fileScheme.length() - 1);
-            final String internalScheme = (lastChar == 's' || lastChar == 'S') ? "https" : "http";
+            final String internalScheme = lastChar == 's' || lastChar == 'S' ? "https" : "http";
 
             httpClient = HttpClientFactory.createConnection(internalScheme, rootName.getHostName(),
                     rootName.getPort(),
@@ -86,12 +85,12 @@ public class HttpFileProvider extends AbstractOriginatingFileProvider {
     }
 
     @Override
-    public FileSystemConfigBuilder getConfigBuilder() {
-        return HttpFileSystemConfigBuilder.getInstance();
+    public Collection<Capability> getCapabilities() {
+        return CAPABILITIES;
     }
 
     @Override
-    public Collection<Capability> getCapabilities() {
-        return capabilities;
+    public FileSystemConfigBuilder getConfigBuilder() {
+        return HttpFileSystemConfigBuilder.getInstance();
     }
 }

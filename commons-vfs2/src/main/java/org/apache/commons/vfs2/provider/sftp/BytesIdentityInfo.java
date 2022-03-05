@@ -40,7 +40,6 @@ public class BytesIdentityInfo implements IdentityProvider {
      * @param passPhrase The passphrase to decrypt the private key (can be {@code null} if no passphrase is used)
      */
     public BytesIdentityInfo(final byte[] privateKey, final byte[] passPhrase) {
-        super();
         this.privateKey = privateKey;
         this.publicKey = null;
         this.passPhrase = passPhrase;
@@ -50,11 +49,10 @@ public class BytesIdentityInfo implements IdentityProvider {
      * Constructs an identity info with private and public key and passphrase for the private key.
      *
      * @param privateKey Private key bytes
-     * @param publicKey  The public key part used for connections with exchange of certificates (can be {@code null})
+     * @param publicKey The public key part used for connections with exchange of certificates (can be {@code null})
      * @param passPhrase The passphrase to decrypt the private key (can be {@code null} if no passphrase is used)
      */
     public BytesIdentityInfo(final byte[] privateKey, final byte[] publicKey, final byte[] passPhrase) {
-        super();
         this.privateKey = privateKey;
         this.publicKey = publicKey;
         this.passPhrase = passPhrase;
@@ -65,14 +63,29 @@ public class BytesIdentityInfo implements IdentityProvider {
         jsch.addIdentity("PrivateKey", privateKey, publicKey, passPhrase);
     }
 
+    /**
+     * Gets the passphrase.
+     *
+     * @return the passphrase.
+     */
     public byte[] getPassPhrase() {
         return passPhrase;
     }
 
+    /**
+     * Gets the private key.
+     *
+     * @return the private key.
+     */
     public byte[] getPrivateKeyBytes() {
         return privateKey;
     }
 
+    /**
+     * Gets the public key.
+     *
+     * @return the public key.
+     */
     public byte[] getPublicKeyBytes() {
         return publicKey;
     }

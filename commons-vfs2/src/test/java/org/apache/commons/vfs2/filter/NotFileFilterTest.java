@@ -16,12 +16,14 @@
  */
 package org.apache.commons.vfs2.filter;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSystemException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link NotFileFilter}.
@@ -29,14 +31,17 @@ import org.junit.Test;
 // CHECKSTYLE:OFF Test code
 public class NotFileFilterTest extends BaseFilterTest {
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testAccept() throws FileSystemException {
 
         final FileSelectInfo any = createFileSelectInfo(new File("test1.txt"));
 
-        Assert.assertFalse(new NotFileFilter(TrueFileFilter.TRUE).accept(any));
-        Assert.assertTrue(new NotFileFilter(FalseFileFilter.FALSE).accept(any));
+        assertFalse(new NotFileFilter(TrueFileFilter.INSTANCE).accept(any));
+        assertFalse(new NotFileFilter(TrueFileFilter.TRUE).accept(any));
 
+        assertTrue(new NotFileFilter(FalseFileFilter.INSTANCE).accept(any));
+        assertTrue(new NotFileFilter(FalseFileFilter.FALSE).accept(any));
     }
 
 }

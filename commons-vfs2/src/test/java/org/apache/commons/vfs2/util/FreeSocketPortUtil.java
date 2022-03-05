@@ -14,17 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.commons.vfs2.util;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 
 public class FreeSocketPortUtil {
-
-    public static void main(final String[] args) throws IOException {
-        System.out.println(FreeSocketPortUtil.findFreeLocalPort());
-    }
 
     /**
      * Finds a free local socket port.
@@ -33,8 +28,13 @@ public class FreeSocketPortUtil {
      * @throws IOException
      */
     public static int findFreeLocalPort() throws IOException {
-        try (final ServerSocket server = new ServerSocket(0)) {
+        try (ServerSocket server = new ServerSocket(0)) {
             return server.getLocalPort();
         }
     }
+
+    public static void main(final String[] args) throws IOException {
+        System.out.println(FreeSocketPortUtil.findFreeLocalPort());
+    }
+
 }

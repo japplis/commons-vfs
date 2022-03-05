@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.vfs2.Capability;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
@@ -55,7 +56,7 @@ public final class Shell {
 
     private Shell() throws IOException {
         final String providers = System.getProperty("providers");
-        final URL providersUrl = (providers != null) ? Shell.class.getResource("/" + providers) : null;
+        final URL providersUrl = providers != null ? Shell.class.getResource("/" + providers) : null;
 
         if (providersUrl != null) {
             mgr = new StandardFileSystemManager();
@@ -70,6 +71,11 @@ public final class Shell {
         reader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
     }
 
+    /**
+     * Invokes this example from the command line.
+     *
+     * @param args Arguments TODO
+     */
     public static void main(final String[] args) {
         try {
             new Shell().go();
@@ -83,19 +89,19 @@ public final class Shell {
     private void go() throws Exception {
         System.out.println("VFS Shell " + getVersion(Shell.class));
         while (true) {
-            final String[] cmd = nextCommand();
-            if (cmd == null) {
+            final String[] commands = nextCommand();
+            if (commands == null) {
                 return;
             }
-            if (cmd.length == 0) {
+            if (commands.length == 0) {
                 continue;
             }
-            final String cmdName = cmd[0];
+            final String cmdName = commands[0];
             if (cmdName.equalsIgnoreCase("exit") || cmdName.equalsIgnoreCase("quit")) {
                 return;
             }
             try {
-                handleCommand(cmd);
+                handleCommand(commands);
             } catch (final Exception e) {
                 System.err.println("Command failed:");
                 e.printStackTrace(System.err);
@@ -137,16 +143,14 @@ public final class Shell {
         if (cmd.length > 1) {
             info(cmd[1]);
         } else {
-            System.out.println(
-                    "Default manager: \"" + mgr.getClass().getName() + "\" " + "version " + getVersion(mgr.getClass()));
+            System.out.println("Default manager: \"" + mgr.getClass().getName() + "\" " + "version " + getVersion(mgr.getClass()));
             final String[] schemes = mgr.getSchemes();
             final List<String> virtual = new ArrayList<>();
             final List<String> physical = new ArrayList<>();
             for (final String scheme : schemes) {
                 final Collection<Capability> caps = mgr.getProviderCapabilities(scheme);
                 if (caps != null) {
-                    if (caps.contains(Capability.VIRTUAL) || caps.contains(Capability.COMPRESS)
-                            || caps.contains(Capability.DISPATCHER)) {
+                    if (caps.contains(Capability.VIRTUAL) || caps.contains(Capability.COMPRESS) || caps.contains(Capability.DISPATCHER)) {
                         virtual.add(scheme);
                     } else {
                         physical.add(scheme);
@@ -164,7 +168,7 @@ public final class Shell {
 
     private void info(final String scheme) throws Exception {
         System.out.println("Provider Info for scheme \"" + scheme + "\":");
-        Collection<Capability> caps;
+        final Collection<Capability> caps;
         caps = mgr.getProviderCapabilities(scheme);
         if (caps != null && !caps.isEmpty()) {
             System.out.println("  capabilities: " + caps);
@@ -249,8 +253,7 @@ public final class Shell {
      * Does a 'pwfs' command.
      */
     private void pwfs() {
-        System.out.println("FileSystem of current folder is " + cwd.getFileSystem() + " (root: "
-                + cwd.getFileSystem().getRootURI() + ")");
+        System.out.println("FileSystem of current folder is " + cwd.getFileSystem() + " (root: " + cwd.getFileSystem().getRootURI() + ")");
     }
 
     /**
@@ -326,8 +329,7 @@ public final class Shell {
     /**
      * Lists the children of a folder.
      */
-    private void listChildren(final FileObject dir, final boolean recursive, final String prefix)
-            throws FileSystemException {
+    private void listChildren(final FileObject dir, final boolean recursive, final String prefix) throws FileSystemException {
         final FileObject[] children = dir.getChildren();
         for (final FileObject child : children) {
             System.out.print(prefix);
@@ -335,7 +337,7 @@ public final class Shell {
             if (child.getType() == FileType.FOLDER) {
                 System.out.println("/");
                 if (recursive) {
-                    listChildren(child, recursive, prefix + "    ");
+                    listChildren(child, true, prefix + "    ");
                 }
             } else {
                 System.out.println();
@@ -357,7 +359,7 @@ public final class Shell {
         while (tokens.hasMoreTokens()) {
             cmd.add(tokens.nextToken());
         }
-        return cmd.toArray(new String[cmd.size()]);
+        return cmd.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
     private static String getVersion(final Class<?> cls) {

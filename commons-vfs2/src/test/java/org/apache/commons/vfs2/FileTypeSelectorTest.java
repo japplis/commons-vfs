@@ -16,10 +16,11 @@
  */
 package org.apache.commons.vfs2;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests FileTypeSelector.
@@ -27,6 +28,7 @@ import org.junit.Test;
  * @since 2.1
  */
 public class FileTypeSelectorTest {
+
     private static FileObject BaseFolder;
 
     /**
@@ -34,7 +36,7 @@ public class FileTypeSelectorTest {
      *
      * @throws Exception
      */
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         BaseFolder = VFS.getManager().resolveFile("ram://" + FileTypeSelectorTest.class.getName());
         BaseFolder.resolveFile("root1.html").createFile();
@@ -52,7 +54,7 @@ public class FileTypeSelectorTest {
      *
      * @throws Exception
      */
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
         if (BaseFolder != null) {
             BaseFolder.deleteAll();
@@ -64,20 +66,21 @@ public class FileTypeSelectorTest {
         final FileSelector selector = new FileTypeSelector(FileType.FILE_OR_FOLDER);
         final FileObject[] foList = BaseFolder.findFiles(selector);
         // Why 0?
-        Assert.assertEquals(0, foList.length);
+        assertEquals(0, foList.length);
     }
 
     @Test
     public void testFiles() throws Exception {
         final FileSelector selector = new FileTypeSelector(FileType.FILE);
         final FileObject[] foList = BaseFolder.findFiles(selector);
-        Assert.assertEquals(5, foList.length);
+        assertEquals(5, foList.length);
     }
 
     @Test
     public void testFolders() throws Exception {
         final FileSelector selector = new FileTypeSelector(FileType.FOLDER);
         final FileObject[] foList = BaseFolder.findFiles(selector);
-        Assert.assertEquals(8, foList.length);
+        assertEquals(8, foList.length);
     }
+
 }

@@ -7,3 +7,9 @@ target/
 *.iml
 *.iws
 .DS_Store
+/derby.log
+/jackrabbit.log_IS_UNDEFINED
+/jetty.log_IS_UNDEFINED
+.vscode/
+*.code-workspace
+.history/

@@ -17,24 +17,39 @@
 package org.apache.commons.vfs2.provider.webdav.test;
 
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.commons.vfs2.AbstractProviderTestCase;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.Selectors;
 import org.apache.commons.vfs2.provider.URLFileName;
 import org.apache.commons.vfs2.provider.webdav.WebdavFileSystemConfigBuilder;
-import org.apache.commons.vfs2.test.AbstractProviderTestCase;
 import org.apache.jackrabbit.webdav.version.DeltaVConstants;
 import org.apache.jackrabbit.webdav.version.VersionControlledResource;
+import org.junit.Test;
 
 /**
  * Test to verify Webdav Versioning support
  */
 public class WebdavVersioningTests extends AbstractProviderTestCase {
+
     /**
+     * Sets up a scratch folder for the test to use.
      */
+    protected FileObject createScratchFolder() throws Exception {
+        final FileObject scratchFolder = getWriteFolder();
+
+        // Make sure the test folder is empty
+        scratchFolder.delete(Selectors.EXCLUDE_SELF);
+        scratchFolder.createFolder();
+
+        return scratchFolder;
+    }
+
+    @Test
     public void testVersioning() throws Exception {
         final FileObject scratchFolder = createScratchFolder();
         final FileSystemOptions opts = scratchFolder.getFileSystem().getFileSystemOptions();
@@ -67,11 +82,8 @@ public class WebdavVersioningTests extends AbstractProviderTestCase {
         // Create the source file
         final String content = "Here is some sample content for the file.  Blah Blah Blah.";
 
-        final OutputStream os = file.getContent().getOutputStream();
-        try {
-            os.write(content.getBytes("utf-8"));
-        } finally {
-            os.close();
+        try (OutputStream os = file.getContent().getOutputStream()) {
+            os.write(content.getBytes(StandardCharsets.UTF_8));
         }
         assertSameContent(content, file);
         map = file.getContent().getAttributes();
@@ -83,8 +95,7 @@ public class WebdavVersioningTests extends AbstractProviderTestCase {
         builder.setVersioning(opts, false);
     }
 
-    /**
-     */
+    @Test
     public void testVersioningWithCreator() throws Exception {
         final FileObject scratchFolder = createScratchFolder();
         final FileSystemOptions opts = scratchFolder.getFileSystem().getFileSystemOptions();
@@ -120,11 +131,8 @@ public class WebdavVersioningTests extends AbstractProviderTestCase {
         // Create the source file
         final String content = "Here is some sample content for the file.  Blah Blah Blah.";
 
-        final OutputStream os = file.getContent().getOutputStream();
-        try {
-            os.write(content.getBytes("utf-8"));
-        } finally {
-            os.close();
+        try (OutputStream os = file.getContent().getOutputStream()) {
+            os.write(content.getBytes(StandardCharsets.UTF_8));
         }
         assertSameContent(content, file);
         map = file.getContent().getAttributes();
@@ -137,19 +145,6 @@ public class WebdavVersioningTests extends AbstractProviderTestCase {
         assertTrue(map.containsKey(VersionControlledResource.CHECKED_IN.toString()));
         builder.setVersioning(opts, false);
         builder.setCreatorName(opts, null);
-    }
-
-    /**
-     * Sets up a scratch folder for the test to use.
-     */
-    protected FileObject createScratchFolder() throws Exception {
-        final FileObject scratchFolder = getWriteFolder();
-
-        // Make sure the test folder is empty
-        scratchFolder.delete(Selectors.EXCLUDE_SELF);
-        scratchFolder.createFolder();
-
-        return scratchFolder;
     }
 
 }
