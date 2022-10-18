@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.security.cert.Certificate;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -266,7 +267,7 @@ public class DelegateFileObject<AFS extends AbstractFileSystem> extends Abstract
                 throw new FileNotFolderException(getName(), e);
             }
 
-            return Stream.of(children).map(child -> child.getName().getBaseName()).toArray(String[]::new);
+            return Stream.of(children).filter(Objects::nonNull).map(child -> child.getName().getBaseName()).toArray(String[]::new);
         }
         return children.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
@@ -277,8 +278,8 @@ public class DelegateFileObject<AFS extends AbstractFileSystem> extends Abstract
      * @since 2.0
      */
     @Override
-    protected void doRemoveAttribute(final String atttrName) throws Exception {
-        getFileContent().removeAttribute(atttrName);
+    protected void doRemoveAttribute(final String attrName) throws Exception {
+        getFileContent().removeAttribute(attrName);
     }
 
     /**
@@ -297,8 +298,8 @@ public class DelegateFileObject<AFS extends AbstractFileSystem> extends Abstract
      * Sets an attribute of this file.
      */
     @Override
-    protected void doSetAttribute(final String atttrName, final Object value) throws Exception {
-        getFileContent().setAttribute(atttrName, value);
+    protected void doSetAttribute(final String attrName, final Object value) throws Exception {
+        getFileContent().setAttribute(attrName, value);
     }
 
     /**

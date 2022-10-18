@@ -41,14 +41,14 @@ import org.apache.commons.vfs2.FileSelectInfo;
  * </pre>
  *
  * @author This code was originally ported from Apache Commons IO File Filter
- * @see "http://commons.apache.org/proper/commons-io/"
+ * @see "https://commons.apache.org/proper/commons-io/"
  * @since 2.4
  */
 public class NameFileFilter implements FileFilter, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Whether the comparison is case sensitive. */
+    /** Whether the comparison is case-sensitive. */
     private final IOCase caseSensitivity;
 
     /** The file names to search for. */
@@ -92,7 +92,7 @@ public class NameFileFilter implements FileFilter, Serializable {
      * @param names the names to allow, must not be null
      */
     public NameFileFilter(final List<String> names) {
-        this((IOCase) null, names);
+        this(null, names);
     }
 
     /**
@@ -105,7 +105,7 @@ public class NameFileFilter implements FileFilter, Serializable {
      * @param names the names to allow, must not be null
      */
     public NameFileFilter(final String... names) {
-        this((IOCase) null, names);
+        this(null, names);
     }
 
     /**
@@ -118,12 +118,7 @@ public class NameFileFilter implements FileFilter, Serializable {
     @Override
     public boolean accept(final FileSelectInfo fileSelectInfo) {
         final String name = fileSelectInfo.getFile().getName().getBaseName();
-        for (final String name2 : this.names) {
-            if (caseSensitivity.checkEquals(name, name2)) {
-                return true;
-            }
-        }
-        return false;
+        return names.stream().anyMatch(name2 -> caseSensitivity.checkEquals(name, name2));
     }
 
     /**
@@ -137,12 +132,7 @@ public class NameFileFilter implements FileFilter, Serializable {
         buffer.append(super.toString());
         buffer.append("(");
         if (names != null) {
-            for (int i = 0; i < names.size(); i++) {
-                if (i > 0) {
-                    buffer.append(",");
-                }
-                buffer.append(names.get(i));
-            }
+            buffer.append(String.join(",", names));
         }
         buffer.append(")");
         return buffer.toString();

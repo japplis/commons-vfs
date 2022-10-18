@@ -86,6 +86,36 @@ The <action> type attribute can be add,update,fix,remove.
       <action type="fix" issue="VFS-814" dev="ggregory" due-to="Luke Wood, Gary Gregory">
         FtpFileObject: re-fetch MDTM after refresh #238.
       </action>
+      <action type="fix" dev="ggregory" due-to="Arturo Bernal">
+        Simplify conditions and avoid extra checks #253.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Boris Petrov, Gary Gregory">
+        Refactor AbstractFileObject#getOutputStream() #151.
+      </action>
+      <action type="fix" issue="VFS-770" dev="ggregory" due-to="Thomas BELOT, PeterAlfredLee, Gary Gregory">
+        FileSystemManager.createFileSystem(FileObject) fails on Gzip files. #92.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Arturo Bernal">
+        Simplify/remove redundant operations. #258.
+      </action>      
+      <action type="fix" dev="ggregory" due-to="Tobias Gierke, Gary Gregory">
+        SFTP: Memory leak because AbstractFileProvider#findFileSystem.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Marc Wrobel">
+        Fix typos #275, #276, #277.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Marc Wrobel">
+        Fix links in Javadoc and documentations #284.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Mark van der Walle, Gary Gregory">
+        [SFTP] Handle the case where a user does not have any groups #280.
+      </action>
+      <action type="fix" dev="ggregory" due-to="ymenager">
+        hadoop-hdfs-client is not set as optional #291.
+      </action>
+      <action type="fix" dev="ggregory" due-to="Boris Petrov">
+        AbstractFileObject uses the wrong exception for "cause" #316.
+      </action>
       <!-- ADD -->
       <action type="add" dev="ggregory" due-to="Seth Falco">
         Add vscode files to gitignore #205.
@@ -111,33 +141,42 @@ The <action> type attribute can be add,update,fix,remove.
       <action type="add" dev="ggregory" due-to="Gary Gregory">
         Extract the layer separator character constant into LayeredFileName.LAYER_SEPARATOR.
       </action>
-      <!-- UDPATE -->
+      <action type="add" dev="ggregory">
+        Add github/codeql-action.
+      </action>
+      <action issue="VFS-821" type="add" dev="ggregory" due-to="Marc Wrobel, Gary Gregory">
+        Deprecate FileSelector#traverseDescendents in favor of traverseDescendants.
+      </action>
+      <action issue="VFS-821" type="add" dev="ggregory" due-to="Maksym Perevertov, Gary Gregory">
+        Add active port range configuration for FTP client factory #318.
+      </action>
+      <!-- UPDATE -->
+      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
+        Bump actions/cache from 2.1.6 to 3.0.11 #221, #249, #310, #314, #317.
+      </action>
+      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
+        Bump actions/checkout from 2.3.4 to 3.1.0 #217, #220, #245, #315.
+      </action>
+      <action type="update" dev="ggregory" due-to="Gary Gregory">
+        Bump actions/setup-java from 2 to 3.5.1.
+      </action>
       <action type="update" dev="ggregory" due-to="Dependabot">
         Bump jakarta.mail from 1.6.7 to 2.0.1 #200.
       </action>
-      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
-        Bump net.sourceforge.pmd:pmd-* from 6.36.0 to 6.42.0 #208.
-      </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
-        Bump commons.animal-sniffer.version from 1.19 to 1.20.
+        Bump commons.animal-sniffer.version from 1.19 to 1.21.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
         Bump com.puppycrawl.tools:checkstyle from 8.44 to 9.3 #211.
       </action>
-      <action type="update" dev="ggregory" due-to="Dependabot">
-        Bump actions/checkout from 2.3.4 to 3 #217, #220, #245.
-      </action>
       <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
-        Bump com.github.spotbugs:spotbugs from 4.3.0 to 4.5.3 #216.
+        Bump com.github.spotbugs:spotbugs from 4.3.0 to 4.7.3 #216, #269, #319.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
-        Bump spotbugs-maven-plugin from 4.3.0 to 4.5.3.0, #229, #236.
-      </action>
-      <action type="update" dev="ggregory" due-to="Dependabot">
-        Bump actions/cache from 2.1.6 to 2.1.7 #221.
+        Bump spotbugs-maven-plugin from 4.3.0 to 4.7.2.0, #229, #236. #264, #282.
       </action>
       <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
-        Bump jackrabbit2.version from 2.21.7 to 2.21.9 #219.
+        Bump jackrabbit2.version from 2.21.7 to 2.21.12 #219, #289.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
         Bump org.apache.httpcomponents.client5:httpclient5 from 5.1 to 5.1.3.
@@ -145,38 +184,56 @@ The <action> type attribute can be add,update,fix,remove.
       <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
         Bump org.apache.mina:mina-core from 2.1.4 to 2.1.6.
       </action>
-      <action type="update" dev="ggregory" due-to="Dependabot">
-        Bump maven-pmd-plugin from 3.14.0 to 3.15.0 #223. 
+      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
+        Bump maven-pmd-plugin from 3.14.0 to 3.19.0 #223, #294, #304.
+      </action>
+      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
+        Bump net.sourceforge.pmd:pmd-* from 6.36.0 to 6.50.0 #208, #247, #256, #261, #266, #270, #283.
+      </action>
+      <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
+        Bump org.mockito:mockito-core from 3.11.2 to 4.8.0 #263, #292, #308.
+      </action>
+      <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
+        Bump maven-javadoc-plugin from 3.3.0 to 3.4.1, #293.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
-        Bump org.mockito:mockito-core from 3.11.2 to 4.3.1.
-      </action>
-      <action type="update" dev="ggregory" due-to="Gary Gregory">
-        Bump maven-javadoc-plugin from 3.3.0 to 3.3.2.
-      </action>
-      <action type="update" dev="ggregory" due-to="Gary Gregory">
-        Bump biz.aQute.bnd:biz.aQute.bndlib 5.3.0 -> 6.1.0.
+        Bump biz.aQute.bnd:biz.aQute.bndlib from 5.3.0 to 6.3.1.
       </action>
       <action dev="ggregory" due-to="Gary Gregory" type="update">
-        Bump commons.japicmp.version 0.15.3 -> 0.15.6.
+        Bump commons.japicmp.version from 0.15.3 to 0.16.0.
       </action>
-      <action dev="ggregory" due-to="Gary Gregory, John Patrick" type="update">
-        Replace JUnit 4.13.2 with 5.8.2.
+      <action dev="ggregory" due-to="Gary Gregory, John Patrick, Dependabot" type="update">
+        Replace JUnit 4.13.2 with 5.9.1 #281, #306.
       </action>
       <action dev="ggregory" due-to="Gary Gregory" type="update">
         Bump org.apache.httpcomponents:httpcore-nio 4.4.14 -> 4.4.15.
       </action>
       <action dev="ggregory" due-to="Gary Gregory, Dependabot" type="update">
-        Bump Apache Log4j 2.14.1 to 2.17.2 [Tests] #226, #230.
+        Bump Apache Log4j 2.14.1 to 2.19.0 [Tests] #226, #230, #305.
       </action>
       <action dev="ggregory" due-to="XenoAmess" type="update">
-        Upgrade ftpserver-core from 1.1.1 to 1.1.2 #235.
-      </action>
-      <action dev="ggregory" due-to="Gary Gregory" type="update">
-        Bump org.apache.jackrabbit:jackrabbit-standalone-components from 2.21.9 to 2.21.10.
+        Bump ftpserver-core from 1.1.1 to 1.1.2 #235.
       </action>
       <action dev="ggregory" due-to="Dependabot" type="update">
-        Bump hadoop.version from 3.3.1 to 3.3.2 #246.
+        Bump hadoop.version from 3.3.1 to 3.3.4 #246, #262, #290.
+      </action>
+      <action dev="ggregory" due-to="Dependabot" type="update">
+        Bump slf4j.version from 1.7.26 to 1.7.36 #244.
+      </action>
+      <action dev="ggregory" due-to="Dependabot" type="update">
+        Bump commons-parent from 52 to 54 #302.
+      </action>
+      <action dev="ggregory" due-to="Gary Gregory" type="update">
+        Bump org.ow2.asm:asm from 9.2 to 9.4.
+      </action>
+      <action dev="ggregory" due-to="Gary Gregory" type="update">
+        Bump commons.jacoco.version from 0.8.7 to 0.8.8.
+      </action>
+      <action dev="ggregory" due-to="Gary Gregory" type="update">
+        Bump commons.surefire.version from 3.0.0-M5 to 3.0.0-M7.
+      </action>
+      <action dev="ggregory" due-to="Gary Gregory" type="update">
+        Bump bcel from 6.5.0 to 6.6.0.
       </action>
     </release>
     <release version="2.9.0" date="2021-06-16" description="Maintenance release. Requires Java 8.">
@@ -201,7 +258,7 @@ The <action> type attribute can be add,update,fix,remove.
         Minor changes #185.
       </action>
       <action type="fix" dev="ggregory" due-to="Gary Gregory">
-        Port internal embedded HTTP asynchronous file server used in tests from from Apache HttpComponents HttpCore/HttpClient 4.x to 5.0.x.
+        Port internal embedded HTTP asynchronous file server used in tests from Apache HttpComponents HttpCore/HttpClient 4.x to 5.0.x.
       </action>
       <action type="fix" dev="ggregory" due-to="Arturo Bernal">
         Replace construction of FileInputStream and FileOutputStream objects with Files NIO APIs. #164.
@@ -250,7 +307,7 @@ The <action> type attribute can be add,update,fix,remove.
         SftpFileObject: Add synchronized to methods that read or write the thread-unsafe instance variable of type com.jcraft.jsch.SftpATTRS.
       </action>
       <action type="fix" issue="VFS-759" dev="ggregory" due-to="Woonsan Ko">
-        WebDAV providers should loaded only when commons-vfs2-jackrabbit* jars are available #84
+        WebDAV providers should be loaded only when commons-vfs2-jackrabbit* jars are available #84
       </action>
       <action type="fix" dev="ggregory" due-to="Arturo Bernal">
         Simplify conditions and avoid extra checks #187.
@@ -274,7 +331,7 @@ The <action> type attribute can be add,update,fix,remove.
       <action dev="ggregory" due-to="Boris Petrov" type="update">
         Bump actions/setup-java to v2 #177.
       </action>
-      <action dev="ggregory" due-to="Dependabot, Gary GRegory" type="update">
+      <action dev="ggregory" due-to="Dependabot, Gary Gregory" type="update">
         Bump mockito-core from 3.8.0 to 3.11.2 #178.
       </action>
       <action dev="ggregory" due-to="Gary Gregory, Dependabot" type="update">
@@ -569,7 +626,7 @@ The <action> type attribute can be add,update,fix,remove.
         Remove workaround for JDK BUG: 6192331 which was fixed way back in Java 6: https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6192331
       </action>
       <action dev="ggregory" due-to="Gary Gregory" type="fix">
-        FileObject.getURL() returns an illegal URL when a it should escape a space.
+        FileObject.getURL() returns an illegal URL when it should escape a space.
       </action>
       <action dev="ggregory" due-to="Gary Gregory" type="add">
         Add FileObject.getURI().
@@ -1050,7 +1107,7 @@ Therefore source and binary compatibility is not affected.">
         Make startup of SoftRefsFileCache cleaner thread work and less racy to avoid leaks.
      </action>
       <action issue="VFS-549" dev="ecki" type="fix">
-        Use File.seperator instead of getProperty("file.separator").
+        Use File.separator instead of getProperty("file.separator").
      </action>
       <action issue="VFS-567" dev="ecki" type="fix" due-to="Antonio Petrelli">
         [ftp] Ignore exceptions while QUIT/disconnect.
@@ -1059,7 +1116,7 @@ Therefore source and binary compatibility is not affected.">
         [sftp] better documentation for knownhosts file option.
      </action>
       <action issue="VFS-574" dev="ecki" type="fix">
-        Ensure FileOpertionProviders are closed. Adds some testcases.
+        Ensure FileOperationProviders are closed. Adds some testcases.
         The error code for missing operations exceptions corrected: vfs.operation/operation-not-supported.error
      </action>
       <action issue="VFS-279" dev="ecki" type="fix" due-to="Didier Earith, Simon Legner">
@@ -1251,7 +1308,7 @@ Therefore source and binary compatibility is not affected.">
         StaticUserAuthenticator should return only requested authentication data.
       </action>
       <action issue="VFS-463" dev="joehni" type="update">
-        FileSytemConfigBuilder supports system properties for the value of enum-based configuration entries.
+        FileSystemConfigBuilder supports system properties for the value of enum-based configuration entries.
       </action>
       <action issue="VFS-462" dev="joehni" type="update">
         [FTPS] Deprecate FtpsFileSystemConfigBuilder.setFtpsType and FtpsFileSystemConfigBuilder.getFtpsType
@@ -1332,7 +1389,7 @@ Therefore source and binary compatibility is not affected.">
         Update test dependencies: sshd-core version 0.7.0 to 0.8.0; mina-core 2.0.4 to 2.0.7; junit 4.11 to 4.12; slf4j-* 1.5.5 to 1.5.11
       </action>
       <action issue="VFS-456" dev="joehni" type="update">
-        Use org.bouncycastel:bcprov-jdk16 instead of org.bouncycastle:bcprof-jdk15on since Java 1.6 is required.
+        Use org.bouncycastle:bcprov-jdk16 instead of org.bouncycastle:bcprof-jdk15on since Java 1.6 is required.
       </action>
       <action issue="VFS-415" dev="ggregory" type="update">
         Update VFS requirement to Java 1.6.
@@ -1458,7 +1515,7 @@ Therefore source and binary compatibility is not affected.">
         SFTP getChildren() does not fail when called on a file.
       </action>
       <action issue="VFS-381" dev="ggregory" type="add">
-        Iterate over a FileObject using the Java "foreach" statement, to provide all descendents of a FileObject.
+        Iterate over a FileObject using the Java "foreach" statement, to provide all descendants of a FileObject.
       </action>
       <action issue="VFS-380" dev="ggregory" type="fix">
         FTP connect.error message used instead of SFTP connect.error message.
@@ -1532,7 +1589,7 @@ Therefore source and binary compatibility is not affected.">
         Update the version of commons-net.
       </action>
       <action issue="VFS-230" dev="rgoers" type="fix">
-        Documented FileSystem capabilities on the web site.
+        Documented FileSystem capabilities on the website.
       </action>
       <action issue="VFS-337" dev="rgoers" type="fix">
         AbstractFileObject and classes that extend from it use AbstractFileName in the constructor and in

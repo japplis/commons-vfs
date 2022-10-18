@@ -44,8 +44,8 @@ Apache Commons VFS Examples
 ===================
 
 [![GitHub Actions Status](https://github.com/apache/commons-vfs/workflows/Java%20CI/badge.svg)](https://github.com/apache/commons-vfs/actions)
-[![Coverage Status](https://coveralls.io/repos/apache/commons-vfs/badge.svg)](https://coveralls.io/r/apache/commons-vfs)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2-examples/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2-examples/)
+[![Coverage Status](https://codecov.io/gh/apache/commons-vfs/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/commons-vfs)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2-examples/badge.svg?gav=true)](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2-examples/?gav=true)
 [![Javadocs](https://javadoc.io/badge/org.apache.commons/commons-vfs2-examples/2.9.0.svg)](https://javadoc.io/doc/org.apache.commons/commons-vfs2-examples/2.9.0)
 
 Apache Commons VFS is a Virtual File System library - Examples.
@@ -54,7 +54,7 @@ Documentation
 -------------
 
 More information can be found on the [Apache Commons VFS Examples homepage](https://commons.apache.org/proper/commons-vfs).
-The [Javadoc](https://commons.apache.org/proper/commons-vfs/apidocs) can be browsed.
+The [Javadoc](https://commons.apache.org/proper/commons-vfs/commons-vfs2/apidocs/index.html) can be browsed.
 Questions related to the usage of Apache Commons VFS Examples should be posted to the [user mailing list][ml].
 
 Where can I get the latest release?

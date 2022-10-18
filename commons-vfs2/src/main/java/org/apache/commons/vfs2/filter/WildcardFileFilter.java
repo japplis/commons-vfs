@@ -54,14 +54,14 @@ import org.apache.commons.vfs2.FileSelectInfo;
  * </pre>
  *
  * @author This code was originally ported from Apache Commons IO File Filter
- * @see "http://commons.apache.org/proper/commons-io/"
+ * @see "https://commons.apache.org/proper/commons-io/"
  * @since 2.4
  */
 public class WildcardFileFilter implements FileFilter, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Whether the comparison is case sensitive. */
+    /** Whether the comparison is case-sensitive. */
     private final IOCase caseSensitivity;
 
     /** The wildcards that will be used to match file names. */
@@ -105,7 +105,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
      * @param wildcards the list of wildcards to match, not null
      */
     public WildcardFileFilter(final List<String> wildcards) {
-        this((IOCase) null, wildcards);
+        this(null, wildcards);
     }
 
     /**
@@ -117,7 +117,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
      * @param wildcards the array of wildcards to match
      */
     public WildcardFileFilter(final String... wildcards) {
-        this((IOCase) null, wildcards);
+        this(null, wildcards);
     }
 
     /**
@@ -175,7 +175,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
      * @param caseSensitivity what case sensitivity rule to use, null means
      *                        case-sensitive
      *
-     * @return true if the file name matches the wilcard string
+     * @return true if the file name matches the wildcard string
      */
     // CHECKSTYLE:OFF TODO xxx Cyclomatic complexity of 19 should be refactored
     static boolean wildcardMatch(final String fileName, final String wildcardMatcher, IOCase caseSensitivity) {
@@ -236,7 +236,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
                         }
                     } else if (!caseSensitivity.checkRegionMatches(fileName, textIdx, wcs[wcsIdx])) {
                         // matching from current position
-                        // couldnt match token
+                        // couldn't match token
                         break;
                     }
 
@@ -270,12 +270,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
     @Override
     public boolean accept(final FileSelectInfo fileSelectInfo) {
         final String name = fileSelectInfo.getFile().getName().getBaseName();
-        for (final String wildcard : wildcards) {
-            if (wildcardMatch(name, wildcard, caseSensitivity)) {
-                return true;
-            }
-        }
-        return false;
+        return wildcards.stream().anyMatch(wildcard -> wildcardMatch(name, wildcard, caseSensitivity));
     }
 
     // CHECKSTYLE:ON
@@ -291,12 +286,7 @@ public class WildcardFileFilter implements FileFilter, Serializable {
         buffer.append(super.toString());
         buffer.append("(");
         if (wildcards != null) {
-            for (int i = 0; i < wildcards.size(); i++) {
-                if (i > 0) {
-                    buffer.append(",");
-                }
-                buffer.append(wildcards.get(i));
-            }
+            buffer.append(String.join(",", wildcards));
         }
         buffer.append(")");
         return buffer.toString();

@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>52</version>
+    <version>54</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -31,7 +31,7 @@
   <packaging>pom</packaging>
   <version>2.10.0-SNAPSHOT</version>
 
-  <url>http://commons.apache.org/proper/commons-vfs/</url>
+  <url>https://commons.apache.org/proper/commons-vfs/</url>
   <inceptionYear>2002</inceptionYear>
 
   <modules>
@@ -116,7 +116,7 @@
       <name>Bernd Eckenfels</name>
       <id>ecki</id>
       <email>ecki -at- apache.org</email>
-      <url>http://bernd.eckenfels.net</url>
+      <url>https://bernd.eckenfels.net</url>
       <timezone>+1</timezone>
     </developer>
   </developers>
@@ -186,22 +186,22 @@
     </commons.osgi.import>
     <!-- Avoid warnings about being unable to find jars during site building -->
     <dependency.locations.enabled>false</dependency.locations.enabled>
-    <hadoop.version>3.3.2</hadoop.version>
+    <hadoop.version>3.3.4</hadoop.version>
     <jackrabbit1.version>1.6.5</jackrabbit1.version>
-    <jackrabbit2.version>2.21.10</jackrabbit2.version>
-    <commons.surefire.version>3.0.0-M5</commons.surefire.version>
-    <commons.japicmp.version>0.15.6</commons.japicmp.version>
-    <commons.jacoco.version>0.8.7</commons.jacoco.version>
-    <commons.spotbugs.version>4.5.3.0</commons.spotbugs.version>
-    <commons.spotbugs.impl.version>4.5.3</commons.spotbugs.impl.version>
-    <commons.asm.version>9.2</commons.asm.version>
-    <commons.pmd.version>6.42.0</commons.pmd.version>
-    <commons.javadoc.version>3.3.2</commons.javadoc.version>
+    <jackrabbit2.version>2.21.12</jackrabbit2.version>
+    <commons.surefire.version>3.0.0-M7</commons.surefire.version>
+    <commons.japicmp.version>0.16.0</commons.japicmp.version>
+    <commons.jacoco.version>0.8.8</commons.jacoco.version>
+    <commons.spotbugs.version>4.7.2.0</commons.spotbugs.version>
+    <commons.spotbugs.impl.version>4.7.3</commons.spotbugs.impl.version>
+    <commons.asm.version>9.4</commons.asm.version>
+    <commons.pmd.version>6.50.0</commons.pmd.version>
+    <commons.javadoc.version>3.4.1</commons.javadoc.version>
     <commons.felix.version>5.1.2</commons.felix.version>
-    <commons.animal-sniffer.version>1.20</commons.animal-sniffer.version>
-    <biz.aQute.bndlib.version>6.1.0</biz.aQute.bndlib.version>
-    <slf4j.version>1.7.26</slf4j.version>
-    <log4j2.version>2.17.2</log4j2.version>
+    <commons.animal-sniffer.version>1.21</commons.animal-sniffer.version>
+    <biz.aQute.bndlib.version>6.3.1</biz.aQute.bndlib.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <log4j2.version>2.19.0</log4j2.version>
     <clirr.skip>true</clirr.skip>
     <japicmp.skip>false</japicmp.skip>
     <jacoco.skip>false</jacoco.skip>
@@ -209,13 +209,13 @@
 
   <build>
     <!-- japicmp:cmp needs package to work from a jar -->
-    <defaultGoal>clean package apache-rat:check japicmp:cmp javadoc:javadoc spotbugs:check pmd:check checkstyle:check</defaultGoal>
+    <defaultGoal>clean verify apache-rat:check japicmp:cmp javadoc:javadoc spotbugs:check pmd:check checkstyle:check</defaultGoal>
     <pluginManagement>
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-pmd-plugin</artifactId>
-          <version>3.15.0</version>
+          <version>3.19.0</version>
           <dependencies>
             <dependency>
               <groupId>net.sourceforge.pmd</groupId>
@@ -266,7 +266,7 @@
             <dependency>
               <groupId>org.apache.bcel</groupId>
               <artifactId>bcel</artifactId>
-              <version>6.5.0</version>
+              <version>6.6.0</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -619,14 +619,14 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.8.2</version>
+        <version>5.9.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>4.3.1</version>
+        <version>4.8.0</version>
       </dependency>
       <!-- Test FTP with Apache FTP Server (MINA) -->
       <dependency>

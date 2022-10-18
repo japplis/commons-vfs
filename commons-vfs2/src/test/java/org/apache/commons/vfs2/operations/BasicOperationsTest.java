@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 public class BasicOperationsTest {
 
     /** This FileOperationsProvider is a VfsComponent and records invocations. */
-    static class MyFileOperationProviderComp extends MyFileOprationProviderBase implements VfsComponent {
+    static class MyFileOperationProviderComp extends MyFileOperationProviderBase implements VfsComponent {
         @Override
         public void close() {
             ops |= 8;
@@ -68,14 +68,14 @@ public class BasicOperationsTest {
     }
 
     /** This FileOperationsProvider is no VfsComponent. */
-    static class MyFileOperationProviderNoncomp extends MyFileOprationProviderBase {
+    static class MyFileOperationProviderNoncomp extends MyFileOperationProviderBase {
     }
 
     /**
      * Base class for different Test Providers. This is also a compile test to ensure interface stability.
      */
-    static class MyFileOprationProviderBase implements FileOperationProvider {
-        int ops; // bit array to record invocations (poor mans mock)
+    static class MyFileOperationProviderBase implements FileOperationProvider {
+        int ops; // bit array to record invocations (poor man's mock)
 
         @Override
         public void collectOperations(final Collection<Class<? extends FileOperation>> operationsList,
@@ -89,7 +89,7 @@ public class BasicOperationsTest {
         public FileOperation getOperation(final FileObject file, final Class<? extends FileOperation> operationClass)
                 throws FileSystemException {
             assertNotNull(file, "file object");
-            assertNotNull(operationClass, "operationclass");
+            assertNotNull(operationClass, "operationClass");
             ops |= 32;
             return null;
         }
@@ -131,7 +131,7 @@ public class BasicOperationsTest {
      */
     @Test
     public void testLifecycleComp() throws FileSystemException {
-        final MyFileOprationProviderBase myop = new MyFileOperationProviderComp();
+        final MyFileOperationProviderBase myop = new MyFileOperationProviderComp();
         assertEquals(0, myop.ops);
         manager.addOperationProvider("file", myop);
         assertEquals(7, myop.ops);
@@ -142,13 +142,13 @@ public class BasicOperationsTest {
     }
 
     /**
-     * Ensure you can use FileOperationProvider which is not a VfsComponnt.
+     * Ensure you can use FileOperationProvider which is not a VfsComponent.
      *
      * @throws FileSystemException for runtime problems
      */
     @Test
     public void testLifecycleNoncomp() throws FileSystemException {
-        final MyFileOprationProviderBase myop = new MyFileOperationProviderNoncomp();
+        final MyFileOperationProviderBase myop = new MyFileOperationProviderNoncomp();
         manager.addOperationProvider("file", myop);
         final FileOperationProvider[] ops = manager.getOperationProviders("file");
         assertSame(1, ops.length, "exactly one provider registered");
@@ -163,7 +163,7 @@ public class BasicOperationsTest {
      */
     @Test
     public void testNotFoundAny() throws FileSystemException {
-        final MyFileOprationProviderBase myop = new MyFileOperationProviderNoncomp();
+        final MyFileOperationProviderBase myop = new MyFileOperationProviderNoncomp();
         manager.addOperationProvider("file", myop);
         final FileObject fo = manager.toFileObject(new File("."));
 
@@ -182,7 +182,7 @@ public class BasicOperationsTest {
      */
     @Test
     public void testNotFoundOperation() throws FileSystemException {
-        final MyFileOprationProviderBase myop = new MyFileOperationProviderNoncomp();
+        final MyFileOperationProviderBase myop = new MyFileOperationProviderNoncomp();
         manager.addOperationProvider("file", myop);
         final FileObject fo = manager.toFileObject(new File("."));
 

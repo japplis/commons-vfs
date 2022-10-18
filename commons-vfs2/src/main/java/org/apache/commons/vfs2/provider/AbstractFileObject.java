@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.vfs2.Capability;
@@ -119,7 +120,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         final int index = selected.size();
 
         // If the file is a folder, traverse it
-        if (file.getType().hasChildren() && selector.traverseDescendents(fileInfo)) {
+        if (file.getType().hasChildren() && selector.traverseDescendants(fileInfo)) {
             final int curDepth = fileInfo.getDepth();
             fileInfo.setDepth(curDepth + 1);
 
@@ -161,7 +162,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 // Attach and determine the file type
                 doAttach();
                 attached = true;
-                // now the type could already be injected by doAttach (e.g from parent to child)
+                // now the type could already be injected by doAttach (e.g. from parent to child)
 
                 /*
                  * VFS-210: determine the type when really asked fore if (type == null) { setFileType(doGetType()); } if
@@ -319,8 +320,13 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                 }
 
                 if (!exists()) {
-                    getOutputStream().close();
-                    endOutput();
+                    try (FileContent content = getContent()) {
+                        if (content != null) {
+                            try (OutputStream ignored = content.getOutputStream()) {
+                                // Avoids NPE on OutputStream#close()
+                            }
+                        }
+                    }
                 }
             } catch (final RuntimeException re) {
                 throw re;
@@ -448,7 +454,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
      */
     private boolean deleteSelf() throws FileSystemException {
         synchronized (fileSystem) {
-            // Its possible to delete a read-only file if you have write-execute access to the directory
+            // It's possible to delete a read-only file if you have write-execute access to the directory
 
             /*
              * VFS-210 if (getType() == FileType.IMAGINARY) { // File does not exist return false; }
@@ -741,8 +747,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     }
 
     /**
-     * Checks if this fileObject is the same file as {@code destFile} just with a different name. E.g. for case
-     * insensitive file systems like windows.
+     * Checks if this fileObject is the same file as {@code destFile} just with a different name. E.g. for
+     * case-insensitive file systems like Windows.
      *
      * @param destFile The file to compare to.
      * @return true if the FileObjects are the same.
@@ -968,7 +974,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         if (objects == null) {
             return null;
         }
-        return Stream.of(objects).map(FileObject::getName).toArray(FileName[]::new);
+        return Stream.of(objects).filter(Objects::nonNull).map(FileObject::getName).toArray(FileName[]::new);
     }
 
     @Override
@@ -1198,9 +1204,10 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
             throw new org.apache.commons.vfs2.FileNotFoundException(fileName, exc);
         } catch (final FileSystemException exc) {
             throw exc;
-        } catch (final UnsupportedOperationException exc) {
+        } catch (final UnsupportedOperationException uoe) {
+            // TODO Remove for 3.0
             // Backward compatibility for subclasses before 2.5.0
-            if (DO_GET_INPUT_STREAM_INT.equals(exc.getMessage())) {
+            if (DO_GET_INPUT_STREAM_INT.equals(uoe.getMessage())) {
                 try {
                     // Invoke old API.
                     return doGetInputStream();
@@ -1208,10 +1215,10 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
                     if (e instanceof FileSystemException) {
                         throw (FileSystemException) e;
                     }
-                    throw new FileSystemException("vfs.provider/read.error", fileName, exc);
+                    throw new FileSystemException("vfs.provider/read.error", fileName, e);
                 }
             }
-            throw exc;
+            throw uoe;
         } catch (final Exception exc) {
             throw new FileSystemException("vfs.provider/read.error", fileName, exc);
         }
@@ -1227,6 +1234,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         return fileName;
     }
 
+    // TODO: remove this method for the next major version as it is unused
     /**
      * Prepares this file for writing. Makes sure it is either a file, or its parent folder exists. Returns an output
      * stream to use to write the content of the file to.
@@ -1238,6 +1246,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
         return getOutputStream(false);
     }
 
+    // TODO: mark this method as `final` and package-private for the next major version because
+    // it shouldn't be used from anywhere other than `DefaultFileContent`
     /**
      * Prepares this file for writing. Makes sure it is either a file, or its parent folder exists. Returns an output
      * stream to use to write the content of the file to.
@@ -1467,7 +1477,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     }
 
     /**
-     * This method is meant to add an object where this object holds a strong reference then. E.g. a archive-file system
+     * This method is meant to add an object where this object holds a strong reference then. E.g. an archive-file system
      * creates a list of all children and they shouldn't get garbage collected until the container is garbage collected
      *
      * @param strongRef The Object to add.
@@ -1582,8 +1592,8 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     }
 
     /**
-     * Checks if this fileObject is the same file as {@code destFile} just with a different name. E.g. for case
-     * insensitive file systems like windows.
+     * Checks if this fileObject is the same file as {@code destFile} just with a different name. E.g. for
+     * case-insensitive file systems like windows.
      *
      * @param destFile The file to compare to.
      * @return true if the FileObjects are the same.
@@ -1722,7 +1732,7 @@ public abstract class AbstractFileObject<AFS extends AbstractFileSystem> impleme
     }
 
     /**
-     * Clled after this file-object closed all its streams.
+     * Called after this file-object closed all its streams.
      */
     protected void notifyAllStreamsClosed() {
         // noop

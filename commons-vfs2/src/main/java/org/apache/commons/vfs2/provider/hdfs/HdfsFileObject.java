@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.vfs2.FileNotFolderException;
@@ -236,7 +237,7 @@ public class HdfsFileObject extends AbstractFileObject<HdfsFileSystem> {
         }
 
         final FileStatus[] fileStatuses = this.hdfs.listStatus(this.path);
-        return Stream.of(fileStatuses).map(status -> status.getPath().getName()).toArray(String[]::new);
+        return Stream.of(fileStatuses).filter(Objects::nonNull).map(status -> status.getPath().getName()).toArray(String[]::new);
     }
 
     /**
@@ -257,7 +258,7 @@ public class HdfsFileObject extends AbstractFileObject<HdfsFileSystem> {
     }
 
     /**
-     * @see org.apache.commons.vfs2.provider.AbstractFileObject#doRemoveAttribute(java.lang.String)
+     * @see org.apache.commons.vfs2.provider.AbstractFileObject#doRemoveAttribute(String)
      */
     @Override
     protected void doRemoveAttribute(final String attrName) throws Exception {
@@ -274,7 +275,7 @@ public class HdfsFileObject extends AbstractFileObject<HdfsFileSystem> {
     }
 
     /**
-     * @see org.apache.commons.vfs2.provider.AbstractFileObject#doSetAttribute(java.lang.String, java.lang.Object)
+     * @see org.apache.commons.vfs2.provider.AbstractFileObject#doSetAttribute(String, Object)
      */
     @Override
     protected void doSetAttribute(final String attrName, final Object value) throws Exception {
@@ -306,7 +307,7 @@ public class HdfsFileObject extends AbstractFileObject<HdfsFileSystem> {
         } catch (final FileNotFoundException fne) {
             return false;
         } catch (final Exception e) {
-            throw new FileSystemException("Unable to check existance ", e);
+            throw new FileSystemException("Unable to check existence ", e);
         }
     }
 

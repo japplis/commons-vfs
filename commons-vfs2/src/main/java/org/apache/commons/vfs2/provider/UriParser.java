@@ -225,9 +225,7 @@ public final class UriParser {
         if (strings == null) {
             return null;
         }
-        for (int i = 0; i < strings.length; i++) {
-            strings[i] = encode(strings[i]);
-        }
+        Arrays.setAll(strings, i -> encode(strings[i]));
         return strings;
     }
 
@@ -379,7 +377,7 @@ public final class UriParser {
                 break;
             }
             // A scheme character (these are not allowed as the first
-            // character of the scheme, but can be used as subsequent
+            // character of the scheme), but can be used as subsequent
             // characters.
         }
 
@@ -501,7 +499,8 @@ public final class UriParser {
         while (startElem < maxlen) {
             // Find the end of the element
             int endElem = startElem;
-            for (; endElem < maxlen && path.charAt(endElem) != SEPARATOR_CHAR; endElem++) {
+            while (endElem < maxlen && path.charAt(endElem) != SEPARATOR_CHAR) {
+                endElem++;
             }
 
             final int elemLen = endElem - startElem;
@@ -526,7 +525,8 @@ public final class UriParser {
 
                 // Find start of previous element
                 int pos = startElem - 2;
-                for (; pos >= 0 && path.charAt(pos) != SEPARATOR_CHAR; pos--) {
+                while (pos >= 0 && path.charAt(pos) != SEPARATOR_CHAR) {
+                    pos--;
                 }
                 startElem = pos + 1;
 

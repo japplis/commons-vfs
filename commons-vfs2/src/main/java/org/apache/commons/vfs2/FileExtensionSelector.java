@@ -70,19 +70,14 @@ public class FileExtensionSelector implements FileSelector {
      */
     @Override
     public boolean includeFile(final FileSelectInfo fileInfo) throws Exception {
-        for (final String extension : this.extensions) {
-            if (fileInfo.getFile().getName().getExtension().equalsIgnoreCase(extension)) {
-                return true;
-            }
-        }
-        return false;
+        return extensions.stream().anyMatch(extension -> fileInfo.getFile().getName().getExtension().equalsIgnoreCase(extension));
     }
 
     /**
      * Determines whether a folder should be traversed.
      *
      * @param fileInfo The file selection information.
-     * @return true if descendants should be traversed, fase otherwise.
+     * @return true if descendants should be traversed, false otherwise.
      */
     @Override
     public boolean traverseDescendents(final FileSelectInfo fileInfo) throws Exception {

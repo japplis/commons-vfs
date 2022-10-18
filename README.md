@@ -44,10 +44,10 @@ Apache Commons VFS Project
 ===================
 
 [![GitHub Actions Status](https://github.com/apache/commons-vfs/workflows/Java%20CI/badge.svg)](https://github.com/apache/commons-vfs/actions)
-[![Coverage Status](https://coveralls.io/repos/apache/commons-vfs/badge.svg)](https://coveralls.io/r/apache/commons-vfs)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2/)
+[![Coverage Status](https://codecov.io/gh/apache/commons-vfs/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/commons-vfs)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2/badge.svg?gav=true)](https://maven-badges.herokuapp.com/maven-central/org.apache.commons/commons-vfs2/?gav=true)
 [![Javadocs](https://javadoc.io/badge/org.apache.commons/commons-vfs2/2.9.0.svg)](https://javadoc.io/doc/org.apache.commons/commons-vfs2/2.9.0)
-[![CodeQL](https://github.com/apache/commons-vfs/workflows/CodeQL/badge.svg)](https://github.com/apache/commons-vfs/actions?query=workflow%3ACodeQL)
+[![CodeQL](https://github.com/apache/commons-vfs/workflows/CodeQL/badge.svg)](https://github.com/apache/commons-vfs/actions/workflows/codeql-analysis.yml?query=workflow%3ACodeQL)
 
 Apache Commons VFS is a Virtual File System library.
 
@@ -80,7 +80,7 @@ There are some guidelines which will make applying PRs easier for us:
 + No tabs! Please use spaces for indentation.
 + Respect the code style.
 + Create minimal diffs - disable on save actions like reformat source code or organize imports. If you feel the source code should be reformatted create a separate PR for this change.
-+ Provide JUnit tests for your changes and make sure your changes don't break any existing tests by running ```mvn clean test```.
++ Provide JUnit tests for your changes and make sure your changes don't break any existing tests by running ```mvn```.
 
 If you plan to contribute on a regular basis, please consider filing a [contributor license agreement](https://www.apache.org/licenses/#clas).
 You can learn more about contributing via GitHub in our [contribution guidelines](CONTRIBUTING.md).

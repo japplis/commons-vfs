@@ -70,19 +70,19 @@ public class DelegatingFileSystemOptionsBuilder {
     }
     @SuppressWarnings("unchecked") // OK, it is a String
     private static final Class<String>[] STRING_PARAM = new Class[] {String.class};
-    private static final Map<String, Class<?>> PRIMATIVE_TO_OBJECT = new TreeMap<>();
+    private static final Map<String, Class<?>> PRIMITIVE_TO_OBJECT = new TreeMap<>();
 
     private static final Log log = LogFactory.getLog(DelegatingFileSystemOptionsBuilder.class);
     static {
-        PRIMATIVE_TO_OBJECT.put(Void.TYPE.getName(), Void.class);
-        PRIMATIVE_TO_OBJECT.put(Boolean.TYPE.getName(), Boolean.class);
-        PRIMATIVE_TO_OBJECT.put(Byte.TYPE.getName(), Byte.class);
-        PRIMATIVE_TO_OBJECT.put(Character.TYPE.getName(), Character.class);
-        PRIMATIVE_TO_OBJECT.put(Short.TYPE.getName(), Short.class);
-        PRIMATIVE_TO_OBJECT.put(Integer.TYPE.getName(), Integer.class);
-        PRIMATIVE_TO_OBJECT.put(Long.TYPE.getName(), Long.class);
-        PRIMATIVE_TO_OBJECT.put(Double.TYPE.getName(), Double.class);
-        PRIMATIVE_TO_OBJECT.put(Float.TYPE.getName(), Float.class);
+        PRIMITIVE_TO_OBJECT.put(Void.TYPE.getName(), Void.class);
+        PRIMITIVE_TO_OBJECT.put(Boolean.TYPE.getName(), Boolean.class);
+        PRIMITIVE_TO_OBJECT.put(Byte.TYPE.getName(), Byte.class);
+        PRIMITIVE_TO_OBJECT.put(Character.TYPE.getName(), Character.class);
+        PRIMITIVE_TO_OBJECT.put(Short.TYPE.getName(), Short.class);
+        PRIMITIVE_TO_OBJECT.put(Integer.TYPE.getName(), Integer.class);
+        PRIMITIVE_TO_OBJECT.put(Long.TYPE.getName(), Long.class);
+        PRIMITIVE_TO_OBJECT.put(Double.TYPE.getName(), Double.class);
+        PRIMITIVE_TO_OBJECT.put(Float.TYPE.getName(), Float.class);
     }
 
     private final FileSystemManager manager;
@@ -95,7 +95,7 @@ public class DelegatingFileSystemOptionsBuilder {
      * Pass in your fileSystemManager instance.
      * </p>
      *
-     * @param manager the manager to use to get the fileSystemConfigBuilder assocated to a scheme
+     * @param manager the manager to use to get the fileSystemConfigBuilder associated to a scheme
      */
     public DelegatingFileSystemOptionsBuilder(final FileSystemManager manager) {
         this.manager = manager;
@@ -126,7 +126,7 @@ public class DelegatingFileSystemOptionsBuilder {
         }
 
         if (type.isPrimitive()) {
-            final Class<?> objectType = PRIMATIVE_TO_OBJECT.get(type.getName());
+            final Class<?> objectType = PRIMITIVE_TO_OBJECT.get(type.getName());
             if (objectType == null) {
                 log.warn(Messages.getString("vfs.provider/config-unexpected-primitive.error", type.getName()));
                 return false;
@@ -283,7 +283,7 @@ public class DelegatingFileSystemOptionsBuilder {
      * @param name name
      * @param className className
      * @throws FileSystemException if an error occurs.
-     * @throws IllegalAccessException if a class canoot be accessed.
+     * @throws IllegalAccessException if a class cannot be accessed.
      * @throws InstantiationException if a class cannot be instantiated.
      */
     public void setConfigClass(final FileSystemOptions fso, final String scheme, final String name,
@@ -302,7 +302,7 @@ public class DelegatingFileSystemOptionsBuilder {
      * @param name name
      * @param classNames classNames
      * @throws FileSystemException if an error occurs.
-     * @throws IllegalAccessException if a class canoot be accessed.
+     * @throws IllegalAccessException if a class cannot be accessed.
      * @throws InstantiationException if a class cannot be instantiated.
      */
     public void setConfigClasses(final FileSystemOptions fso, final String scheme, final String name,
@@ -348,7 +348,7 @@ public class DelegatingFileSystemOptionsBuilder {
     }
 
     /**
-     * Sets the values using the informations of the given context.
+     * Sets the values using the information of the given context.
      */
     private void setValues(final Context ctx) throws FileSystemException {
         // find all setter methods suitable for the given "name"

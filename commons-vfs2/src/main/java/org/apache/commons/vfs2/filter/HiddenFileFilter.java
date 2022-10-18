@@ -53,7 +53,7 @@ import org.apache.commons.vfs2.FileSystemException;
  * </pre>
  *
  * @author This code was originally ported from Apache Commons IO File Filter
- * @see "http://commons.apache.org/proper/commons-io/"
+ * @see "https://commons.apache.org/proper/commons-io/"
  * @since 2.4
  */
 public class HiddenFileFilter implements FileFilter, Serializable {
@@ -73,7 +73,7 @@ public class HiddenFileFilter implements FileFilter, Serializable {
     }
 
     /**
-     * Checks to see if the file is hidden. Non existing files won't be accepted.
+     * Checks to see if the file is hidden. Non-existing files won't be accepted.
      *
      * @param fileSelectInfo the File to check
      *

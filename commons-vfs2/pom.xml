@@ -24,7 +24,7 @@
   <name>Apache Commons VFS</name>
   <artifactId>commons-vfs2</artifactId>
   <description>Apache Commons VFS is a Virtual File System library.</description>
-  <url>http://commons.apache.org/proper/commons-vfs/</url>
+  <url>https://commons.apache.org/proper/commons-vfs/</url>
 
   <parent>
     <groupId>org.apache.commons</groupId>
@@ -61,6 +61,7 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-hdfs-client</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -92,7 +93,7 @@
       <artifactId>jsch</artifactId>
       <optional>true</optional>
     </dependency>
-
+    <!-- Tests -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>

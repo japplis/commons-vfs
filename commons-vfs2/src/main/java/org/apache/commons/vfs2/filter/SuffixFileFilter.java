@@ -42,14 +42,14 @@ import org.apache.commons.vfs2.FileSelectInfo;
  * </pre>
  *
  * @author This code was originally ported from Apache Commons IO File Filter
- * @see "http://commons.apache.org/proper/commons-io/"
+ * @see "https://commons.apache.org/proper/commons-io/"
  * @since 2.4
  */
 public class SuffixFileFilter implements FileFilter, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Whether the comparison is case sensitive. */
+    /** Whether the comparison is case-sensitive. */
     private final IOCase caseSensitivity;
 
     /** The file name suffixes to search for. */
@@ -72,7 +72,7 @@ public class SuffixFileFilter implements FileFilter, Serializable {
     }
 
     /**
-     * Constructs a new Suffix file filter for an array of suffixs specifying
+     * Constructs a new Suffix file filter for an array of suffixes specifying
      * case-sensitivity.
      *
      * @param suffixes        the suffixes to allow, must not be null
@@ -115,12 +115,7 @@ public class SuffixFileFilter implements FileFilter, Serializable {
     @Override
     public boolean accept(final FileSelectInfo fileSelectInfo) {
         final String name = fileSelectInfo.getFile().getName().getBaseName();
-        for (final String suffix : this.suffixes) {
-            if (caseSensitivity.checkEndsWith(name, suffix)) {
-                return true;
-            }
-        }
-        return false;
+        return suffixes.stream().anyMatch(suffix -> caseSensitivity.checkEndsWith(name, suffix));
     }
 
     /**
@@ -134,12 +129,7 @@ public class SuffixFileFilter implements FileFilter, Serializable {
         buffer.append(super.toString());
         buffer.append("(");
         if (suffixes != null) {
-            for (int i = 0; i < suffixes.size(); i++) {
-                if (i > 0) {
-                    buffer.append(",");
-                }
-                buffer.append(suffixes.get(i));
-            }
+            buffer.append(String.join(",", suffixes));
         }
         buffer.append(")");
         return buffer.toString();

@@ -138,7 +138,7 @@ public class StandardFileSystemManager extends DefaultFileSystemManager {
     }
 
     /**
-     * Configures this manager from an parsed XML configuration file
+     * Configures this manager from a parsed XML configuration file
      *
      * @param config The configuration Element.
      * @throws FileSystemException if an error occurs.
@@ -185,26 +185,7 @@ public class StandardFileSystemManager extends DefaultFileSystemManager {
      * Configures this manager from an XML configuration file.
      *
      * @param configUri The URI of the configuration.
-     * @param configStream An InputStream containing the configuration.
      * @throws FileSystemException if an error occurs.
-     */
-    @SuppressWarnings("unused")
-    private void configure(final String configUri, final InputStream configStream) throws FileSystemException {
-        try {
-            // Load up the config
-            // TODO - validate
-            configure(createDocumentBuilder().parse(configStream).getDocumentElement());
-
-        } catch (final Exception e) {
-            throw new FileSystemException("vfs.impl/load-config.error", configUri, e);
-        }
-    }
-
-    /**
-     * Configures this manager from an XML configuration file.
-     *
-     * @param configUri The URI of the configuration.
-     * @throws FileSystemException if an error occus.
      */
     private void configure(final URL configUri) throws FileSystemException {
         InputStream configStream = null;
@@ -230,7 +211,7 @@ public class StandardFileSystemManager extends DefaultFileSystemManager {
     }
 
     /**
-     * Scans the classpath to find any droped plugin.
+     * Scans the classpath to find any dropped plugin.
      * <p>
      * The plugin-description has to be in {@code /META-INF/vfs-providers.xml}.
      * </p>
@@ -438,7 +419,7 @@ public class StandardFileSystemManager extends DefaultFileSystemManager {
     /**
      * Sets the configuration file for this manager.
      *
-     * @param configUri The URI forthis manager.
+     * @param configUri The URI for this manager.
      */
     public void setConfiguration(final URL configUri) {
         this.configUri = configUri;
@@ -446,7 +427,7 @@ public class StandardFileSystemManager extends DefaultFileSystemManager {
 
     private ClassLoader validateClassLoader(final ClassLoader clazzLoader, final Class<?> clazz) {
         return Objects.requireNonNull(clazzLoader, "The class loader for " + clazz
-                + " is null; some Java implementions use null for the bootstrap class loader.");
+                + " is null; some Java implementations use null for the bootstrap class loader.");
     }
 
 }

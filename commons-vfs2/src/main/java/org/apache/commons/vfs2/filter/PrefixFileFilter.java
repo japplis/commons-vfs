@@ -41,14 +41,14 @@ import org.apache.commons.vfs2.FileSelectInfo;
  * </pre>
  *
  * @author This code was originally ported from Apache Commons IO File Filter
- * @see "http://commons.apache.org/proper/commons-io/"
+ * @see "https://commons.apache.org/proper/commons-io/"
  * @since 2.4
  */
 public class PrefixFileFilter implements FileFilter, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Whether the comparison is case sensitive. */
+    /** Whether the comparison is case-sensitive. */
     private final IOCase caseSensitivity;
 
     /** The file name prefixes to search for. */
@@ -117,12 +117,7 @@ public class PrefixFileFilter implements FileFilter, Serializable {
     @Override
     public boolean accept(final FileSelectInfo fileSelectInfo) {
         final String name = fileSelectInfo.getFile().getName().getBaseName();
-        for (final String prefix : this.prefixes) {
-            if (caseSensitivity.checkStartsWith(name, prefix)) {
-                return true;
-            }
-        }
-        return false;
+        return prefixes.stream().anyMatch(prefix -> caseSensitivity.checkStartsWith(name, prefix));
     }
 
     /**
@@ -136,12 +131,7 @@ public class PrefixFileFilter implements FileFilter, Serializable {
         buffer.append(super.toString());
         buffer.append("(");
         if (prefixes != null) {
-            for (int i = 0; i < prefixes.size(); i++) {
-                if (i > 0) {
-                    buffer.append(",");
-                }
-                buffer.append(prefixes.get(i));
-            }
+            buffer.append(String.join(",", prefixes));
         }
         buffer.append(")");
         return buffer.toString();

@@ -148,13 +148,13 @@
             methods for provider interfaces (like <code>FileObject</code>). If you implement a VFS provider and use the
             corresponding <code>Abstract*</code> or <code>Default*</code> classes, there should be no need to modify
             the code or recompile the provider. The TarFileProvider is one known exception to compatibility with 2.0.
-            See the <a href="https://dist.apache.org/repos/dist/dev/commons/vfs/RELEASE-NOTES.txt">Release Notes</a> and the
-            <a href="commons-vfs2/clirr-report.html">Clirr Report</a> for details. VFS 2.1 adds a new read-only provider
-            for the Apache Hadoop (HDFS) File system.
+            See the <a href="https://dist.apache.org/repos/dist/release/commons/vfs/RELEASE-NOTES.txt">Release Notes</a>
+            and the <a href="commons-vfs2/clirr-report.html">Clirr Report</a> for details. VFS 2.1 adds a new read-only
+            provider for the Apache Hadoop (HDFS) File system.
           </p>
           <p>
             Apache Commons VFS 2.0 adds support for FTPS and WebDav have been added in addition to many bugs
-            being fixed. Version 2.0 is not binary compatible with version 1.0. To insure that both 1.0 and 2.0 can
+            being fixed. Version 2.0 is not binary compatible with version 1.0. To ensure that both 1.0 and 2.0 can
             coexist version 2.0 has had its Maven groupId changed to org.apache.commons, its Maven artifact changed
             to commons-vfs2, and the package names are now org.apache.commons.vfs2. The API changes are fairly minor
             and will mostly impact provider implementations.

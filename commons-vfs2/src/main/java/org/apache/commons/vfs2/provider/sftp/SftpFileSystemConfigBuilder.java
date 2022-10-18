@@ -91,7 +91,7 @@ public final class SftpFileSystemConfigBuilder extends FileSystemConfigBuilder {
      * </p>
      * <p>
      * When used, the proxy username ({@linkplain #setProxyUser}) and hostname ({@linkplain #setProxyHost}) <b>must</b>
-     * be set. Optionnaly, the command ({@linkplain #setProxyCommand}), password ({@linkplain #setProxyPassword}) and
+     * be set. Optionally, the command ({@linkplain #setProxyCommand}), password ({@linkplain #setProxyPassword}) and
      * connection options ({@linkplain #setProxyOptions}) can be set.
      * </p>
      */
@@ -232,8 +232,7 @@ public final class SftpFileSystemConfigBuilder extends FileSystemConfigBuilder {
     public IdentityInfo[] getIdentityInfo(final FileSystemOptions options) {
         final IdentityProvider[] infos = getIdentityProvider(options);
         if (infos != null) {
-            return Stream.of(infos).filter(info -> info instanceof IdentityInfo)
-                                   .map(info -> (IdentityInfo) info).toArray(IdentityInfo[]::new);
+            return Stream.of(infos).filter(info -> info instanceof IdentityInfo).map(info -> (IdentityInfo) info).toArray(IdentityInfo[]::new);
         }
         return null;
     }
@@ -558,7 +557,7 @@ public final class SftpFileSystemConfigBuilder extends FileSystemConfigBuilder {
     public void setIdentities(final FileSystemOptions options, final File... identityFiles) {
         IdentityProvider[] info = null;
         if (identityFiles != null) {
-            info = Stream.of(identityFiles).map(IdentityInfo::new).toArray(IdentityProvider[]::new);
+            info = Stream.of(identityFiles).filter(Objects::nonNull).filter(Objects::nonNull).map(IdentityInfo::new).toArray(IdentityProvider[]::new);
         }
         this.setParam(options, IDENTITIES, info);
     }
@@ -567,24 +566,24 @@ public final class SftpFileSystemConfigBuilder extends FileSystemConfigBuilder {
      * Sets the identity info (your private key files).
      *
      * @param options      The FileSystem options.
-     * @param identites An array of identity info.
+     * @param identities An array of identity info.
      * @since 2.1
      * @deprecated Use {@link #setIdentityProvider(FileSystemOptions,IdentityProvider...)}
      */
     @Deprecated
-    public void setIdentityInfo(final FileSystemOptions options, final IdentityInfo... identites) {
-        this.setParam(options, IDENTITIES, identites);
+    public void setIdentityInfo(final FileSystemOptions options, final IdentityInfo... identities) {
+        this.setParam(options, IDENTITIES, identities);
     }
 
     /**
      * Sets the identity info (your private key files).
      *
      * @param options      The FileSystem options.
-     * @param identites An array of identity info.
+     * @param identities An array of identity info.
      * @since 2.4
      */
-    public void setIdentityProvider(final FileSystemOptions options, final IdentityProvider... identites) {
-        this.setParam(options, IDENTITIES, identites);
+    public void setIdentityProvider(final FileSystemOptions options, final IdentityProvider... identities) {
+        this.setParam(options, IDENTITIES, identities);
     }
 
     /**
@@ -602,15 +601,15 @@ public final class SftpFileSystemConfigBuilder extends FileSystemConfigBuilder {
     }
 
     /**
-     * Configures Key exchange algorithm explicitly e.g diffie-hellman-group14-sha1,
+     * Configures Key exchange algorithm explicitly e.g. diffie-hellman-group14-sha1,
      * diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1, diffie-hellman-group1-sha1.
      *
      * @param options                The FileSystem options.
-     * @param keyExchangeAlgoritm The key exchange algorithm picked.
+     * @param keyExchangeAlgorithm The key exchange algorithm picked.
      * @since 2.4
      */
-    public void setKeyExchangeAlgorithm(final FileSystemOptions options, final String keyExchangeAlgoritm) {
-        setParam(options, KEY_EXCHANGE_ALGORITHM, keyExchangeAlgoritm);
+    public void setKeyExchangeAlgorithm(final FileSystemOptions options, final String keyExchangeAlgorithm) {
+        setParam(options, KEY_EXCHANGE_ALGORITHM, keyExchangeAlgorithm);
     }
 
     /**
