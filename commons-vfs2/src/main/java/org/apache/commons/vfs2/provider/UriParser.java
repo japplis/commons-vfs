@@ -123,13 +123,6 @@ public final class UriParser {
             return false;
         }
 
-        private void readToNextSeparator() {
-            boolean reading = true;
-            while (reading) {
-                reading = readNonSeparator();
-            }
-        }
-
         private void removePreviousElement(final int to) throws FileSystemException {
             if (lastSeparator == 0) {
                 // Previous element is missing
@@ -182,7 +175,7 @@ public final class UriParser {
                         }
                     }
                 } else {
-                    readToNextSeparator();
+                    readNonSeparators();
                     lastSeparator = cursor;
                     readSeparator();
                 }
