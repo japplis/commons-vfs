@@ -125,13 +125,6 @@ public final class UriParser {
             return false;
         }
 
-        private void readToNextSeparator() {
-            boolean reading = true;
-            while (reading) {
-                reading = readNonSeparator();
-            }
-        }
-
         private boolean isCursorAtUrlEncodedSlash() {
             return path.charAt(cursor) == '%' && path.charAt(cursor + 1) == '2' &&
                     (path.charAt(cursor + 2) == 'F' || path.charAt(cursor + 2) == 'f');
@@ -189,7 +182,7 @@ public final class UriParser {
                         }
                     }
                 } else {
-                    readToNextSeparator();
+                    readNonSeparators();
                     lastSeparator = cursor;
                     readSeparator();
                 }
