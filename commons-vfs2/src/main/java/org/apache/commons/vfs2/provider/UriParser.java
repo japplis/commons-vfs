@@ -382,6 +382,9 @@ public final class UriParser {
         }
         final StringBuilder buffer = new StringBuilder(decodedStr);
         encode(buffer, 0, buffer.length(), reserved);
+        if (buffer.length() == decodedStr.length()) { // No encoding happened
+            return decodedStr;
+        }
         return buffer.toString();
     }
 
@@ -596,7 +599,7 @@ public final class UriParser {
             buffer.append(uri);
         }
         for (final String scheme : schemes) {
-            if (uri.startsWith(scheme + ":")) {
+            if (uri.startsWith(scheme) && uri.length() > scheme.length() && uri.charAt(scheme.length()) == ':') {
                 if (buffer != null) {
                     buffer.delete(0, uri.indexOf(':') + 1);
                 }
