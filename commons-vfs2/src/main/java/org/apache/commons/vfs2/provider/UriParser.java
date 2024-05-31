@@ -71,8 +71,8 @@ public final class UriParser {
             if (cursor + 2 >= end) {
                 return false;
             }
-            final String sub = path.substring(cursor, cursor + 3);
-            if (sub.equals("%2e") || sub.equals("%2E")) {
+            if (path.charAt(cursor) == '%' && path.charAt(cursor + 1) == '2' &&
+                    (path.charAt(cursor + 2) == 'E' || path.charAt(cursor + 2) == 'e')) {
                 cursor += 3;
                 return true;
             }
@@ -90,8 +90,7 @@ public final class UriParser {
                 cursor++;
                 return true;
             }
-            final String sub = path.substring(cursor, cursor + 3);
-            if (sub.equals(URLENCODED_SLASH_UC) || sub.equals(URLENCODED_SLASH_LC)) {
+            if (isCursorAtUrlEncodedSlash()) {
                 return false;
             }
             cursor++;
@@ -116,8 +115,7 @@ public final class UriParser {
             if (cursor + 2 >= end) {
                 return false;
             }
-            final String sub = path.substring(cursor, cursor + 3);
-            if (sub.equals(URLENCODED_SLASH_LC) || sub.equals(URLENCODED_SLASH_UC)) {
+            if (isCursorAtUrlEncodedSlash()) {
                 path.setCharAt(cursor, SEPARATOR_CHAR);
                 path.delete(cursor + 1, cursor + 3);
                 end -= 2;
@@ -132,6 +130,11 @@ public final class UriParser {
             while (reading) {
                 reading = readNonSeparator();
             }
+        }
+
+        private boolean isCursorAtUrlEncodedSlash() {
+            return path.charAt(cursor) == '%' && path.charAt(cursor + 1) == '2' &&
+                    (path.charAt(cursor + 2) == 'F' || path.charAt(cursor + 2) == 'f');
         }
 
         private void removePreviousElement(final int to) throws FileSystemException {
@@ -679,11 +682,10 @@ public final class UriParser {
             if (maxlen > 1 && path.charAt(maxlen - 1) == SEPARATOR_CHAR) {
                 path.delete(maxlen - 1, maxlen);
             }
-            if (maxlen > 3) {
-                final String sub = path.substring(maxlen - 3);
-                if (sub.equals(URLENCODED_SLASH_UC) || sub.equals(URLENCODED_SLASH_LC)) {
-                    path.delete(maxlen - 3, maxlen);
-                }
+            if (maxlen > 3 &&
+                    path.charAt(maxlen - 3) == '%' && path.charAt(maxlen - 2) == '2' &&
+                    (path.charAt(maxlen - 1) == 'F' || path.charAt(maxlen - 1) == 'f')) {
+                path.delete(maxlen - 3, maxlen);
             }
         }
 
