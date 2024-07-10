@@ -257,6 +257,16 @@ public class FTPClientWrapper implements FtpClient {
     }
 
     @Override
+    public boolean setModificationTime(String relPath, String time) throws IOException {
+        try {
+            return getFtpClient().setModificationTime(relPath, time);
+        } catch (final IOException e) {
+            disconnect();
+            return getFtpClient().setModificationTime(relPath, time);
+        }
+    }
+
+    @Override
     public boolean removeDirectory(final String relPath) throws IOException {
         try {
             return getFtpClient().removeDirectory(relPath);

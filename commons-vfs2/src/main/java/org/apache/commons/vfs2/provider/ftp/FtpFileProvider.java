@@ -49,7 +49,8 @@ public class FtpFileProvider extends AbstractOriginatingFileProvider {
     static final Collection<Capability> CAPABILITIES = Collections
         .unmodifiableCollection(Arrays.asList(Capability.CREATE, Capability.DELETE, Capability.RENAME,
             Capability.GET_TYPE, Capability.LIST_CHILDREN, Capability.READ_CONTENT, Capability.GET_LAST_MODIFIED,
-            Capability.URI, Capability.WRITE_CONTENT, Capability.APPEND_CONTENT, Capability.RANDOM_ACCESS_READ));
+            Capability.SET_LAST_MODIFIED_FILE, Capability.SET_LAST_MODIFIED_FOLDER, Capability.URI,
+            Capability.WRITE_CONTENT, Capability.APPEND_CONTENT, Capability.RANDOM_ACCESS_READ));
 
     /**
      * Constructs a new provider.
