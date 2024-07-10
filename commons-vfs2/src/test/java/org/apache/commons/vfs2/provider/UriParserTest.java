@@ -54,6 +54,13 @@ public class UriParserTest {
     }
 
     @Test
+    public void testBracketUriDecoding() throws FileSystemException {
+        assertEquals("http://[fe80::14b5:1204:5410:64ca%en1]:8080", UriParser.decode("http://[fe80::14b5:1204:5410:64ca%en1]:8080"));
+        assertEquals("http://username@[fe80::14b5:1204:5410:64ca%en1]:8080", UriParser.decode("http://username@[fe80::14b5:1204:5410:64ca%en1]:8080"));
+        assertEquals("file:/user/file [with brackets].txt", UriParser.decode("file:/user/file%20[with%20brackets].txt"));
+    }
+
+    @Test
     public void testNormalScheme() {
         assertEquals("ftp", UriParser.extractScheme(schemes, "ftp://user:pass@host/some/path/some:file"));
     }
@@ -86,6 +93,7 @@ public class UriParserTest {
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/")));
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/.")));
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/./")));
+            assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder%2f.%2f")));
 
             assertEquals(FileType.FILE, UriParser.normalisePath(new StringBuilder("File.txt")));
             assertEquals(FileType.FILE, UriParser.normalisePath(new StringBuilder("/File.txt")));
@@ -98,5 +106,21 @@ public class UriParserTest {
         } catch (final FileSystemException e) {
             fail(e);
         }
+    }
+
+    @Test
+    public void testPathOfNormalizedPath() throws FileSystemException {
+        checkNormalizedPath("./Sub Folder/", "/Sub Folder");
+        checkNormalizedPath("./Sub Folder/../", "/");
+        checkNormalizedPath("./Sub Folder%2f..%2f", "/");
+        checkNormalizedPath("File.txt", "File.txt");
+        checkNormalizedPath("./Sub Folder/./File.txt", "/Sub Folder/File.txt");
+        checkNormalizedPath("./Sub Folder%2F.%2FFile.txt", "/Sub Folder/File.txt");
+    }
+
+    private void checkNormalizedPath(String path, String normalized) throws FileSystemException {
+        final StringBuilder pathBuilder = new StringBuilder(path);
+        UriParser.normalisePath(pathBuilder);
+        assertEquals(normalized, pathBuilder.toString());
     }
 }

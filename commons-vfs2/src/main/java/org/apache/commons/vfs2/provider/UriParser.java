@@ -18,6 +18,7 @@ package org.apache.commons.vfs2.provider;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
@@ -70,8 +71,8 @@ public final class UriParser {
             if (cursor + 2 >= end) {
                 return false;
             }
-            final String sub = path.substring(cursor, cursor + 3);
-            if (sub.equals("%2e") || sub.equals("%2E")) {
+            if (path.charAt(cursor) == '%' && path.charAt(cursor + 1) == '2' &&
+                    (path.charAt(cursor + 2) == 'E' || path.charAt(cursor + 2) == 'e')) {
                 cursor += 3;
                 return true;
             }
@@ -89,8 +90,7 @@ public final class UriParser {
                 cursor++;
                 return true;
             }
-            final String sub = path.substring(cursor + 1, cursor + 3);
-            if (sub.equals(URLENCODED_SLASH_UC) || sub.equals(URLENCODED_SLASH_LC)) {
+            if (isCursorAtUrlEncodedSlash()) {
                 return false;
             }
             cursor++;
@@ -115,19 +115,19 @@ public final class UriParser {
             if (cursor + 2 >= end) {
                 return false;
             }
-            final String sub = path.substring(cursor, cursor + 3);
-            if (sub.equals(URLENCODED_SLASH_LC) || sub.equals(URLENCODED_SLASH_UC)) {
-                cursor += 3;
+            if (isCursorAtUrlEncodedSlash()) {
+                path.setCharAt(cursor, SEPARATOR_CHAR);
+                path.delete(cursor + 1, cursor + 3);
+                end -= 2;
+                cursor++;
                 return true;
             }
             return false;
         }
 
-        private void readToNextSeparator() {
-            boolean reading = true;
-            while (reading) {
-                reading = readNonSeparator();
-            }
+        private boolean isCursorAtUrlEncodedSlash() {
+            return path.charAt(cursor) == '%' && path.charAt(cursor + 1) == '2' &&
+                    (path.charAt(cursor + 2) == 'F' || path.charAt(cursor + 2) == 'f');
         }
 
         private void removePreviousElement(final int to) throws FileSystemException {
@@ -182,7 +182,7 @@ public final class UriParser {
                         }
                     }
                 } else {
-                    readToNextSeparator();
+                    readNonSeparators();
                     lastSeparator = cursor;
                     readSeparator();
                 }
@@ -208,9 +208,6 @@ public final class UriParser {
     private static final int BITS_IN_HALF_BYTE = 4;
 
     private static final char LOW_MASK = 0x0F;
-    private static final String URLENCODED_SLASH_LC = "%2f";
-
-    private static final String URLENCODED_SLASH_UC = "%2F";
 
     /**
      * Encodes and appends a string to a StringBuilder.
@@ -328,7 +325,7 @@ public final class UriParser {
         boolean ipv6Host = false;
         for (; count > 0; count--, index++) {
             final char ch = buffer.charAt(index);
-            if (ch == '[') {
+            if (ch == '[' && buffer.substring(0, index).matches("\\w+://([^/]+@)?")) {
                 ipv6Host = true;
             }
             if (ch == ']') {
@@ -382,6 +379,9 @@ public final class UriParser {
         }
         final StringBuilder buffer = new StringBuilder(decodedStr);
         encode(buffer, 0, buffer.length(), reserved);
+        if (buffer.length() == decodedStr.length()) { // No encoding happened
+            return decodedStr;
+        }
         return buffer.toString();
     }
 
@@ -596,7 +596,7 @@ public final class UriParser {
             buffer.append(uri);
         }
         for (final String scheme : schemes) {
-            if (uri.startsWith(scheme + ":")) {
+            if (uri.startsWith(scheme) && uri.length() > scheme.length() && uri.charAt(scheme.length()) == ':') {
                 if (buffer != null) {
                     buffer.delete(0, uri.indexOf(':') + 1);
                 }
@@ -649,8 +649,14 @@ public final class UriParser {
 
         // '/' or '.' or '..' or anyPath/..' or 'anyPath/.'  should always be a path
         if (path.charAt(path.length() - 1) != '/'
-                && path.lastIndexOf("/..") != path.length() - 3
-                && path.lastIndexOf("/.") != path.length() - 2
+                && !StringUtils.endsWith(path, "/..")
+                && !StringUtils.endsWith(path, "/.")
+                && !StringUtils.endsWith(path, "%2f")
+                && !StringUtils.endsWith(path, "%2F")
+                && !StringUtils.endsWith(path, "%2f..")
+                && !StringUtils.endsWith(path, "%2F..")
+                && !StringUtils.endsWith(path, "%2f.")
+                && !StringUtils.endsWith(path, "%2F.")
                 && path.lastIndexOf("..") != 0
                 && path.lastIndexOf(".") != 0
         ) {
@@ -669,11 +675,10 @@ public final class UriParser {
             if (maxlen > 1 && path.charAt(maxlen - 1) == SEPARATOR_CHAR) {
                 path.delete(maxlen - 1, maxlen);
             }
-            if (maxlen > 3) {
-                final String sub = path.substring(maxlen - 3);
-                if (sub.equals(URLENCODED_SLASH_UC) || sub.equals(URLENCODED_SLASH_LC)) {
-                    path.delete(maxlen - 3, maxlen);
-                }
+            if (maxlen > 3 &&
+                    path.charAt(maxlen - 3) == '%' && path.charAt(maxlen - 2) == '2' &&
+                    (path.charAt(maxlen - 1) == 'F' || path.charAt(maxlen - 1) == 'f')) {
+                path.delete(maxlen - 3, maxlen);
             }
         }
 
