@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>67</version>
+    <version>71</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -135,7 +135,7 @@
             <dependency>
               <groupId>org.apache.bcel</groupId>
               <artifactId>bcel</artifactId>
-              <version>6.9.0</version>
+              <version>6.10.0</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -200,6 +200,16 @@
           </parameter>
         </configuration>
       </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pmd-plugin</artifactId>
+          <configuration>
+            <targetJdk>${maven.compiler.target}</targetJdk>
+            <rulesets>
+              <ruleset>${commons.parent.dir}/src/conf/pmd-ruleset.xml</ruleset>
+            </rulesets>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -383,7 +393,7 @@
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
-        <version>1.17.0</version>
+        <version>1.17.1</version>
       </dependency>
       <dependency>
         <groupId>commons-net</groupId>
@@ -443,7 +453,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.14.0</version>
+        <version>3.15.0</version>
       </dependency>
       <!-- HDFS -->
       <dependency>
@@ -591,6 +601,12 @@
       <dependency>
         <groupId>org.openjdk.jmh</groupId>
         <artifactId>jmh-core</artifactId>
+        <version>1.37</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-generator-annprocess</artifactId>
         <version>1.37</version>
         <scope>test</scope>
       </dependency>

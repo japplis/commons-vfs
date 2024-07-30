@@ -197,11 +197,11 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     @Override
     protected void doDelete() throws Exception {
         synchronized (getFileSystem()) {
-            if (this.ftpFile != null) {
+            if (ftpFile != null) {
                 final boolean ok;
                 final FtpClient ftpClient = getAbstractFileSystem().getClient();
                 try {
-                    if (this.ftpFile.isDirectory()) {
+                    if (ftpFile.isDirectory()) {
                         ok = ftpClient.removeDirectory(relPath);
                     } else {
                         ok = ftpClient.deleteFile(relPath);
@@ -213,9 +213,9 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
                 if (!ok) {
                     throw new FileSystemException("vfs.provider.ftp/delete-file.error", getName());
                 }
-                this.ftpFile = null;
+                ftpFile = null;
             }
-            this.childMap = EMPTY_FTP_FILE_MAP;
+            childMap = EMPTY_FTP_FILE_MAP;
         }
     }
 
@@ -225,9 +225,9 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     @Override
     protected void doDetach() {
         synchronized (getFileSystem()) {
-            this.ftpFile = null;
-            this.childMap = null;
-            this.mdtmSet = false;
+            ftpFile = null;
+            childMap = null;
+            mdtmSet = false;
         }
     }
 
@@ -277,18 +277,18 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     @Override
     protected long doGetContentSize() throws Exception {
         synchronized (getFileSystem()) {
-            if (this.ftpFile == null) {
+            if (ftpFile == null) {
                 return 0;
             }
-            if (this.ftpFile.isSymbolicLink()) {
+            if (ftpFile.isSymbolicLink()) {
                 final FileObject linkDest = getLinkDestination();
                 // VFS-437: Try to avoid a recursion loop.
-                if (this.isCircular(linkDest)) {
-                    return this.ftpFile.getSize();
+                if (isCircular(linkDest)) {
+                    return ftpFile.getSize();
                 }
                 return linkDest.getContent().getSize();
             }
-            return this.ftpFile.getSize();
+            return ftpFile.getSize();
         }
     }
 
@@ -319,13 +319,13 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     @Override
     protected long doGetLastModifiedTime() throws Exception {
         synchronized (getFileSystem()) {
-            if (this.ftpFile == null) {
+            if (ftpFile == null) {
                 return DEFAULT_TIMESTAMP;
             }
-            if (this.ftpFile.isSymbolicLink()) {
+            if (ftpFile.isSymbolicLink()) {
                 final FileObject linkDest = getLinkDestination();
                 // VFS-437: Try to avoid a recursion loop.
-                if (this.isCircular(linkDest)) {
+                if (isCircular(linkDest)) {
                     return getTimestampMillis();
                 }
                 return linkDest.getContent().getLastModifiedTime();
@@ -361,7 +361,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
                 out = client.storeFileStream(relPath);
             }
 
-            FileSystemException.requireNonNull(out, "vfs.provider.ftp/output-error.debug", this.getName(),
+            FileSystemException.requireNonNull(out, "vfs.provider.ftp/output-error.debug", getName(),
                     client.getReplyString());
 
             return new FtpOutputStream(client, out);
@@ -383,23 +383,23 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     protected FileType doGetType() throws Exception {
         // VFS-210
         synchronized (getFileSystem()) {
-            if (this.ftpFile == null) {
+            if (ftpFile == null) {
                 setFTPFile(false);
             }
 
-            if (this.ftpFile == UNKNOWN) {
+            if (ftpFile == UNKNOWN) {
                 return FileType.IMAGINARY;
             }
-            if (this.ftpFile.isDirectory()) {
+            if (ftpFile.isDirectory()) {
                 return FileType.FOLDER;
             }
-            if (this.ftpFile.isFile()) {
+            if (ftpFile.isFile()) {
                 return FileType.FILE;
             }
-            if (this.ftpFile.isSymbolicLink()) {
+            if (ftpFile.isSymbolicLink()) {
                 final FileObject linkDest = getLinkDestination();
                 // VFS-437: We need to check if the symbolic link links back to the symbolic link itself
-                if (this.isCircular(linkDest)) {
+                if (isCircular(linkDest)) {
                     // If the symbolic link links back to itself, treat it as an imaginary file to prevent following
                     // this link. If the user tries to access the link as a file or directory, the user will end up with
                     // a FileSystemException warning that the file cannot be accessed. This is to prevent the infinite
@@ -435,10 +435,10 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
     @Override
     protected FileObject[] doListChildrenResolved() throws Exception {
         synchronized (getFileSystem()) {
-            if (this.ftpFile != null && this.ftpFile.isSymbolicLink()) {
+            if (ftpFile != null && ftpFile.isSymbolicLink()) {
                 final FileObject linkDest = getLinkDestination();
                 // VFS-437: Try to avoid a recursion loop.
-                if (this.isCircular(linkDest)) {
+                if (isCircular(linkDest)) {
                     return null;
                 }
                 return linkDest.getChildren();
@@ -465,8 +465,8 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
             if (!ok) {
                 throw new FileSystemException("vfs.provider.ftp/rename-file.error", getName().toString(), newFile);
             }
-            this.ftpFile = null;
-            this.childMap = EMPTY_FTP_FILE_MAP;
+            ftpFile = null;
+            childMap = EMPTY_FTP_FILE_MAP;
         }
     }
 
@@ -519,10 +519,10 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
              * has C children, P parents, there will be (C * P) listings made with (C * (P + 1)) refreshes, when there
              * should really only be 1 listing and C refreshes.
              */
-            this.inRefresh.set(true);
+            inRefresh.set(true);
             return super.getChildren();
         } finally {
-            this.inRefresh.set(false);
+            inRefresh.set(false);
         }
     }
 
@@ -530,7 +530,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
         final FtpClient client = getAbstractFileSystem().getClient();
         try {
             final InputStream instr = client.retrieveFileStream(relPath, filePointer);
-            FileSystemException.requireNonNull(instr, "vfs.provider.ftp/input-error.debug", this.getName(),
+            FileSystemException.requireNonNull(instr, "vfs.provider.ftp/input-error.debug", getName(),
                     client.getReplyString());
             return new FtpInputStream(client, instr);
         } catch (final IOException e) {
@@ -543,7 +543,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
         if (linkDestination == null) {
             final String path;
             synchronized (getFileSystem()) {
-                path = this.ftpFile == null ? null : this.ftpFile.getLink();
+                path = ftpFile == null ? null : ftpFile.getLink();
             }
             final FileName parent = getName().getParent();
             final FileName relativeTo = parent == null ? getName() : parent;
@@ -583,7 +583,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
      * This is an over simplistic implementation for VFS-437.
      */
     private boolean isCircular(final FileObject linkDest) throws FileSystemException {
-        return linkDest.getName().getPathDecoded().equals(this.getName().getPathDecoded());
+        return linkDest.getName().getPathDecoded().equals(getName().getPathDecoded());
     }
 
     /**
@@ -596,7 +596,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
         if (getType().equals(FileType.IMAGINARY)) {
             // file is deleted, avoid server lookup
             synchronized (getFileSystem()) {
-                this.ftpFile = UNKNOWN;
+                ftpFile = UNKNOWN;
             }
             return;
         }
@@ -627,7 +627,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
             try {
                 super.refresh();
                 synchronized (getFileSystem()) {
-                    this.ftpFile = null;
+                    ftpFile = null;
                 }
                 /*
                  * VFS-210 try { // this will tell the parent to recreate its children collection getInfo(true); } catch
@@ -653,7 +653,7 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
                 newFileInfo = new FTPFile();
                 newFileInfo.setType(FTPFile.DIRECTORY_TYPE);
             }
-            this.ftpFile = newFileInfo == null ? UNKNOWN : newFileInfo;
+            ftpFile = newFileInfo == null ? UNKNOWN : newFileInfo;
         }
     }
 }
