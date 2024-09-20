@@ -452,7 +452,7 @@ public final class UriParser {
         int maxlen = name.length();
         for (int i = 0; i < maxlen; i++) {
             final char ch = name.charAt(i);
-            if (ch == TRANS_SEPARATOR) {
+            if (ch == TRANS_SEPARATOR && SystemUtils.IS_OS_WINDOWS) {
                 name.setCharAt(i, SEPARATOR_CHAR);
                 changed = true;
             }
