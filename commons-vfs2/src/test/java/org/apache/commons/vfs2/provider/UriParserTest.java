@@ -16,6 +16,8 @@
  */
 package org.apache.commons.vfs2.provider;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -98,6 +100,7 @@ public class UriParserTest {
         checkNormalizedPath("File.txt", "File.txt");
         checkNormalizedPath("./Sub Folder/./File.txt", "Sub Folder/File.txt");
         checkNormalizedPath("./Sub Folder%2F.%2FFile.txt", "Sub Folder/File.txt");
+        checkNormalizedPath("File\\WithBackslash.txt", SystemUtils.IS_OS_WINDOWS ? "File/WithBackslash.txt" : "File\\WithBackslash.txt");
     }
 
     @Test
