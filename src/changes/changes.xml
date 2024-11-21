@@ -263,6 +263,9 @@ The <action> type attribute can be add,update,fix,remove.
         Add FileSystemConfigBuilder.getParamOrDefault(FileSystemOptions, String, T).
       </action>
       <!-- UPDATE -->
+      <action dev="ggregory" due-to="Dependabot, Gary Gregory" type="update">
+        Bump org.apache.commons:commons-parent from 52 to 78 #497, #588, #592, #600, #608, #615, #623.
+      </action>
       <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
         Bump actions/cache and others.
       </action>
@@ -294,10 +297,10 @@ The <action> type attribute can be add,update,fix,remove.
         Bump org.apache.jackrabbit:jackrabbit-standalone-components from 2.21.7 to 2.20.16, 2.21.x is beta only.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
-        Bump org.apache.httpcomponents.client5:httpclient5 from 5.1 to 5.4-beta1 #561.
+        Bump org.apache.httpcomponents.client5:httpclient5 from 5.1 to 5.4.1 #561, #602, #2778.
       </action>
-      <action type="update" dev="ggregory" due-to="Dependabot">
-        Bump org.apache.httpcomponents.core5:httpcore5 from 5.1.5 to 5.3 #369, #399, #429, #447, #559, #597.
+      <action type="update" dev="ggregory" due-to="Dependabot, Gary Gregory">
+        Bump org.apache.httpcomponents.core5:httpcore5 from 5.1.5 to 5.3.1 #369, #399, #429, #447, #559, #597, #624.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory, Dependabot">
         Bump org.apache.mina:mina-core from 2.1.4 to 2.1.8.
@@ -327,19 +330,16 @@ The <action> type attribute can be add,update,fix,remove.
         Bump org.apache.httpcomponents:httpcore-nio from 4.4.14 to 4.4.16, #341.
       </action>
       <action dev="ggregory" due-to="Gary Gregory, Dependabot" type="update">
-        Bump Apache Log4j 2.14.1 to 2.24.0 [Tests] #226, #230, #305, #378, #448, #461, #487, #499, #598.
+        Bump Apache Log4j 2.14.1 to 2.24.1 [Tests] #226, #230, #305, #378, #448, #461, #487, #499, #598, #610.
       </action>
       <action dev="ggregory" due-to="XenoAmess" type="update">
         Bump ftpserver-core from 1.1.1 to 1.1.2 #235.
       </action>
       <action dev="ggregory" due-to="Dependabot" type="update">
-        Bump hadoop.version from 3.3.1 to 3.3.6 #246, #262, #290, #386, #402.
+        Bump hadoop.version from 3.3.1 to 3.4.1 #246, #262, #290, #386, #402, #620.
       </action>
       <action dev="ggregory" due-to="Dependabot" type="update">
         Bump slf4j.version from 1.7.26 to 2.0.16 #484, #486, #524, #575, #580, #585.
-      </action>
-      <action dev="ggregory" due-to="Dependabot, Gary Gregory" type="update">
-        Bump org.apache.commons:commons-parent from 52 to 75 #497, #588, #592, #600.
       </action>
       <action dev="ggregory" due-to="Gary Gregory" type="update">
         Bump org.ow2.asm:asm from 9.2 to 9.4.
@@ -366,7 +366,7 @@ The <action> type attribute can be add,update,fix,remove.
         Bump httpclient from 4.5.13 to 4.5.14 #344.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
-        Bump commons-io:commons-io from 2.11.0 to 2.17.0 #515, #601.
+        Bump commons-io:commons-io from 2.11.0 to 2.18.0 #515, #601, #633.
       </action>
       <action type="update" dev="ggregory" due-to="Gary Gregory">
         Bump commons-codec:commons-codec from 1.15 to 1.17.1 #480, #530, #567.
