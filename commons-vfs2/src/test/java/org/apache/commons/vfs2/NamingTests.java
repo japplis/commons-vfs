@@ -381,12 +381,14 @@ public class NamingTests extends AbstractProviderTestCase {
         assertEquals(path + "/dir/child", file.getName().getPathDecoded());
 
         // §5 Encode \
-        file = getManager().resolveFile("dir%5cchild");
-        // 18-6-2005 imario@apache.org: all file separators normalized to "/"
-        // decided to do this to get the same behavior as in §4 on Windows
-        // platforms
-        // assertEquals(path + "/dir\\child", file.getName().getPathDecoded());
-        assertEquals(path + "/dir/child", file.getName().getPathDecoded());
+        if (SystemUtils.IS_OS_WINDOWS) {
+            file = getManager().resolveFile("dir%5cchild");
+            // 18-6-2005 imario@apache.org: all file separators normalized to "/"
+            // decided to do this to get the same behavior as in §4 on Windows
+            // platforms
+            // assertEquals(path + "/dir\\child", file.getName().getPathDecoded());
+            assertEquals(path + "/dir/child", file.getName().getPathDecoded());
+        }
 
         // §6 Use "%" literal
         assertThrows(FileSystemException.class, () -> getManager().resolveFile("%"));
