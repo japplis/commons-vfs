@@ -284,7 +284,9 @@ public class NamingTests extends AbstractProviderTestCase {
 
         // Test .///.///. relative path
         assertSameName(path, baseName, ".///.///.");
-        assertSameName(path, baseName, "./\\/.\\//.");
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertSameName(path, baseName, "./\\/.\\//.");
+        }
 
         // Test <elem>/.. relative path
         assertSameName(path, baseName, "a/..");
@@ -297,7 +299,9 @@ public class NamingTests extends AbstractProviderTestCase {
 
         // Test ..//./ relative path
         assertSameName(parentPath, baseName, "..//./");
-        assertSameName(parentPath, baseName, "..//.\\");
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertSameName(parentPath, baseName, "..//.\\");
+        }
 
         // Test <elem>/../.. relative path
         assertSameName(parentPath, baseName, "a/../..");
