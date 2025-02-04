@@ -156,6 +156,20 @@ public interface FtpClient {
     }
 
     /**
+     * Sends the MFMT command which sets the last modified time of a file.
+     * <p>
+     * NOTE: not all remote FTP servers support {@code MFMT}.
+     * </p>
+     *
+     * @param relPath The relative path of the file object to execute {@code MFMT} command against
+     * @param time The GMT time of the file is the form of yyyyMMDDhhmmss. Not all servers honor the GMT time zone.
+     * @return true if successfully completed, false if not.
+     * @throws IOException If an I/O error occurs.
+     * @since 2.10.0
+     */
+    boolean setModificationTime(String relPath, String time) throws IOException;
+
+    /**
      * Removes a directory on the FTP server (if empty).
      *
      * @param relPath The pathname of the directory to remove.

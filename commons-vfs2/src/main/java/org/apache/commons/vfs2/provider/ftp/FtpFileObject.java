@@ -20,9 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -336,6 +339,19 @@ public class FtpFileObject extends AbstractFileObject<FtpFileSystem> {
                 return linkDest.getContent().getLastModifiedTime();
             }
             return getTimestampMillis();
+        }
+    }
+
+    @Override
+    protected boolean doSetLastModifiedTime(final long modtime) throws Exception {
+        final FtpClient client = getAbstractFileSystem().getClient();
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMMddHHmmss", Locale.US).withZone(ZoneOffset.UTC);
+            String time = formatter.format(Instant.ofEpochMilli(modtime));
+            return client.setModificationTime(relPath, time);
+        } catch (final Exception e) {
+            getAbstractFileSystem().putClient(client);
+            throw e;
         }
     }
 
