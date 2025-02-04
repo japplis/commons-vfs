@@ -18,7 +18,10 @@ package org.apache.commons.vfs2.provider;
 
 import java.util.Arrays;
 
+<<<<<<< HEAD
 import org.apache.commons.lang3.StringUtils;
+=======
+>>>>>>> master
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
@@ -38,7 +41,7 @@ public final class UriParser {
     public static final char TRANS_SEPARATOR = '\\';
 
     /**
-     * The normalised separator to use.
+     * The normalized separator to use.
      */
     private static final char SEPARATOR_CHAR = FileName.SEPARATOR_CHAR;
 
@@ -490,7 +493,6 @@ public final class UriParser {
      * @param path The path to normalize.
      * @return The FileType.
      * @throws FileSystemException if an error occurs.
-     *
      * @see #fixSeparators
      */
     public static FileType normalisePath(final StringBuilder path) throws FileSystemException {
@@ -501,14 +503,8 @@ public final class UriParser {
 
         // '/' or '.' or '..' or anyPath/..' or 'anyPath/.'  should always be a path
         if (path.charAt(path.length() - 1) != '/'
-                && !StringUtils.endsWith(path, "/..")
-                && !StringUtils.endsWith(path, "/.")
-                && !StringUtils.endsWith(path, "%2f")
-                && !StringUtils.endsWith(path, "%2F")
-                && !StringUtils.endsWith(path, "%2f..")
-                && !StringUtils.endsWith(path, "%2F..")
-                && !StringUtils.endsWith(path, "%2f.")
-                && !StringUtils.endsWith(path, "%2F.")
+                && path.lastIndexOf("/..") != path.length() - 3
+                && path.lastIndexOf("/.") != path.length() - 2
                 && path.lastIndexOf("..") != 0
                 && path.lastIndexOf(".") != 0
         ) {
