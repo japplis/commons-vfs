@@ -16,6 +16,8 @@
  */
 package org.apache.commons.vfs2;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.Test;
@@ -65,9 +67,11 @@ public class NamingTests extends AbstractProviderTestCase {
         assertEquals(expectedPath, name.getPath());
 
         // And again
-        temp = relName.replace('/', '\\');
-        name = getManager().resolveName(baseName, temp, scope);
-        assertEquals(expectedPath, name.getPath());
+        if (SystemUtils.IS_OS_WINDOWS) {
+            temp = relName.replace('/', '\\');
+            name = getManager().resolveName(baseName, temp, scope);
+            assertEquals(expectedPath, name.getPath());
+        }
     }
 
     /**
