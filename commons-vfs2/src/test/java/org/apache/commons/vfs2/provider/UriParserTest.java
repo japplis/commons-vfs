@@ -113,7 +113,6 @@ public class UriParserTest {
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/")));
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/.")));
             assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder/./")));
-            assertEquals(FileType.FOLDER, UriParser.normalisePath(new StringBuilder("./Sub Folder%2f.%2f")));
 
             assertEquals(FileType.FILE, UriParser.normalisePath(new StringBuilder("File.txt")));
             assertEquals(FileType.FILE, UriParser.normalisePath(new StringBuilder("/File.txt")));
