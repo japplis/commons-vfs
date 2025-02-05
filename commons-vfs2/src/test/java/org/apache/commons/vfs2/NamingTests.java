@@ -16,6 +16,8 @@
  */
 package org.apache.commons.vfs2;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.Test;
@@ -65,9 +67,11 @@ public class NamingTests extends AbstractProviderTestCase {
         assertEquals(expectedPath, name.getPath());
 
         // And again
-        temp = relName.replace('/', '\\');
-        name = getManager().resolveName(baseName, temp, scope);
-        assertEquals(expectedPath, name.getPath());
+        if (SystemUtils.IS_OS_WINDOWS) {
+            temp = relName.replace('/', '\\');
+            name = getManager().resolveName(baseName, temp, scope);
+            assertEquals(expectedPath, name.getPath());
+        }
     }
 
     /**
@@ -280,7 +284,9 @@ public class NamingTests extends AbstractProviderTestCase {
 
         // Test .///.///. relative path
         assertSameName(path, baseName, ".///.///.");
-        assertSameName(path, baseName, "./\\/.\\//.");
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertSameName(path, baseName, "./\\/.\\//.");
+        }
 
         // Test <elem>/.. relative path
         assertSameName(path, baseName, "a/..");
@@ -293,7 +299,9 @@ public class NamingTests extends AbstractProviderTestCase {
 
         // Test ..//./ relative path
         assertSameName(parentPath, baseName, "..//./");
-        assertSameName(parentPath, baseName, "..//.\\");
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertSameName(parentPath, baseName, "..//.\\");
+        }
 
         // Test <elem>/../.. relative path
         assertSameName(parentPath, baseName, "a/../..");
@@ -373,12 +381,14 @@ public class NamingTests extends AbstractProviderTestCase {
         assertEquals(path + "/dir/child", file.getName().getPathDecoded());
 
         // §5 Encode \
-        file = getManager().resolveFile("dir%5cchild");
-        // 18-6-2005 imario@apache.org: all file separators normalized to "/"
-        // decided to do this to get the same behavior as in §4 on Windows
-        // platforms
-        // assertEquals(path + "/dir\\child", file.getName().getPathDecoded());
-        assertEquals(path + "/dir/child", file.getName().getPathDecoded());
+        if (SystemUtils.IS_OS_WINDOWS) {
+            file = getManager().resolveFile("dir%5cchild");
+            // 18-6-2005 imario@apache.org: all file separators normalized to "/"
+            // decided to do this to get the same behavior as in §4 on Windows
+            // platforms
+            // assertEquals(path + "/dir\\child", file.getName().getPathDecoded());
+            assertEquals(path + "/dir/child", file.getName().getPathDecoded());
+        }
 
         // §6 Use "%" literal
         assertThrows(FileSystemException.class, () -> getManager().resolveFile("%"));
