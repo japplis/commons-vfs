@@ -18,10 +18,6 @@ package org.apache.commons.vfs2.provider;
 
 import java.util.Arrays;
 
-<<<<<<< HEAD
-import org.apache.commons.lang3.StringUtils;
-=======
->>>>>>> master
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
